@@ -70,6 +70,56 @@
             "font_size": 9, 
             "max_lines": 3, 
             "page": 1
+        }, 
+        "Sources" : {
+            "Source #1" : {
+                "EnergySource" : {
+                    "x": 40,
+                    "y": 325,
+                    "max_characters": 15,
+                    "font_size": 10,
+                    "max_lines": 1,
+                    "page": 1
+                },
+                "Device" : {
+                    "x": 115,
+                    "y": 325,
+                    "max_characters": 15,
+                    "font_size": 10,
+                    "max_lines": 1,
+                    "page": 1
+                },
+                "IsolationPoint": {
+                    "x": 180,
+                    "y": 318,
+                    "max_width": 130,
+                    "max_height": 85,
+                    "page": 1
+                },
+                "IsolationMethod" : {
+                    "x": 308,
+                    "y": 325,
+                    "max_characters": 15,
+                    "font_size": 10,
+                    "max_lines": 1,
+                    "page": 1
+                },
+                "VerificationMethod" : {
+                    "x": 385,
+                    "y": 325,
+                    "max_characters": 15,
+                    "font_size": 10,
+                    "max_lines": 1,
+                    "page": 1
+                },
+                "VerificationDevice": {
+                    "x": 450,
+                    "y": 318,
+                    "max_width": 130,
+                    "max_height": 85,
+                    "page": 1
+                }
+            }
         }
     }
 }

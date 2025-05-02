@@ -24,6 +24,11 @@ def printSuccess(successMessage):
 # DUPLICATE FILE
 def duplicate_pdf(input_path, output_path = "untitled.pdf"):
     try:
+        base_name, extension = os.path.splitext(output_path)
+        counter = 1
+        while os.path.exists(output_path):
+            output_path = f"{base_name} ({counter}){extension}"
+            counter += 1
         shutil.copy(input_path, output_path)
     except Exception as e:
         printError(f"Could not duplicate file: {e}")
@@ -188,4 +193,3 @@ def fillPDF():
             
         rename_file("untitled.pdf", file_name + ".pdf")
 
-fillPDF()
