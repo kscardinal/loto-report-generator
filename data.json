@@ -1,18 +1,5 @@
 {
-    "1 - Lathe": {
-      "Template": "LOTO",
-      "Description": "Description",
-      "ProcedureNumber": "12345",
-      "Facility": "Main Facility",
-      "Location": "Building A",
-      "Revision": "2.0",
-      "Date": "04-30-25",
-      "Origin": "04-30-25",
-      "machineImage_I": "test_1.jpg",
-      "IsolationPoints": "99",
-      "Notes_M": "This is the notes field"
-    },
-    "2 - Mill": {
+    "1 - Mill": {
       "Template": "LOTO",
       "Description": "Description",
       "ProcedureNumber": "12345",
@@ -23,7 +10,17 @@
       "Origin": "04-30-25",
       "machineImage_I": "test_2.jpg",
       "IsolationPoints": "99",
-      "Notes_M": "This is the notes field"
+      "Notes_M": "This is the notes field",
+      "Sources" : {
+            "Source #1": {
+                "EnergySource": "Energy Source #1",
+                "Device": "Device #1",
+                "IsolationPoint": "test_1.jpg",
+                "IsolationMethod": "Isolation Method #1",
+                "VerificationMethod": "Verification Method #1",
+                "VerificationDevice": "test_2.jpg"
+            }
+      }
     }
   } 
   
