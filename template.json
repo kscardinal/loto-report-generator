@@ -1,0 +1,75 @@
+{
+    "LOTO": {
+        "Description": {
+            "x": 100, 
+            "y": 107, 
+            "max_characters": 57, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "ProcedureNumber": {
+            "x": 485, 
+            "y": 107, 
+            "max_characters": 17, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "Facility": {
+            "x": 80, 
+            "y": 121, 
+            "max_characters": 25, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "Location": {
+            "x": 270, 
+            "y": 121, 
+            "max_characters": 18, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "Revision": {
+            "x": 400, 
+            "y": 121, 
+            "max_characters": 3,
+             "font_size": 10, 
+             "page": 0
+        },
+        "Date": {
+            "x": 453, 
+            "y": 121, 
+            "max_characters": 8, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "Origin": {
+            "x": 538, 
+            "y": 121, 
+            "max_characters": 8, 
+            "font_size": 10, 
+            "page": 0
+        },
+        "machineImage_I": {
+            "max_width": 256, 
+            "max_height": 100, 
+            "center_x": 183, 
+            "center_y": 207, 
+            "page": 1
+        },
+        "IsolationPoints": {
+            "x": 313, 
+            "y": 188, 
+            "max_characters": 2,
+            "font_size": 32, 
+            "page": 1
+        },
+        "Notes_M": {
+            "x": 308, 
+            "y": 239, 
+            "max_characters": 65, 
+            "font_size": 9, 
+            "max_lines": 3, 
+            "page": 1
+        }
+    }
+}
