@@ -193,3 +193,5 @@ def fillPDF():
             
         rename_file("untitled.pdf", file_name + ".pdf")
 
+
+fillPDF()
