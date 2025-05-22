@@ -33,6 +33,7 @@ def duplicate_pdf(input_path, output_path = "untitled.pdf"):
     except Exception as e:
         printError(f"Could not duplicate file: {e}")
 
+# RENAME FILE
 def rename_file(old_name, new_name):
     try:
         base_name, extension = os.path.splitext(new_name)
