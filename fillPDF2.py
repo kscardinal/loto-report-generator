@@ -19,6 +19,7 @@ def duplicate_pdf(input_path, output_path = "untitled.pdf"):
             output_path = f"{base_name} ({counter}){extension}"
             counter += 1
         shutil.copy(input_path, output_path)
+        return output_path
     except Exception as e:
         printError(f"Could not duplicate file: {e}")
 
@@ -31,6 +32,7 @@ def rename_file(old_name, new_name):
             new_name = f"{base_name} ({counter}){extension}"
             counter += 1
         os.rename(old_name, new_name)
+        return new_name
     except FileNotFoundError:
         printError(f"The file {old_name} does not exist.")
     except PermissionError:
@@ -127,6 +129,9 @@ def resizeImage(image_path, spot_width, spot_height):
 def placeImage(image_file, top, left, input_file, output_file, page, width = 256, height = 256):
     try:
         fillpdfs.place_image(image_file, top, left, input_file, output_file, page, width, height)
+        os.remove(input_file)
+        os.remove(image_file)
+        rename_file(output_file, input_file)
     except Exception as e:
         printError(f"Could not place image: {e}")
 
@@ -180,7 +185,7 @@ def fillPDF():
 
     for form, fields in data.items():
         print(f"{form} : {fields.get('template', '')}")
-        duplicate_pdf("LOTO_Fillable.pdf", form + ".pdf")
+        file_name = duplicate_pdf("LOTO_Fillable.pdf", form + ".pdf")
 
         form_type = fields.get('template', '')
         if not form_type:
@@ -194,17 +199,15 @@ def fillPDF():
                 template_field_data = template_fields.get(field_name, {})
 
                 if template_fields.get(field_name, {}).get('field_type', '') == "SLT":
-                    placeText(field_value, template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), form + ".pdf", "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
+                    placeText(field_value, template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
                 elif template_fields.get(field_name, {}).get('field_type', '') == "MLT":
-                   placeText(splitText(field_value, template_field_data.get('max_length', ''), template_field_data.get('max_lines', '')), template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), form + ".pdf", "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
+                   placeText(splitText(field_value, template_field_data.get('max_length', ''), template_field_data.get('max_lines', '')), template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
                 elif template_fields.get(field_name, {}).get('field_type', '') == "Image":
                     image_size = resizeImage(field_value, template_field_data.get('max_width', ''), template_field_data.get('max_height',''))
                     starting_x = template_field_data["center_x_pos"] - (image_size[0] / 2)
                     starting_y = template_field_data["center_y_pos"] - (image_size[1] / 2)
-                    placeImage(image_size[2], starting_x, starting_y, form + ".pdf", "in-progress.pdf", template_field_data["page"], image_size[0], image_size[1])
-                    os.remove(form + ".pdf")
-                    os.remove(image_size[2])
-                    rename_file("in-progress.pdf", form + ".pdf")
+                    placeImage(image_size[2], starting_x, starting_y, file_name, "in-progress.pdf", template_field_data["page"], image_size[0], image_size[1])
+
 
 
 
