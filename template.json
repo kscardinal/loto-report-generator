@@ -124,17 +124,17 @@
         "Source 1": {
             "EnergySource": {
                 "field_type": "SLT",
-                "x_pos": 400,
-                "y_pos": 400,
-                "max_length": 16,
+                "x_pos": 41,
+                "y_pos": 323,
+                "max_length": 10,
                 "font_size": 10,
                 "page": 1
             },
             "VOLTS": {
                 "field_type": "SLT",
-                "x_pos": 400,
-                "y_pos": 450,
-                "max_length": 16,
+                "x_pos": 41,
+                "y_pos": 335,
+                "max_length": 10,
                 "font_size": 10,
                 "page": 1
             },
