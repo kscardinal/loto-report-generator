@@ -187,14 +187,14 @@ def fillPDF():
         print(f"{form} : {fields.get('Template', '')}")
         file_name = duplicate_pdf("LOTO_Fillable.pdf", form + ".pdf")
 
-        form_type = fields.get('template', '')
+        form_type = fields.get('Template', '')
         if not form_type:
             printError(f"Can't find template from.")
 
         template_fields = template.get(form_type, {})
 
         for field_name, field_value in fields.items():
-            if field_name != "template" or "Source" in field_name:
+            if field_name != "Template" or "Source" in field_name:
 
                 template_field_data = template_fields.get(field_name, {})
 
