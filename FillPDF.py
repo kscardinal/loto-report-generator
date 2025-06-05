@@ -184,7 +184,7 @@ def fillPDF():
     template = loadData("template.json")
 
     for form, fields in data.items():
-        print(f"{form} : {fields.get('template', '')}")
+        print(f"{form} : {fields.get('Template', '')}")
         file_name = duplicate_pdf("LOTO_Fillable.pdf", form + ".pdf")
 
         form_type = fields.get('template', '')
@@ -194,7 +194,7 @@ def fillPDF():
         template_fields = template.get(form_type, {})
 
         for field_name, field_value in fields.items():
-            if field_name != "template":
+            if field_name != "template" or "Source" in field_name:
 
                 template_field_data = template_fields.get(field_name, {})
 
