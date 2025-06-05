@@ -1,26 +1,23 @@
 {
     "1 - Mill": {
-      "Template": "LOTO",
-      "Description": "Description",
-      "ProcedureNumber": "12345",
-      "Facility": "Main Facility",
-      "Location": "Building A",
-      "Revision": "2.0",
-      "Date": "04-30-25",
-      "Origin": "04-30-25",
-      "machineImage_I": "test_2.jpg",
-      "IsolationPoints": "99",
-      "Notes_M": "This is the notes field",
-      "Sources" : {
-            "Source #1": {
-                "EnergySource": "Energy Source #1",
-                "Device": "Device #1",
-                "IsolationPoint": "test_1.jpg",
-                "IsolationMethod": "Isolation Method #1",
-                "VerificationMethod": "Verification Method #1",
-                "VerificationDevice": "test_2.jpg"
-            }
-      }
+        "template": "LOTO",
+        "Description": "Description",
+        "ProcedureNumber": "12345",
+        "Facility": "Main Facility",
+        "Location": "Building A",
+        "Revision": "2.0",
+        "Date": "04-30-25",
+        "Origin": "04-30-25",
+        "machineImage": "test_1.jpg",
+        "IsolationPoints": "99",
+        "Notes": "This is the notes field. I am going to add more so that we can see what it would look like when it has to be filled up a little more and maybe how it handles if there are too many words",
+        "ApprovedBy_1": "Kyle Schang - SG",
+        "PreparedBy": "Kyle Schang - CCC",
+        "ApprovedBy_2": "Kyle Schang - SG",
+        "ApprovedByCompany": "Sonnaz Group, LLC",
+        "CompletedDate": "06/05/2025"
+    },
+    "2 - Lathe": {
+        
     }
-  } 
-  
+}

@@ -1,125 +1,131 @@
 {
     "LOTO": {
-        "Description": {
-            "x": 100, 
-            "y": 107, 
-            "max_characters": 57, 
-            "font_size": 10, 
+        "Description" : {
+            "field_type" : "SLT",
+            "x_pos": 100,
+            "y_pos": 107,
+            "max_length": 57,
+            "font_size": 10,
             "page": 0
         },
         "ProcedureNumber": {
-            "x": 485, 
-            "y": 107, 
-            "max_characters": 17, 
+            "field_type": "SLT",
+            "x_pos": 485, 
+            "y_pos": 107, 
+            "max_length": 17, 
             "font_size": 10, 
             "page": 0
         },
         "Facility": {
-            "x": 80, 
-            "y": 121, 
-            "max_characters": 25, 
+            "field_type": "SLT",
+            "x_pos": 80, 
+            "y_pos": 121, 
+            "max_length": 25, 
             "font_size": 10, 
             "page": 0
         },
         "Location": {
-            "x": 270, 
-            "y": 121, 
-            "max_characters": 18, 
+            "field_type": "SLT",
+            "x_pos": 270, 
+            "y_pos": 121, 
+            "max_length": 18, 
             "font_size": 10, 
             "page": 0
         },
         "Revision": {
-            "x": 400, 
-            "y": 121, 
-            "max_characters": 3,
+            "field_type": "SLT",
+            "x_pos": 400, 
+            "y_pos": 121, 
+            "max_length": 3,
              "font_size": 10, 
              "page": 0
         },
         "Date": {
-            "x": 453, 
-            "y": 121, 
-            "max_characters": 8, 
+            "field_type": "SLT",
+            "x_pos": 453, 
+            "y_pos": 121, 
+            "max_length": 8, 
             "font_size": 10, 
             "page": 0
         },
         "Origin": {
-            "x": 538, 
-            "y": 121, 
-            "max_characters": 8, 
+            "field_type": "SLT",
+            "x_pos": 538, 
+            "y_pos": 121, 
+            "max_length": 8, 
             "font_size": 10, 
             "page": 0
         },
-        "machineImage_I": {
+        "machineImage": {
+            "field_type": "IMG",
+            "center_x_pos": 183, 
+            "center_y_pos": 207,
             "max_width": 256, 
             "max_height": 100, 
-            "center_x": 183, 
-            "center_y": 207, 
-            "page": 1
+             "page": 1
         },
         "IsolationPoints": {
-            "x": 313, 
-            "y": 188, 
-            "max_characters": 2,
+            "field_type": "SLT",
+            "x_pos": 313, 
+            "y_pos": 188, 
+            "max_length": 2,
             "font_size": 32, 
             "page": 1
         },
-        "Notes_M": {
-            "x": 308, 
-            "y": 239, 
-            "max_characters": 65, 
-            "font_size": 9, 
+        "Notes": {
+            "field_type": "MLT",
+            "x_pos": 308, 
+            "y_pos": 239, 
             "max_lines": 3, 
+            "max_length": 75, 
+            "font_size": 8, 
             "page": 1
-        }, 
-        "Sources" : {
-            "Source #1" : {
-                "EnergySource" : {
-                    "x": 40,
-                    "y": 325,
-                    "max_characters": 15,
-                    "font_size": 10,
-                    "max_lines": 1,
-                    "page": 1
-                },
-                "Device" : {
-                    "x": 115,
-                    "y": 325,
-                    "max_characters": 15,
-                    "font_size": 10,
-                    "max_lines": 1,
-                    "page": 1
-                },
-                "IsolationPoint": {
-                    "x": 180,
-                    "y": 318,
-                    "max_width": 130,
-                    "max_height": 85,
-                    "page": 1
-                },
-                "IsolationMethod" : {
-                    "x": 308,
-                    "y": 325,
-                    "max_characters": 15,
-                    "font_size": 10,
-                    "max_lines": 1,
-                    "page": 1
-                },
-                "VerificationMethod" : {
-                    "x": 385,
-                    "y": 325,
-                    "max_characters": 15,
-                    "font_size": 10,
-                    "max_lines": 1,
-                    "page": 1
-                },
-                "VerificationDevice": {
-                    "x": 450,
-                    "y": 318,
-                    "max_width": 130,
-                    "max_height": 85,
-                    "page": 1
-                }
-            }
+        },
+        "ApprovedBy_1": {
+            "field_type": "SLT",
+            "x_pos": 170, 
+            "y_pos": 673, 
+            "max_length": 28,
+            "font_size": 10, 
+            "page": 2
+        },
+        "PreparedBy": {
+            "field_type": "SLT",
+            "x_pos": 97, 
+            "y_pos": 724, 
+            "max_length": 16,
+            "font_size": 10, 
+            "page": 2
+        },
+        "ApprovedBy_2": {
+            "field_type": "SLT",
+            "x_pos": 278, 
+            "y_pos": 724, 
+            "max_length": 16,
+            "font_size": 10, 
+            "page": 2
+        },
+        "ApprovedByCompany": {
+            "field_type": "SLT",
+            "x_pos": 278, 
+            "y_pos": 742, 
+            "max_length": 28,
+            "font_size": 10, 
+            "page": 2
+        },
+        "CompletedDate": {
+            "field_type": "SLT",
+            "x_pos": 458, 
+            "y_pos": 702, 
+            "max_length": 10, 
+            "font_size": 10, 
+            "page": 2
         }
+    },
+    "Construction Inspection Form": {
+
+    },
+    "Training Sign-in Sheet": {
+
     }
 }
