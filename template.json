@@ -56,7 +56,7 @@
             "font_size": 10, 
             "page": 0
         },
-        "machineImage": {
+        "MachineImage": {
             "field_type": "IMG",
             "center_x_pos": 183, 
             "center_y_pos": 207,
