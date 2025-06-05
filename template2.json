@@ -57,7 +57,7 @@
             "page": 0
         },
         "machineImage": {
-            "field_type": "Image",
+            "field_type": "IMG",
             "center_x_pos": 183, 
             "center_y_pos": 207,
             "max_width": 256, 
@@ -80,6 +80,46 @@
             "max_length": 75, 
             "font_size": 8, 
             "page": 1
+        },
+        "ApprovedBy_1": {
+            "field_type": "SLT",
+            "x_pos": 170, 
+            "y_pos": 673, 
+            "max_length": 28,
+            "font_size": 10, 
+            "page": 2
+        },
+        "PreparedBy": {
+            "field_type": "SLT",
+            "x_pos": 97, 
+            "y_pos": 724, 
+            "max_length": 16,
+            "font_size": 10, 
+            "page": 2
+        },
+        "ApprovedBy_2": {
+            "field_type": "SLT",
+            "x_pos": 278, 
+            "y_pos": 724, 
+            "max_length": 16,
+            "font_size": 10, 
+            "page": 2
+        },
+        "ApprovedByCompany": {
+            "field_type": "SLT",
+            "x_pos": 278, 
+            "y_pos": 742, 
+            "max_length": 28,
+            "font_size": 10, 
+            "page": 2
+        },
+        "CompletedDate": {
+            "field_type": "SLT",
+            "x_pos": 458, 
+            "y_pos": 702, 
+            "max_length": 10, 
+            "font_size": 10, 
+            "page": 2
         }
     },
     "Construction Inspection Form": {
