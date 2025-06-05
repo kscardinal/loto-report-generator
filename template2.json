@@ -77,8 +77,8 @@
             "x_pos": 308, 
             "y_pos": 239, 
             "max_lines": 3, 
-            "max_length": 65, 
-            "font_size": 9, 
+            "max_length": 75, 
+            "font_size": 8, 
             "page": 1
         }
     },

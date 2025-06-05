@@ -8,6 +8,7 @@ from PIL import Image
 import json
 import shutil
 import os
+from PyPDF2 import PdfReader
 
 # DUPLICATE FILE
 def duplicate_pdf(input_path, output_path = "untitled.pdf"):
@@ -63,6 +64,15 @@ def getData(fileName, entryName):
     if entryName in data:
         return data[entryName]
     
+# GET PAGES
+def pageCount(pdf_path):
+    try:
+        reader = PdfReader(pdf_path)
+        return len(reader.pages)
+    except Exception as e:
+        print(f"Error reading PDF file: {e}")
+        return 0
+
 # CROP IMAGE
 def cropImage(input_path, output_path, left, upper, right, lower):
     try:
@@ -81,7 +91,7 @@ def cropImage(input_path, output_path, left, upper, right, lower):
     cropped_image.save(output_path)
 
 # RESIZE IMAGE
-def resizeImage(image_path, output_path, spot_width, spot_height):
+def resizeImage(image_path, spot_width, spot_height):
 
     # Open the image
     with Image.open(image_path) as img:
@@ -106,10 +116,12 @@ def resizeImage(image_path, output_path, spot_width, spot_height):
         resized_img = img.resize((new_width, new_height))
         
         # Save the resized image
-        resized_img.save(output_path)
+        base_name, ext = os.path.splitext(image_path)
+        resized_img.save(base_name + "(resized)" + ext)
+        output_file = base_name + "(resized)" + ext
 
         # Return sizes
-        return [new_width, new_height]
+        return [new_width, new_height, output_file]
     
 # ADD IMAGE TO PDF
 def placeImage(image_file, top, left, input_file, output_file, page, width = 256, height = 256):
@@ -121,16 +133,45 @@ def placeImage(image_file, top, left, input_file, output_file, page, width = 256
 # ADD TEXT TO PDF
 def placeText(text, top, left, input_file, output_file, page, font_size=12, font_name="helv", color=None):
     try:
-        fillpdfs.place_text(text, top, left, input_file, output_file, page, font_size, font_name, color)
+        if page == 0:
+            for page in range(pageCount(input_file)):
+                fillpdfs.place_text(text, top, left, input_file, output_file, page + 1, font_size, font_name, color)
+                os.remove(input_file)
+                rename_file(output_file, input_file)
+        else:
+            fillpdfs.place_text(text, top, left, input_file, output_file, 1, font_size, font_name, color)
+            os.remove(input_file)
+            rename_file(output_file, input_file)
     except Exception as e:
         printError(f"Could not place text: {e}")
 
+
 # SPLITS TEXT IF NEEDED
 def splitText(input_text, line_length, max_lines):
-    splits = 0
+    words = input_text.split()
     lines = []
-    for line in max_lines:
-        lines[line] = input_text[(splits * line_length + line_length):((splits + 1) * line_length)]
+    current_line = []
+
+    for word in words:
+        # Check if adding the word exceeds the maximum line length
+        if len(' '.join(current_line + [word])) <= line_length:
+            current_line.append(word)
+        else:
+            # Finalize the current line and start a new one
+            lines.append(' '.join(current_line).strip())
+            current_line = [word]
+            if len(lines) == max_lines:
+                break  # Stop if max_lines is reached
+
+    # Add any remaining words to the last line (if space is available)
+    if current_line and len(lines) < max_lines:
+        lines.append(' '.join(current_line).strip())
+
+    # Ensure output is properly truncated and formatted
+    result = '\n'.join(lines).strip()
+
+    return result
+
 
 # MAIN LOGIC
 def fillPDF():
@@ -139,14 +180,35 @@ def fillPDF():
 
     for form, fields in data.items():
         print(f"{form} : {fields.get('template', '')}")
-        duplicate_pdf("LOTO_Fillable.pdf")
+        duplicate_pdf("LOTO_Fillable.pdf", form + ".pdf")
 
         form_type = fields.get('template', '')
         if not form_type:
             printError(f"Can't find template from.")
 
+        template_fields = template.get(form_type, {})
+
         for field_name, field_value in fields.items():
-            
+            if field_name != "template":
+
+                template_field_data = template_fields.get(field_name, {})
+
+                if template_fields.get(field_name, {}).get('field_type', '') == "SLT":
+                    placeText(field_value, template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), form + ".pdf", "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
+                elif template_fields.get(field_name, {}).get('field_type', '') == "MLT":
+                   placeText(splitText(field_value, template_field_data.get('max_length', ''), template_field_data.get('max_lines', '')), template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), form + ".pdf", "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
+                elif template_fields.get(field_name, {}).get('field_type', '') == "Image":
+                    image_size = resizeImage(field_value, template_field_data.get('max_width', ''), template_field_data.get('max_height',''))
+                    starting_x = template_field_data["center_x_pos"] - (image_size[0] / 2)
+                    starting_y = template_field_data["center_y_pos"] - (image_size[1] / 2)
+                    placeImage(image_size[2], starting_x, starting_y, form + ".pdf", "in-progress.pdf", template_field_data["page"], image_size[0], image_size[1])
+                    os.remove(form + ".pdf")
+                    os.remove(image_size[2])
+                    rename_file("in-progress.pdf", form + ".pdf")
+
+
+
+
 
 
 
