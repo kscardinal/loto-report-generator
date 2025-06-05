@@ -144,7 +144,7 @@ def placeText(text, top, left, input_file, output_file, page, font_size=12, font
                 os.remove(input_file)
                 rename_file(output_file, input_file)
         else:
-            fillpdfs.place_text(text, top, left, input_file, output_file, 1, font_size, font_name, color)
+            fillpdfs.place_text(text, top, left, input_file, output_file, page, font_size, font_name, color)
             os.remove(input_file)
             rename_file(output_file, input_file)
     except Exception as e:
@@ -202,17 +202,11 @@ def fillPDF():
                     placeText(field_value, template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
                 elif template_fields.get(field_name, {}).get('field_type', '') == "MLT":
                    placeText(splitText(field_value, template_field_data.get('max_length', ''), template_field_data.get('max_lines', '')), template_field_data.get('x_pos', ''), template_field_data.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data.get('page', ''), template_field_data.get('font_size', ''))
-                elif template_fields.get(field_name, {}).get('field_type', '') == "Image":
+                elif template_fields.get(field_name, {}).get('field_type', '') == "IMG":
                     image_size = resizeImage(field_value, template_field_data.get('max_width', ''), template_field_data.get('max_height',''))
                     starting_x = template_field_data["center_x_pos"] - (image_size[0] / 2)
                     starting_y = template_field_data["center_y_pos"] - (image_size[1] / 2)
                     placeImage(image_size[2], starting_x, starting_y, file_name, "in-progress.pdf", template_field_data["page"], image_size[0], image_size[1])
-
-
-
-
-
-
 
 
 fillPDF()
