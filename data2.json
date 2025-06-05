@@ -1,5 +1,5 @@
 {
-    "1-Mill": {
+    "1 - Mill": {
         "template": "LOTO",
         "Description": "Description",
         "ProcedureNumber": "12345",
@@ -8,9 +8,9 @@
         "Revision": "2.0",
         "Date": "04-30-25",
         "Origin": "04-30-25",
-        "machineImage": "test_2.jpg",
+        "machineImage": "test_1.jpg",
         "IsolationPoints": "99",
-        "Notes": "This is the notes field"
+        "Notes": "This is the notes field. I am going to add more so that we can see what it would look like when it has to be filled up a little more and maybe how it handles if there are too many words"
     },
     "2 - Lathe": {
         
