@@ -15,21 +15,37 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib import colors
 
 
-# creating a pdf object
+def resize_height(filename, max_height):
+    width, height = Image.open(filename).size
+    ratio = height / max_height
+    return height / ratio, width / ratio
+
+def resize_width(filename, max_width):
+    width, height = Image.open(filename).size
+    ratio = width / max_width
+    return height / ratio, width / ratio
+
+def max_offset(offset, max_offset):
+    if offset > max_offset:
+        print("Offset too large")
+        return max_offset
+    else:
+        return offset
+
+
+
+# CREATING PDF
 pdf = canvas.Canvas("Create_Test.pdf")
 
-# setting the title of the document
+# SETTING DOCUMENT TITLE
 pdf.setTitle("Create Test")
 
-# registering a external font in python
+# REGIsTERING FONTS
 pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
-
-
-
-# HEADER
+# CREATING HEADER TEMPLATE
 pdf.setFont('DM Serif Display', 18)
 pdf.drawCentredString(300, 790, "LOCKOUT-TAGOUT")
 pdf.drawCentredString(300, 770, "PROCEDURE")
@@ -57,24 +73,21 @@ pdf.drawString(405, 778, "5353 Secor Rd.")
 pdf.drawString(405, 766, "Toledo, OH 43623")
 pdf.drawString(405, 754, "P: 419-882-9224")
 
-pdf.setFont('Times', 12)
-pdf.drawString(33, 735, "Description:")
+pdf.setFont('Times', 10)
+pdf.drawString(33, 736, "Description:")
 pdf.drawString(33, 715, "Facility:")
 pdf.drawString(219, 715, "Location:")
 pdf.drawString(353, 715, "Rev:")
-pdf.drawString(403, 735, "Procedure #:")
+pdf.drawString(403, 736, "Procedure #:")
 pdf.drawString(403, 715, "Date: ")
 pdf.drawString(478, 715, "Origin:")
 
 pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
-# MACHINE LOCKOUT SUMMARY
+# CREATING MACHINE LOCKOUT SUMMARY
 
-additionalNotesOffset = 0
-
-if additionalNotesOffset > 40:
-    print("Notes are too long")
-    additionalNotesOffset = 40
+additionalNotesOffset = 20
+additionalNotesOffset = max_offset(additionalNotesOffset, 40)
 
 pdf.line(30, 690, 550, 690)
 pdf.line(30, 670, 290, 670)
@@ -89,11 +102,7 @@ pdf.setFont('DM Serif Display', 12)
 pdf.drawString(90, 676, "Machine to be Locked Out")
 pdf.drawString(400, 626, "Notes:")
 
-# Get dimensions
-width, height = Image.open("test_1.jpg").size
-max_height = 100 + additionalNotesOffset
-ratio = height / max_height
-new_height, new_width = height / ratio, width / ratio
+new_height, new_width = resize_height("test_1.jpg", (100 + additionalNotesOffset))
 
 pdf.drawImage('test_1.jpg', (160 - (new_width / 2)), 560 - additionalNotesOffset, new_width, new_height)
 
@@ -126,5 +135,38 @@ pdf.setFillColorRGB(0, 0, 0)
 pdf.setFont('Inter', 8)
 pdf.drawString(40, 520 - additionalNotesOffset, "1. Notify affected personanel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO Devices. 5. Verify")
 pdf.drawString(225, 510 - additionalNotesOffset, "total de-energizing of all sources.")
+
+
+# CREATING LOCKOUT POINTS
+
+startInstructionLine = 505 - additionalNotesOffset
+endInstructionLine = startInstructionLine - 30
+
+pdf.line(30, endInstructionLine, 550, endInstructionLine)
+pdf.line(30, startInstructionLine, 30, endInstructionLine)
+pdf.line(550, startInstructionLine, 550, endInstructionLine)
+
+pdf.line(105, startInstructionLine, 105, endInstructionLine)
+pdf.line(180, startInstructionLine, 180, endInstructionLine)
+pdf.line(290, startInstructionLine, 290, endInstructionLine)
+pdf.line(365, startInstructionLine, 365, endInstructionLine)
+pdf.line(440, startInstructionLine, 440, endInstructionLine)
+
+pdf.setFont('Times', 10)
+pdf.drawString(38, startInstructionLine - 18, "Energy Source")
+pdf.drawString(128, startInstructionLine - 18, "Device")
+pdf.drawString(208, startInstructionLine - 18, "Isolation Point")
+pdf.drawString(298, startInstructionLine - 18, "Isolation Point")
+pdf.drawString(378, startInstructionLine - 12, "Verification")
+pdf.drawString(388, startInstructionLine - 22, "Method")
+pdf.drawString(452, startInstructionLine - 18, "Verification Device")
+
+
+
+
+
+
+
+
 
 pdf.save()
