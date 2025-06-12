@@ -86,7 +86,7 @@ pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
 # CREATING MACHINE LOCKOUT SUMMARY
 
-additionalNotesOffset = 20
+additionalNotesOffset = 0
 additionalNotesOffset = max_offset(additionalNotesOffset, 40)
 
 pdf.line(30, 690, 550, 690)
@@ -133,11 +133,11 @@ pdf.line(550, 530 - additionalNotesOffset, 550, 505 - additionalNotesOffset)
 
 pdf.setFillColorRGB(0, 0, 0)
 pdf.setFont('Inter', 8)
-pdf.drawString(40, 520 - additionalNotesOffset, "1. Notify affected personanel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO Devices. 5. Verify")
-pdf.drawString(225, 510 - additionalNotesOffset, "total de-energizing of all sources.")
+pdf.drawString(40, 520 - additionalNotesOffset, "1. Notify affected personanel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO Devices. 5. Verify total")
+pdf.drawString(225, 510 - additionalNotesOffset, "de-energizing of all sources.")
 
 
-# CREATING LOCKOUT POINTS
+# CREATING LOCKOUT POINT HEADER
 
 startInstructionLine = 505 - additionalNotesOffset
 endInstructionLine = startInstructionLine - 30
@@ -145,12 +145,13 @@ endInstructionLine = startInstructionLine - 30
 pdf.line(30, endInstructionLine, 550, endInstructionLine)
 pdf.line(30, startInstructionLine, 30, endInstructionLine)
 pdf.line(550, startInstructionLine, 550, endInstructionLine)
-
 pdf.line(105, startInstructionLine, 105, endInstructionLine)
 pdf.line(180, startInstructionLine, 180, endInstructionLine)
 pdf.line(290, startInstructionLine, 290, endInstructionLine)
 pdf.line(365, startInstructionLine, 365, endInstructionLine)
 pdf.line(440, startInstructionLine, 440, endInstructionLine)
+
+
 
 pdf.setFont('Times', 10)
 pdf.drawString(38, startInstructionLine - 18, "Energy Source")
@@ -162,6 +163,14 @@ pdf.drawString(388, startInstructionLine - 22, "Method")
 pdf.drawString(452, startInstructionLine - 18, "Verification Device")
 
 
+# CREATING LOCKOUT POINTS
+
+startingPoint = endInstructionLine
+space = startingPoint - 30
+
+source1Offset = 110
+source1End = startingPoint - source1Offset
+pdf.line(30, source1End, 550, source1End)
 
 
 
