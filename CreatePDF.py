@@ -382,23 +382,27 @@ if source1:
         pdf.line(365, endInstructionLine, 365, source1End)
         pdf.line(440, endInstructionLine, 440, source1End)
 
-        match fields.get("S1_EnergySource"):
-            case "Electric":
-                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_VOLTS") + " V")
-            case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
-                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_PSI") + " PSI")
-            case "Chemical":
-                pdf.drawCentredString(67,  source1Middle + 16,  fields.get("S1_EnergySource"))
-                pdf.drawCentredString(67, source1Middle, fields.get("S1_ChemicalName"))
-                pdf.drawCentredString(67, source1Middle - 16, fields.get("S1_PSI") + " PSI")
-            case "Gravity":
-                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_LBS") + " lbs")
-            case "Thermal":
-                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_TEMP") + " F")
+        if checkExists(fields, "S1_EnergySource"):
+            match fields.get("S1_EnergySource"):
+                case "Electric":
+                    pdf.drawCentredString(67,  source1Middle + 8,  fields.get("S1_EnergySource"))
+                    pdf.drawCentredString(67, source1Middle - 8, fields.get("S1_VOLTS") + " V")
+                case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
+                    pdf.drawCentredString(67,  source1Middle + 8,  fields.get("S1_EnergySource"))
+                    pdf.drawCentredString(67, source1Middle - 8, fields.get("S1_PSI") + " PSI")
+                case "Chemical":
+                    pdf.drawCentredString(67,  source1Middle + 16,  fields.get("S1_EnergySource"))
+                    pdf.drawCentredString(67, source1Middle, fields.get("S1_ChemicalName"))
+                    pdf.drawCentredString(67, source1Middle - 16, fields.get("S1_PSI") + " PSI")
+                case "Gravity":
+                    pdf.drawCentredString(67,  source1Middle + 8,  fields.get("S1_EnergySource"))
+                    pdf.drawCentredString(67, source1Middle - 8, fields.get("S1_LBS") + " lbs")
+                case "Thermal":
+                    pdf.drawCentredString(67,  source1Middle + 8,  fields.get("S1_EnergySource"))
+                    pdf.drawCentredString(67, source1Middle - 8, fields.get("S1_TEMP") + " F")
+        else:
+            pdf.drawCentredString(67,  source1Middle + 8, "_____________")
+            pdf.drawCentredString(67, source1Middle - 8, "_____________")
 
         S1_Device = []
 
