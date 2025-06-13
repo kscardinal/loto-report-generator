@@ -13,6 +13,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib import colors
+import math
 
 # RESIZE IMAGE WITH MAX HEIGHT
 def resize_height(filename, max_height):
@@ -109,6 +110,29 @@ def splitText(input_text, line_length, max_lines):
 
     return lines
 
+# RETURNS NUMBER OF LINES
+def numLines(input_text, line_length, max_lines):
+    words = input_text.split()
+    lines = []
+    current_line = []
+
+    for word in words:
+        # Check if adding the word exceeds the maximum line length
+        if len(' '.join(current_line + [word])) <= line_length:
+            current_line.append(word)
+        else:
+            # Finalize the current line and start a new one
+            lines.append(' '.join(current_line).strip())
+            current_line = [word]
+            if len(lines) == max_lines:
+                break  # Stop if max_lines is reached
+
+    # Add any remaining words to the last line (if space is available)
+    if current_line and len(lines) < max_lines:
+        lines.append(' '.join(current_line).strip())
+
+    return len(lines)
+
 # CHECK IF FIELD HAS A VALUE
 def checkExists(fields, field_name):
     if fields.get(field_name):
@@ -124,9 +148,12 @@ def checkLength_E(text, max_length):
 def checkLength_C(text, max_length):
         return text[:max_length] if len(text) > max_length else text
 
+# GET DATA
+data = loadData("data_2.json")
 
 # CREATING PDF
-pdf = canvas.Canvas("Create_Test.pdf")
+fileName = list(data.keys())[0]
+pdf = canvas.Canvas(fileName + ".pdf")
 
 # SETTING DOCUMENT TITLE
 pdf.setTitle("Create Test")
@@ -179,8 +206,6 @@ pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
 additionalNotesOffset = 0
 
-data = loadData("data_2.json")
-
 pdf.setFont('Inter', 10)
 for form, fields in data.items():
     print(f"{form}")
@@ -207,8 +232,8 @@ for form, fields in data.items():
         pdf.drawString(504, 715, checkLength_C(fields.get("Origin"), 8))
 
     if checkExists(fields, "IsolationPoints"):
-        pdf.setFont('Inter', 21)
-        pdf.drawString(295, 657, checkLength_C(fields.get("IsolationPoints"), 3))
+        pdf.setFont('Inter', 20)
+        pdf.drawString(296, 657, checkLength_C(fields.get("IsolationPoints"), 3))
         pdf.setFont('Inter', 10)
 
     if checkExists(fields, "Notes"):
@@ -271,7 +296,7 @@ pdf.drawString(225, 510 - additionalNotesOffset, "de-energizing of all sources."
 # CREATING LOCKOUT POINT HEADER
 
 startInstructionLine = 505 - additionalNotesOffset
-endInstructionLine = startInstructionLine - 30
+endInstructionLine = startInstructionLine - 30 
 
 pdf.line(30, endInstructionLine, 550, endInstructionLine)
 pdf.line(30, startInstructionLine, 30, endInstructionLine)
@@ -296,6 +321,142 @@ pdf.drawString(452, startInstructionLine - 18, "Verification Device")
 
 # CREATING LOCKOUT POINTS
 
+source1 = False
+source2 = False
+source3 = False
+source4 = False
+source5 = False
+source6 = False
+source7 = False
+source8 = False
 
+for key in fields.keys():
+    if  "S1" in key:
+        source1 = True
+    if "S2" in key:
+        source = True
+    if "S3" in key:
+        source = True
+    if "S4" in key:
+        source = True
+    if "S5" in key:
+        source = True
+    if "S6" in key:
+        source = True
+    if "S7" in key:
+        source = True
+    if "S8" in key:
+        source = True
+
+
+if source1:
+
+    charactersPerLine = 14
+
+    deviceHeight = numLines(fields.get("S1_Device"), charactersPerLine, 10) + 3 + numLines(fields.get("S1_Description"), charactersPerLine, 10)
+    IsolationMethodHeight = numLines(fields.get("S1_IsolationMethod"), charactersPerLine, 10)
+    verificationMethodHeight = numLines(fields.get("S1_VerificationMethod"), charactersPerLine, 10)
+
+    minHeight = 110
+    height = (max(deviceHeight, IsolationMethodHeight, verificationMethodHeight) * 11) + 16
+
+    if height < minHeight:
+        height = minHeight
+
+    source1Start = endInstructionLine
+    source1End = source1Start - height
+    source1Middle = source1Start - (height / 2)
+
+    pdf.line(30, source1End, 550, source1End)
+    pdf.line(30, endInstructionLine, 30, source1End)
+    pdf.line(550, endInstructionLine, 550, source1End)
+    pdf.line(105, endInstructionLine, 105, source1End)
+    pdf.line(180, endInstructionLine, 180, source1End)
+    pdf.line(290, endInstructionLine, 290, source1End)
+    pdf.line(365, endInstructionLine, 365, source1End)
+    pdf.line(440, endInstructionLine, 440, source1End)
+
+    match fields.get("S1_EnergySource"):
+        case "Electric":
+            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_VOLTS") + " V")
+        case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
+            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_PSI") + " PSI")
+        case "Chemical":
+            pdf.drawCentredString(67,  source1Middle + 16,  fields.get("S1_EnergySource"))
+            pdf.drawCentredString(67, source1Middle, fields.get("S1_ChemicalName"))
+            pdf.drawCentredString(67, source1Middle - 16, fields.get("S1_PSI") + " PSI")
+        case "Gravity":
+            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_LBS") + " lbs")
+        case "Thermal":
+            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_TEMP") + " F")
+
+    S1_Device = []
+
+    if checkExists(fields, "S1_Device"):
+        max_device_lines = 10
+        device_lines = splitText(fields.get("S1_Device"), charactersPerLine, max_device_lines)
+        for int in range(len(device_lines)):
+            S1_Device.append(device_lines[int])
+    else:
+        S1_Device.append("_____________")
+
+    if checkExists(fields, "S1_Tag"):
+        S1_Device.append("")
+        S1_Device.append("Tag: #" + fields.get("S1_Tag"))
+        S1_Device.append("")
+    else:
+        S1_Device.append("")
+        S1_Device.append("Tag: #_______")
+        S1_Device.append("")
+
+    if checkExists(fields, "S1_Description"):
+        max_description_lines = 10
+        description_lines = splitText(fields.get("S1_Description"), charactersPerLine, max_description_lines)
+        for int in range(len(description_lines)):
+            S1_Device.append(description_lines[int])
+    else:
+        S1_Device.append("_____________")
+
+    if deviceHeight % 2 == 1:
+        for int in range(len(S1_Device)):
+            pdf.drawCentredString(142.5, source1Middle + (math.floor(deviceHeight / 2) * 10) - (11 * int), S1_Device[int])
+    else:
+        for int in range(len(S1_Device)):
+            pdf.drawCentredString(142.5, source1Middle + (((math.floor(deviceHeight / 2) - 1) * 10) + 5) - (11 * int), S1_Device[int])
+
+    if checkExists(fields, "S1_IsolationMethod"):
+        if len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)) % 2 == 1:
+            for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
+                pdf.drawCentredString(326, source1Middle + (math.floor(IsolationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
+        else:
+            for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
+                pdf.drawCentredString(326, source1Middle + (((math.floor(IsolationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
+    else:
+        pdf.drawCentredString(326, source1Middle, "_____________")
+
+
+    if checkExists(fields, "S1_VerificationMethod"):
+        if len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)) % 2 == 1:
+            for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
+                pdf.drawCentredString(326, source1Middle + (math.floor(verificationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
+        else:
+            for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
+                pdf.drawCentredString(402, source1Middle + (((math.floor(verificationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
+    else:
+        pdf.drawCentredString(402, source1Middle, "_____________")
+
+
+    if checkExists(fields, "S1_IsolationPoint"):
+        new_height, new_width = resize_to_fit(fields.get("S1_IsolationPoint"), height - 16, 100)
+        pdf.drawImage(fields.get("S1_IsolationPoint"), (235 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
+
+
+    if checkExists(fields, "S1_VerificationDevice"):
+        new_height, new_width = resize_to_fit(fields.get("S1_VerificationDevice"), height - 16, 100)
+        pdf.drawImage(fields.get("S1_VerificationDevice"), (495 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
 
 pdf.save()
