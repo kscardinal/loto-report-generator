@@ -349,6 +349,8 @@ for key in fields.keys():
         source = True
 
 
+previousBottom = endInstructionLine
+
 if source1:
 
     charactersPerLine = 14
@@ -363,100 +365,105 @@ if source1:
     if height < minHeight:
         height = minHeight
 
-    source1Start = endInstructionLine
-    source1End = source1Start - height
-    source1Middle = source1Start - (height / 2)
+    spaceRemaining =  previousBottom - 30
+    if spaceRemaining < 30:
+        pdf.showPage()
+    else: 
+        source1Start = endInstructionLine
+        source1End = source1Start - height
+        source1Middle = source1Start - (height / 2)
 
-    pdf.line(30, source1End, 550, source1End)
-    pdf.line(30, endInstructionLine, 30, source1End)
-    pdf.line(550, endInstructionLine, 550, source1End)
-    pdf.line(105, endInstructionLine, 105, source1End)
-    pdf.line(180, endInstructionLine, 180, source1End)
-    pdf.line(290, endInstructionLine, 290, source1End)
-    pdf.line(365, endInstructionLine, 365, source1End)
-    pdf.line(440, endInstructionLine, 440, source1End)
+        pdf.line(30, source1End, 550, source1End)
+        pdf.line(30, endInstructionLine, 30, source1End)
+        pdf.line(550, endInstructionLine, 550, source1End)
+        pdf.line(105, endInstructionLine, 105, source1End)
+        pdf.line(180, endInstructionLine, 180, source1End)
+        pdf.line(290, endInstructionLine, 290, source1End)
+        pdf.line(365, endInstructionLine, 365, source1End)
+        pdf.line(440, endInstructionLine, 440, source1End)
 
-    match fields.get("S1_EnergySource"):
-        case "Electric":
-            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_VOLTS") + " V")
-        case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
-            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_PSI") + " PSI")
-        case "Chemical":
-            pdf.drawCentredString(67,  source1Middle + 16,  fields.get("S1_EnergySource"))
-            pdf.drawCentredString(67, source1Middle, fields.get("S1_ChemicalName"))
-            pdf.drawCentredString(67, source1Middle - 16, fields.get("S1_PSI") + " PSI")
-        case "Gravity":
-            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_LBS") + " lbs")
-        case "Thermal":
-            pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
-            pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_TEMP") + " F")
+        match fields.get("S1_EnergySource"):
+            case "Electric":
+                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_VOLTS") + " V")
+            case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
+                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_PSI") + " PSI")
+            case "Chemical":
+                pdf.drawCentredString(67,  source1Middle + 16,  fields.get("S1_EnergySource"))
+                pdf.drawCentredString(67, source1Middle, fields.get("S1_ChemicalName"))
+                pdf.drawCentredString(67, source1Middle - 16, fields.get("S1_PSI") + " PSI")
+            case "Gravity":
+                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_LBS") + " lbs")
+            case "Thermal":
+                pdf.drawCentredString(67,  source1Middle + 6,  fields.get("S1_EnergySource"))
+                pdf.drawCentredString(67, source1Middle - 6, fields.get("S1_TEMP") + " F")
 
-    S1_Device = []
+        S1_Device = []
 
-    if checkExists(fields, "S1_Device"):
-        max_device_lines = 10
-        device_lines = splitText(fields.get("S1_Device"), charactersPerLine, max_device_lines)
-        for int in range(len(device_lines)):
-            S1_Device.append(device_lines[int])
-    else:
-        S1_Device.append("_____________")
-
-    if checkExists(fields, "S1_Tag"):
-        S1_Device.append("")
-        S1_Device.append("Tag: #" + fields.get("S1_Tag"))
-        S1_Device.append("")
-    else:
-        S1_Device.append("")
-        S1_Device.append("Tag: #_______")
-        S1_Device.append("")
-
-    if checkExists(fields, "S1_Description"):
-        max_description_lines = 10
-        description_lines = splitText(fields.get("S1_Description"), charactersPerLine, max_description_lines)
-        for int in range(len(description_lines)):
-            S1_Device.append(description_lines[int])
-    else:
-        S1_Device.append("_____________")
-
-    if deviceHeight % 2 == 1:
-        for int in range(len(S1_Device)):
-            pdf.drawCentredString(142.5, source1Middle + (math.floor(deviceHeight / 2) * 10) - (11 * int), S1_Device[int])
-    else:
-        for int in range(len(S1_Device)):
-            pdf.drawCentredString(142.5, source1Middle + (((math.floor(deviceHeight / 2) - 1) * 10) + 5) - (11 * int), S1_Device[int])
-
-    if checkExists(fields, "S1_IsolationMethod"):
-        if len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)) % 2 == 1:
-            for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
-                pdf.drawCentredString(326, source1Middle + (math.floor(IsolationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
+        if checkExists(fields, "S1_Device"):
+            max_device_lines = 10
+            device_lines = splitText(fields.get("S1_Device"), charactersPerLine, max_device_lines)
+            for int in range(len(device_lines)):
+                S1_Device.append(device_lines[int])
         else:
-            for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
-                pdf.drawCentredString(326, source1Middle + (((math.floor(IsolationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
-    else:
-        pdf.drawCentredString(326, source1Middle, "_____________")
+            S1_Device.append("_____________")
 
-
-    if checkExists(fields, "S1_VerificationMethod"):
-        if len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)) % 2 == 1:
-            for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
-                pdf.drawCentredString(326, source1Middle + (math.floor(verificationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
+        if checkExists(fields, "S1_Tag"):
+            S1_Device.append("")
+            S1_Device.append("Tag: #" + fields.get("S1_Tag"))
+            S1_Device.append("")
         else:
-            for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
-                pdf.drawCentredString(402, source1Middle + (((math.floor(verificationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
-    else:
-        pdf.drawCentredString(402, source1Middle, "_____________")
+            S1_Device.append("")
+            S1_Device.append("Tag: #_______")
+            S1_Device.append("")
+
+        if checkExists(fields, "S1_Description"):
+            max_description_lines = 10
+            description_lines = splitText(fields.get("S1_Description"), charactersPerLine, max_description_lines)
+            for int in range(len(description_lines)):
+                S1_Device.append(description_lines[int])
+        else:
+            S1_Device.append("_____________")
+
+        if deviceHeight % 2 == 1:
+            for int in range(len(S1_Device)):
+                pdf.drawCentredString(142.5, source1Middle + (math.floor(deviceHeight / 2) * 10) - (11 * int), S1_Device[int])
+        else:
+            for int in range(len(S1_Device)):
+                pdf.drawCentredString(142.5, source1Middle + (((math.floor(deviceHeight / 2) - 1) * 10) + 5) - (11 * int), S1_Device[int])
+
+        if checkExists(fields, "S1_IsolationMethod"):
+            if len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)) % 2 == 1:
+                for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
+                    pdf.drawCentredString(326, source1Middle + (math.floor(IsolationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
+            else:
+                for int in range(len(splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10))):
+                    pdf.drawCentredString(326, source1Middle + (((math.floor(IsolationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_IsolationMethod"), charactersPerLine, 10)[int])
+        else:
+            pdf.drawCentredString(326, source1Middle, "_____________")
 
 
-    if checkExists(fields, "S1_IsolationPoint"):
-        new_height, new_width = resize_to_fit(fields.get("S1_IsolationPoint"), height - 16, 100)
-        pdf.drawImage(fields.get("S1_IsolationPoint"), (235 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
+        if checkExists(fields, "S1_VerificationMethod"):
+            if len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)) % 2 == 1:
+                for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
+                    pdf.drawCentredString(326, source1Middle + (math.floor(verificationMethodHeight / 2) * 10) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
+            else:
+                for int in range(len(splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10))):
+                    pdf.drawCentredString(402, source1Middle + (((math.floor(verificationMethodHeight / 2) - 1) * 10) + 5) - (11 * int), splitText(fields.get("S1_VerificationMethod"), charactersPerLine, 10)[int])
+        else:
+            pdf.drawCentredString(402, source1Middle, "_____________")
 
 
-    if checkExists(fields, "S1_VerificationDevice"):
-        new_height, new_width = resize_to_fit(fields.get("S1_VerificationDevice"), height - 16, 100)
-        pdf.drawImage(fields.get("S1_VerificationDevice"), (495 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
+        if checkExists(fields, "S1_IsolationPoint"):
+            new_height, new_width = resize_to_fit(fields.get("S1_IsolationPoint"), height - 16, 100)
+            pdf.drawImage(fields.get("S1_IsolationPoint"), (235 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
+
+
+        if checkExists(fields, "S1_VerificationDevice"):
+            new_height, new_width = resize_to_fit(fields.get("S1_VerificationDevice"), height - 16, 100)
+            pdf.drawImage(fields.get("S1_VerificationDevice"), (495 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
+
 
 pdf.save()
