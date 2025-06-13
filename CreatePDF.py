@@ -171,7 +171,7 @@ pdf.drawString(219, 715, "Location:")
 pdf.drawString(353, 715, "Rev:")
 pdf.drawString(403, 736, "Procedure #:")
 pdf.drawString(403, 715, "Date: ")
-pdf.drawString(475, 715, "Origin:")
+pdf.drawString(474, 715, "Origin:")
 
 pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
@@ -204,7 +204,7 @@ for form, fields in data.items():
         pdf.drawString(425, 715, checkLength_C(fields.get("Date"), 8))
 
     if checkExists(fields, "Origin"):
-        pdf.drawString(505, 715, checkLength_C(fields.get("Origin"), 8))
+        pdf.drawString(504, 715, checkLength_C(fields.get("Origin"), 8))
 
     if checkExists(fields, "IsolationPoints"):
         pdf.setFont('Inter', 21)
@@ -222,7 +222,6 @@ for form, fields in data.items():
     if checkExists(fields, "MachineImage"):
         new_height, new_width = resize_to_fit(fields.get("MachineImage"), (100 + additionalNotesOffset), 180)
         pdf.drawImage(fields.get("MachineImage"), (160 - (new_width / 2)), 560 - additionalNotesOffset, new_width, new_height)
-        print(f"Height - {new_height} :  Width - {new_width}")
 
 
 pdf.line(30, 690, 550, 690)
@@ -297,11 +296,6 @@ pdf.drawString(452, startInstructionLine - 18, "Verification Device")
 
 # CREATING LOCKOUT POINTS
 
-startingPoint = endInstructionLine
-space = startingPoint - 30
 
-source1Offset = 110
-source1End = startingPoint - source1Offset
-pdf.line(30, source1End, 550, source1End)
 
 pdf.save()
