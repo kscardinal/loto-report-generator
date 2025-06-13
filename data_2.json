@@ -1,0 +1,33 @@
+{
+    "1 - Mill": {
+        "Template": "LOTO",
+        "Description": "Description of what I think should be going on here and now I am trying to make it over 40 characters long to see what it does",
+        "ProcedureNumber": "12345678901234567890",
+        "Facility": "Main Facility this is where the magic happens and I need to know what happens in the end here",
+        "Location": "Building A this is where the magic happens and I need to know what happens in the end here",
+        "Revision": "123456",
+        "Date": "99/99/99",
+        "Origin": "99/99/99",
+        "MachineImage": "test_2.jpg",
+        "IsolationPoints": "999",
+        "Notes": "This is the notes field. I am going to add more so that we can see what it would look like when it has to be filled up a little more and maybe how it handles if there are too many words. This is the notes field. I am going to add more so that we can see what it would look like when it has to be filled up a little more and maybe how it handles if there are too many words.",
+        "ApprovedBy_1": "Kyle Schang - SG",
+        "PreparedBy": "Kyle Schang - CCC",
+        "ApprovedBy_2": "Kyle Schang - SG",
+        "ApprovedByCompany": "Sonnaz Group, LLC",
+        "CompletedDate": "06/05/2025",
+        "S1_EnergySource": "Electric",
+        "S1_ChemicalName": "",
+        "S1_VOLTS": "120",
+        "S1_PSI": "",
+        "S1_LBS":"",
+        "S1_TEMP": "",
+        "S1_Device": "Device",
+        "S1_Tag": "1234",
+        "S1_Description": "Description",
+        "S1_IsolationPoint": "test_1.jpg",
+        "S1_IsolationMethod": "Isolation Method",
+        "S1_VerificationMethod": "Verification Method",
+        "S1_VerificationDevice": "test_1.jpg"
+    }
+}

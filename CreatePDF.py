@@ -14,17 +14,36 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib import colors
 
-
+# RESIZE IMAGE WITH MAX HEIGHT
 def resize_height(filename, max_height):
     width, height = Image.open(filename).size
     ratio = height / max_height
     return height / ratio, width / ratio
 
+# RESIZE IMAGE WITH MAX WIDTH
 def resize_width(filename, max_width):
     width, height = Image.open(filename).size
     ratio = width / max_width
     return height / ratio, width / ratio
 
+# COMBINES BOTH TO RESIZE WITH MAX HEIGHT AND WIDTH
+def resize_to_fit(filename, max_height, max_width):
+    original_width, original_height = Image.open(filename).size
+
+    # Calculate width and height ratios
+    width_ratio = original_width / max_width
+    height_ratio = original_height / max_height
+
+    # Use the larger ratio to determine the limiting factor
+    limiting_ratio = max(width_ratio, height_ratio)
+
+    # Calculate new dimensions
+    new_width = original_width / limiting_ratio
+    new_height = original_height / limiting_ratio
+
+    return new_height, new_width
+
+# ADD SPACE TO CERTAIN COMPONENTS
 def max_offset(offset, max_offset):
     if offset > max_offset:
         print("Offset too large")
@@ -32,6 +51,78 @@ def max_offset(offset, max_offset):
     else:
         return offset
 
+# ERROR MESSAGE FUNCTION
+def printError(errorMessage):
+    redColor = "\033[91m"
+    whiteColor = "\033[0m"
+    print(f"{redColor}{errorMessage}{whiteColor}")
+
+#SUCCESS MESSAGE FUNCTION
+def printSuccess(successMessage):
+    greenColor = "\033[92m"
+    whiteColor = "\033[0m"
+    print(f"{greenColor}{successMessage}{whiteColor}")
+
+# LOAD json/data
+def loadData(fileName):
+    try:
+        with open(fileName, "r") as file:
+            return json.load(file)
+    except  Exception as e:
+        printError(f"Could not load json file: {e}")
+
+# GET DATA FROM json
+def getData(fileName, entryName):
+    data = loadData(fileName)
+    if entryName in data:
+        return data[entryName]
+    
+# GET PAGES
+def pageCount(pdf_path):
+    try:
+        reader = PdfReader(pdf_path)
+        return len(reader.pages)
+    except Exception as e:
+        print(f"Error reading PDF file: {e}")
+        return 0
+
+# SPLITS TEXT IF NEEDED
+def splitText(input_text, line_length, max_lines):
+    words = input_text.split()
+    lines = []
+    current_line = []
+
+    for word in words:
+        # Check if adding the word exceeds the maximum line length
+        if len(' '.join(current_line + [word])) <= line_length:
+            current_line.append(word)
+        else:
+            # Finalize the current line and start a new one
+            lines.append(' '.join(current_line).strip())
+            current_line = [word]
+            if len(lines) == max_lines:
+                break  # Stop if max_lines is reached
+
+    # Add any remaining words to the last line (if space is available)
+    if current_line and len(lines) < max_lines:
+        lines.append(' '.join(current_line).strip())
+
+    return lines
+
+# CHECK IF FIELD HAS A VALUE
+def checkExists(fields, field_name):
+    if fields.get(field_name):
+        return True
+    else:
+        return False
+    
+# MASK THE LENGTH OF VALUES    
+def checkLength_E(text, max_length):
+    return text[:max_length] + " ..." if len(text) > max_length else text
+
+# CUT THE LENGTH OF VALUES
+def checkLength_C(text, max_length):
+        return text[:max_length] if len(text) > max_length else text
 
 
 # CREATING PDF
@@ -60,7 +151,7 @@ pdf.line(550, 820, 550, 710)
 pdf.line(400, 820, 400, 710)
 pdf.line(400, 820, 550, 820)
 pdf.line(400, 800, 550, 800)
-pdf.line(475, 730, 475, 710)
+pdf.line(472, 730, 472, 710)
 pdf.line(215, 730, 215, 710)
 pdf.line(350, 730, 350, 710)
 
@@ -80,14 +171,59 @@ pdf.drawString(219, 715, "Location:")
 pdf.drawString(353, 715, "Rev:")
 pdf.drawString(403, 736, "Procedure #:")
 pdf.drawString(403, 715, "Date: ")
-pdf.drawString(478, 715, "Origin:")
+pdf.drawString(475, 715, "Origin:")
 
 pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
 # CREATING MACHINE LOCKOUT SUMMARY
 
 additionalNotesOffset = 0
-additionalNotesOffset = max_offset(additionalNotesOffset, 40)
+
+data = loadData("data_2.json")
+
+pdf.setFont('Inter', 10)
+for form, fields in data.items():
+    print(f"{form}")
+
+    if checkExists(fields, "Description"):
+        pdf.drawString(85, 736, checkLength_E(fields.get("Description"), 60))
+    
+    if checkExists(fields, "ProcedureNumber"):
+        pdf.drawString(455, 736, checkLength_E(fields.get("ProcedureNumber"), 12))
+
+    if checkExists(fields, "Facility"):
+        pdf.drawString(68, 715, checkLength_E(fields.get("Facility"), 29))
+
+    if checkExists(fields, "Location"):
+        pdf.drawString(260, 715, checkLength_E(fields.get("Location"), 17))
+
+    if checkExists(fields, "Revision"):
+        pdf.drawString(373, 715, checkLength_C(fields.get("Revision"), 4))
+
+    if checkExists(fields, "Date"):
+        pdf.drawString(425, 715, checkLength_C(fields.get("Date"), 8))
+
+    if checkExists(fields, "Origin"):
+        pdf.drawString(505, 715, checkLength_C(fields.get("Origin"), 8))
+
+    if checkExists(fields, "IsolationPoints"):
+        pdf.setFont('Inter', 21)
+        pdf.drawString(295, 657, checkLength_C(fields.get("IsolationPoints"), 3))
+        pdf.setFont('Inter', 10)
+
+    if checkExists(fields, "Notes"):
+        max_lines = 10
+        lines = splitText(fields.get("Notes"), 50, max_lines)
+        for int in range(len(lines)):
+            pdf.drawString(294, 609 - (11 * int), lines[int])
+            if int > 5:
+                additionalNotesOffset = (int - 5) * 11
+    
+    if checkExists(fields, "MachineImage"):
+        new_height, new_width = resize_to_fit(fields.get("MachineImage"), (100 + additionalNotesOffset), 180)
+        pdf.drawImage(fields.get("MachineImage"), (160 - (new_width / 2)), 560 - additionalNotesOffset, new_width, new_height)
+        print(f"Height - {new_height} :  Width - {new_width}")
+
 
 pdf.line(30, 690, 550, 690)
 pdf.line(30, 670, 290, 670)
@@ -101,10 +237,6 @@ pdf.line(550, 690, 550, 550 - additionalNotesOffset)
 pdf.setFont('DM Serif Display', 12)
 pdf.drawString(90, 676, "Machine to be Locked Out")
 pdf.drawString(400, 626, "Notes:")
-
-new_height, new_width = resize_height("test_1.jpg", (100 + additionalNotesOffset))
-
-pdf.drawImage('test_1.jpg', (160 - (new_width / 2)), 560 - additionalNotesOffset, new_width, new_height)
 
 pdf.line(295, 685, 335, 685)
 pdf.line(295, 645, 335, 645)
@@ -171,11 +303,5 @@ space = startingPoint - 30
 source1Offset = 110
 source1End = startingPoint - source1Offset
 pdf.line(30, source1End, 550, source1End)
-
-
-
-
-
-
 
 pdf.save()
