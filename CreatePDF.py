@@ -73,6 +73,7 @@ def loadData(fileName):
         printError(f"Could not load json file: {e}")
 
 # GET DATA FROM json
+# FIX
 def getData(fileName, entryName):
     data = loadData(fileName)
     if entryName in data:
@@ -84,7 +85,7 @@ def pageCount(pdf_path):
         reader = PdfReader(pdf_path)
         return len(reader.pages)
     except Exception as e:
-        print(f"Error reading PDF file: {e}")
+        printError(f"Error reading PDF file: {e}")
         return 0
 
 # SPLITS TEXT IF NEEDED
@@ -111,6 +112,7 @@ def splitText(input_text, line_length, max_lines):
     return lines
 
 # RETURNS NUMBER OF LINES
+# FIX
 def numLines(input_text, line_length, max_lines):
     words = input_text.split()
     lines = []
@@ -140,11 +142,13 @@ def checkExists(fields, field_name):
     else:
         return False
     
-# MASK THE LENGTH OF VALUES    
+# MASK THE LENGTH OF VALUES
+# FIX (Optional paramter, default to false for adding the ...)    
 def checkLength_E(text, max_length):
     return text[:max_length] + " ..." if len(text) > max_length else text
 
 # CUT THE LENGTH OF VALUES
+# COMBINE WITH ABOVE
 def checkLength_C(text, max_length):
         return text[:max_length] if len(text) > max_length else text
 
@@ -156,7 +160,7 @@ fileName = list(data.keys())[0]
 pdf = canvas.Canvas(fileName + ".pdf")
 
 # SETTING DOCUMENT TITLE
-pdf.setTitle("Create Test")
+pdf.setTitle(list(data.keys())[0])
 
 # REGIsTERING FONTS
 pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
@@ -170,6 +174,8 @@ pdf.drawCentredString(300, 770, "PROCEDURE")
 
 pdf.setLineWidth(0.25)
 
+# ADD MORE COMMENTS ABOUT WHAT THINGS DO
+# MAKE THESE NUMBERS PARAMETERIZED
 pdf.line(30, 750, 550, 750)
 pdf.line(30, 730, 550, 730)
 pdf.line(30, 710, 550, 710)
@@ -185,12 +191,14 @@ pdf.line(350, 730, 350, 710)
 pdf.setFont('Times', 12)
 pdf.drawString(440, 806, "Developed By:")
 
+# ARRAY AND FOR LOOP FOR PRINTING
 pdf.setFont('Times', 9)
 pdf.drawString(405, 790, "Cardinal Compliance Consultants")
 pdf.drawString(405, 778, "5353 Secor Rd.")
 pdf.drawString(405, 766, "Toledo, OH 43623")
 pdf.drawString(405, 754, "P: 419-882-9224")
 
+# SAME AS ABOVE
 pdf.setFont('Times', 10)
 pdf.drawString(33, 736, "Description:")
 pdf.drawString(33, 715, "Facility:")
@@ -204,14 +212,15 @@ pdf.drawImage("CardinalLogo.png", 30, 760, 150, 50)
 
 # CREATING MACHINE LOCKOUT SUMMARY
 
-additionalNotesOffset = 0
+additionalNotesOffset = 20
 
 pdf.setFont('Inter', 10)
 for form, fields in data.items():
     print(f"{form}")
 
+    # SIMPLIFY CODE WITH THE SECOND STRING
     if checkExists(fields, "Description"):
-        pdf.drawString(85, 736, checkLength_E(fields.get("Description"), 60))
+        pdf.drawString(85, 736, checkLength_E(fields.get("Description", ""), 60))
     
     if checkExists(fields, "ProcedureNumber"):
         pdf.drawString(455, 736, checkLength_E(fields.get("ProcedureNumber"), 12))
@@ -236,6 +245,7 @@ for form, fields in data.items():
         pdf.drawString(296, 657, checkLength_C(fields.get("IsolationPoints"), 3))
         pdf.setFont('Inter', 10)
 
+    # MORE CLEAR VARIABLES (change int to lineNumber)
     if checkExists(fields, "Notes"):
         max_lines = 10
         lines = splitText(fields.get("Notes"), 50, max_lines)
@@ -245,8 +255,8 @@ for form, fields in data.items():
                 additionalNotesOffset = (int - 5) * 11
     
     if checkExists(fields, "MachineImage"):
-        new_height, new_width = resize_to_fit(fields.get("MachineImage"), (100 + additionalNotesOffset), 180)
-        pdf.drawImage(fields.get("MachineImage"), (160 - (new_width / 2)), 560 - additionalNotesOffset, new_width, new_height)
+        new_height, new_width = resize_to_fit(fields.get("MachineImage"), (110 + additionalNotesOffset), 180)
+        pdf.drawImage(fields.get("MachineImage"), (160 - (new_width / 2)), 555 - additionalNotesOffset, new_width, new_height)
 
 
 pdf.line(30, 690, 550, 690)
@@ -320,7 +330,7 @@ pdf.drawString(452, startInstructionLine - 18, "Verification Device")
 
 
 # CREATING LOCKOUT POINTS
-
+# MAKE SOURCES ARRAY OF DICTS SO SOURCE NUMBER IS UNLIMITED
 source1 = False
 source2 = False
 source3 = False
