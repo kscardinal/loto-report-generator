@@ -288,7 +288,7 @@ sourceTitleField_Title_LineSpacing = 12
 sourceTitleField_TextBlock = (page_RightMargin - page_LeftMargin) * (2 / 14)
 sourceTitleField_ImageBlock = (page_RightMargin - page_LeftMargin) * (3 / 14)
 
-sourceTitleField_H_Line1 = shutdownField_H_Line3
+sourceTitleField_H_Line1 = shutdownField_H_Line3 - shutdownField_RowSpacing
 sourceTitleField_H_Line2 = sourceTitleField_H_Line1 - sourceTitleField_RowSpacing
 
 sourceTitleField_V_Line1 = page_LeftMargin
@@ -311,6 +311,159 @@ sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_Tex
 sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
 
+def addHeader():
+    # Creating Header Title
+    pdf.setFont(headerTitle_Font, headerTitle_FontSize)
+    pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
+    pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
+    pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
+
+    # Creating Header Field Outlines
+    pdf.setLineWidth(defaultLineWidth)
+
+    # Horizontal Outline Lines
+    pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line6, headerField_H_Line1)
+    pdf.line(headerField_V_Line4, headerField_H_Line2, headerField_V_Line6, headerField_H_Line2)
+    pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line6, headerField_H_Line3)
+    pdf.line(headerField_V_Line1, headerField_H_Line4, headerField_V_Line6, headerField_H_Line4)
+    pdf.line(headerField_V_Line1, headerField_H_Line5, headerField_V_Line6, headerField_H_Line5)
+    # Vertical Outline lines
+    pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line1, headerField_H_Line5)
+    pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line4, headerField_H_Line5)
+    pdf.line(headerField_V_Line6, headerField_H_Line1, headerField_V_Line6, headerField_H_Line5)
+    # Vertical Divider Lines
+    pdf.line(headerField_V_Line2,headerField_H_Line4, headerField_V_Line2, headerField_H_Line5)
+    pdf.line(headerField_V_Line3,headerField_H_Line4, headerField_V_Line3, headerField_H_Line5)
+    pdf.line(headerField_V_Line5,headerField_H_Line4, headerField_V_Line5, headerField_H_Line5)
+
+    # Creating Header Fields Titles
+    pdf.setFont(headerField_Title_Font, headerField_Title_FontSize)
+    pdf.drawCentredString(headerField_Column5_Text, headerField_Row1_Text, 'Developed By:')
+    pdf.drawString(headerField_Column1_Text, headerField_Row2_Text, 'Description:')
+    pdf.drawString(headerField_Column1_Text, headerField_Row3_Text, 'Facility:')
+    pdf.drawString(headerField_Column2_Text, headerField_Row3_Text, 'Location:')
+    pdf.drawString(headerField_Column3_Text, headerField_Row3_Text, 'Rev:')
+    pdf.drawString(headerField_Column4_Text, headerField_Row2_Text, 'Procedure #:')
+    pdf.drawString(headerField_Column4_Text, headerField_Row3_Text, 'Date:')
+    pdf.drawString(headerField_Column6_Text, headerField_Row3_Text, 'Origin:')
+
+    # Creating the Address Block
+    pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
+    for line in range(0,len(headerField_Address)):
+        pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
+        if line > 3:
+            headerField_Row1_Offset += headerField_AddressBlock_FontSize
+
+def addMachineInfo():
+    # Create Machine Field Outlintes
+    pdf.setLineWidth(defaultLineWidth)
+
+    # Horizontal Lines
+    pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line3, machineField_H_Line1)
+    pdf.line(machineField_V_Line1, machineField_H_Line2, machineField_V_Line2, machineField_H_Line2)
+    pdf.line(machineField_V_Line2, machineField_H_Line3, machineField_V_Line3, machineField_H_Line3)
+    pdf.line(machineField_V_Line2, machineField_H_Line4, machineField_V_Line3, machineField_H_Line4)
+    pdf.line(machineField_V_Line1, machineField_H_Line5, machineField_V_Line3, machineField_H_Line5)
+    # Vertical Lines
+    pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line1, machineField_H_Line5)
+    pdf.line(machineField_V_Line2, machineField_H_Line1, machineField_V_Line2, machineField_H_Line5)
+    pdf.line(machineField_V_Line3, machineField_H_Line1, machineField_V_Line3, machineField_H_Line5)
+
+    # Creating Machine Fields Titles
+    pdf.setFont(machineField_Title_Font, machineField_Title_FontSize)
+    pdf.drawCentredString(machineField_Column1_Text, machineField_Row1_Text, 'Machine to be Locked Out')
+    pdf.drawCentredString(machineField_Column3_Text, machineField_Row4_Text, 'Notes:')
+
+    pdf.setFont(machineField_LargeText_Font, machineField_LargeText_FontSize)
+    pdf.drawString(machineField_Column2_Text, machineField_Row2_Text, 'Isolation Points to be')
+    pdf.drawString(machineField_Column2_Text, machineField_Row3_Text, 'Locked and Tagged')
+
+    # Place Lock Tag Image
+    pdf.drawImage(machineField_LockImage, machineField_LockImage_X, machineField_LockImage_Y, machineField_LockImage_Width, machineField_LockImage_Height)
+
+    # Place Square
+    pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Right, machineField_Square_Top)
+    pdf.line(machineField_Square_Left, machineField_Square_Bottom, machineField_Square_Right, machineField_Square_Bottom)
+    pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Left, machineField_Square_Bottom)
+    pdf.line(machineField_Square_Right, machineField_Square_Top, machineField_Square_Right, machineField_Square_Bottom)
+
+def addShutdownInfo():
+    # Creating the Shutdown Fields
+    pdf.setLineWidth(defaultLineWidth)
+
+    # Horizontal Lines
+    pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line1)
+    pdf.line(shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_V_Line2, shutdownField_H_Line2)
+    pdf.line(shutdownField_V_Line1, shutdownField_H_Line3, shutdownField_V_Line2, shutdownField_H_Line3)
+    # Vertical Lines
+    pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line1, shutdownField_H_Line3)
+    pdf.line(shutdownField_V_Line2, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line3)
+
+    # Add Red
+    pdf.drawImage(shutdownField_Background, shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_Width, shutdownField_RowSpacing)
+
+    # Add Shutdown Field Titles / Descriptions
+    pdf.setFillColorRGB(shutdownField_Title_Color[0], shutdownField_Title_Color[1], shutdownField_Title_Color[2])
+    pdf.setFont(shutdownField_Title_Font, shutdownField_Title_FontSize)
+    pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row1_Text, 'SHUTDOWN SEQUENCE')
+
+    pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
+    pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
+    for line in range(0, numLines(shutdownField_Description, 135, 5)):
+        pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, 135, 5)[line])
+        if line > 1:
+            shutdownField_Row1_Offset += shutdownField_Description_FontSize
+
+def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
+    # Creating Source Title Row
+    pdf.setLineWidth(defaultLineWidth)
+
+    sourceTitleField_H_Line1 = newStartingYPos
+    sourceTitleField_H_Line2 = sourceTitleField_H_Line1 - sourceTitleField_RowSpacing
+    sourceTitleField_Row1_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) + 2
+    sourceTitleField_Row2_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 3
+    sourceTitleField_Row3_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 7
+
+    # Horizontal Lines
+    pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line1, sourceTitleField_V_Line7, sourceTitleField_H_Line1)
+    pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line2, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
+    # Vertical Lines
+    pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line1, sourceTitleField_V_Line1, sourceTitleField_H_Line2)
+    pdf.line(sourceTitleField_V_Line7, sourceTitleField_H_Line1, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
+    # Vertical Dividers
+    pdf.line(sourceTitleField_V_Line2, sourceTitleField_H_Line1, sourceTitleField_V_Line2, sourceTitleField_H_Line2)
+    pdf.line(sourceTitleField_V_Line3, sourceTitleField_H_Line1, sourceTitleField_V_Line3, sourceTitleField_H_Line2)
+    pdf.line(sourceTitleField_V_Line4, sourceTitleField_H_Line1, sourceTitleField_V_Line4, sourceTitleField_H_Line2)
+    pdf.line(sourceTitleField_V_Line5, sourceTitleField_H_Line1, sourceTitleField_V_Line5, sourceTitleField_H_Line2)
+    pdf.line(sourceTitleField_V_Line6, sourceTitleField_H_Line1, sourceTitleField_V_Line6, sourceTitleField_H_Line2)
+
+    # Add Source Title Fields
+    pdf.setFont(sourceTitleField_Title_Font, sourceTitleField_Title_FontSize)
+
+    pdf.drawCentredString(sourceTitleField_Column1_Text, sourceTitleField_Row2_Text, 'Energy Source')
+    pdf.drawCentredString(sourceTitleField_Column2_Text, sourceTitleField_Row2_Text, 'Device')
+    pdf.drawCentredString(sourceTitleField_Column3_Text, sourceTitleField_Row2_Text, 'Isolation Point')
+    pdf.drawCentredString(sourceTitleField_Column4_Text, sourceTitleField_Row2_Text, 'Isolation Method')
+    pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row1_Text, 'Verification')
+    pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, 'Method')
+    pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, 'Verification Device')
+
+
+def firstPage():
+    addHeader()
+    addMachineInfo()
+    addShutdownInfo()
+    addSourceTitles()
+
+def newPage():
+    pdf.showPage()
+    addHeader()
+    addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
+
+
+
+
+
 
 
 
@@ -328,142 +481,20 @@ pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf')
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
-# Creating Header Title
-pdf.setFont(headerTitle_Font, headerTitle_FontSize)
-pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
-pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
-pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
-
-# Creating Header Field Outlines
-pdf.setLineWidth(defaultLineWidth)
-
-# Horizontal Outline Lines
-pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line6, headerField_H_Line1)
-pdf.line(headerField_V_Line4, headerField_H_Line2, headerField_V_Line6, headerField_H_Line2)
-pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line6, headerField_H_Line3)
-pdf.line(headerField_V_Line1, headerField_H_Line4, headerField_V_Line6, headerField_H_Line4)
-pdf.line(headerField_V_Line1, headerField_H_Line5, headerField_V_Line6, headerField_H_Line5)
-# Vertical Outline lines
-pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line1, headerField_H_Line5)
-pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line4, headerField_H_Line5)
-pdf.line(headerField_V_Line6, headerField_H_Line1, headerField_V_Line6, headerField_H_Line5)
-# Vertical Divider Lines
-pdf.line(headerField_V_Line2,headerField_H_Line4, headerField_V_Line2, headerField_H_Line5)
-pdf.line(headerField_V_Line3,headerField_H_Line4, headerField_V_Line3, headerField_H_Line5)
-pdf.line(headerField_V_Line5,headerField_H_Line4, headerField_V_Line5, headerField_H_Line5)
-
-# Creating Header Fields Titles
-pdf.setFont(headerField_Title_Font, headerField_Title_FontSize)
-pdf.drawCentredString(headerField_Column5_Text, headerField_Row1_Text, 'Developed By:')
-pdf.drawString(headerField_Column1_Text, headerField_Row2_Text, 'Description:')
-pdf.drawString(headerField_Column1_Text, headerField_Row3_Text, 'Facility:')
-pdf.drawString(headerField_Column2_Text, headerField_Row3_Text, 'Location:')
-pdf.drawString(headerField_Column3_Text, headerField_Row3_Text, 'Rev:')
-pdf.drawString(headerField_Column4_Text, headerField_Row2_Text, 'Procedure #:')
-pdf.drawString(headerField_Column4_Text, headerField_Row3_Text, 'Date:')
-pdf.drawString(headerField_Column6_Text, headerField_Row3_Text, 'Origin:')
-
-# Creating the Address Block
-pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
-for line in range(0,len(headerField_Address)):
-    pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
-    if line > 3:
-        headerField_Row1_Offset += headerField_AddressBlock_FontSize
+firstPage()
+newPage()
 
 
 
 
 
-# Create Machine Field Outlintes
-pdf.setLineWidth(defaultLineWidth)
-
-# Horizontal Lines
-pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line3, machineField_H_Line1)
-pdf.line(machineField_V_Line1, machineField_H_Line2, machineField_V_Line2, machineField_H_Line2)
-pdf.line(machineField_V_Line2, machineField_H_Line3, machineField_V_Line3, machineField_H_Line3)
-pdf.line(machineField_V_Line2, machineField_H_Line4, machineField_V_Line3, machineField_H_Line4)
-pdf.line(machineField_V_Line1, machineField_H_Line5, machineField_V_Line3, machineField_H_Line5)
-# Vertical Lines
-pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line1, machineField_H_Line5)
-pdf.line(machineField_V_Line2, machineField_H_Line1, machineField_V_Line2, machineField_H_Line5)
-pdf.line(machineField_V_Line3, machineField_H_Line1, machineField_V_Line3, machineField_H_Line5)
-
-# Creating Machine Fields Titles
-pdf.setFont(machineField_Title_Font, machineField_Title_FontSize)
-pdf.drawCentredString(machineField_Column1_Text, machineField_Row1_Text, 'Machine to be Locked Out')
-pdf.drawCentredString(machineField_Column3_Text, machineField_Row4_Text, 'Notes:')
-
-pdf.setFont(machineField_LargeText_Font, machineField_LargeText_FontSize)
-pdf.drawString(machineField_Column2_Text, machineField_Row2_Text, 'Isolation Points to be')
-pdf.drawString(machineField_Column2_Text, machineField_Row3_Text, 'Locked and Tagged')
-
-# Place Lock Tag Image
-pdf.drawImage(machineField_LockImage, machineField_LockImage_X, machineField_LockImage_Y, machineField_LockImage_Width, machineField_LockImage_Height)
-
-# Place Square
-pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Right, machineField_Square_Top)
-pdf.line(machineField_Square_Left, machineField_Square_Bottom, machineField_Square_Right, machineField_Square_Bottom)
-pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Left, machineField_Square_Bottom)
-pdf.line(machineField_Square_Right, machineField_Square_Top, machineField_Square_Right, machineField_Square_Bottom)
-
-
-
-
-# Creating the Shutdown Fields
-pdf.setLineWidth(defaultLineWidth)
-
-# Horizontal Lines
-pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line1)
-pdf.line(shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_V_Line2, shutdownField_H_Line2)
-pdf.line(shutdownField_V_Line1, shutdownField_H_Line3, shutdownField_V_Line2, shutdownField_H_Line3)
-# Vertical Lines
-pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line1, shutdownField_H_Line3)
-pdf.line(shutdownField_V_Line2, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line3)
-
-# Add Red
-pdf.drawImage(shutdownField_Background, shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_Width, shutdownField_RowSpacing)
-
-# Add Shutdown Field Titles / Descriptions
-pdf.setFillColorRGB(shutdownField_Title_Color[0], shutdownField_Title_Color[1], shutdownField_Title_Color[2])
-pdf.setFont(shutdownField_Title_Font, shutdownField_Title_FontSize)
-pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row1_Text, 'SHUTDOWN SEQUENCE')
-
-pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
-pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
-for line in range(0, numLines(shutdownField_Description, 135, 5)):
-    pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, 135, 5)[line])
-    if line > 1:
-        shutdownField_Row1_Offset += shutdownField_Description_FontSize
 
 
 
 
 
-# Creating Source Title Row
-pdf.setLineWidth(defaultLineWidth)
 
-# Horizontal Lines
-pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line2, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
-# Vertical Lines
-pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line1, sourceTitleField_V_Line1, sourceTitleField_H_Line2)
-pdf.line(sourceTitleField_V_Line7, sourceTitleField_H_Line1, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
-# Vertical Dividers
-pdf.line(sourceTitleField_V_Line2, sourceTitleField_H_Line1, sourceTitleField_V_Line2, sourceTitleField_H_Line2)
-pdf.line(sourceTitleField_V_Line3, sourceTitleField_H_Line1, sourceTitleField_V_Line3, sourceTitleField_H_Line2)
-pdf.line(sourceTitleField_V_Line4, sourceTitleField_H_Line1, sourceTitleField_V_Line4, sourceTitleField_H_Line2)
-pdf.line(sourceTitleField_V_Line5, sourceTitleField_H_Line1, sourceTitleField_V_Line5, sourceTitleField_H_Line2)
-pdf.line(sourceTitleField_V_Line6, sourceTitleField_H_Line1, sourceTitleField_V_Line6, sourceTitleField_H_Line2)
 
-# Add Source Title Fields
-pdf.setFont(sourceTitleField_Title_Font, sourceTitleField_Title_FontSize)
-
-pdf.drawCentredString(sourceTitleField_Column1_Text, sourceTitleField_Row2_Text, 'Energy Source')
-pdf.drawCentredString(sourceTitleField_Column2_Text, sourceTitleField_Row2_Text, 'Device')
-pdf.drawCentredString(sourceTitleField_Column3_Text, sourceTitleField_Row2_Text, 'Isolation Point')
-pdf.drawCentredString(sourceTitleField_Column4_Text, sourceTitleField_Row2_Text, 'Isolation Method')
-pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row1_Text, 'Verification')
-pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, 'Method')
-pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, 'Verification Device')
 
 
 
