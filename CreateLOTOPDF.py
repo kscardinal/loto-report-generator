@@ -143,38 +143,57 @@ headerImage_Name = 'CardinalLogo.png'
 headerImage_Width = 144                               # 2in
 headerImage_Height = 72
 headerImage_Height, headerImage_Width = resize_image(headerImage_Name, headerImage_Height, headerImage_Width)
+headerImage_X = page_LeftMargin
+headerImage_Y = headerTitle_Y - headerImage_Height + headerTitle_LineSpacing
 
 # Header Fields
 headerField_RowSpacing = 14
 headerField_Title_Font = 'Times'
 headerField_Title_FontSize =10
 headerField_Description_Font = 'Inter'
-headerField_Description_FontSize = 9
+headerField_Description_FontSize = 10
 headerField_Description_LineSpacing = 12
 
-headerField_Start = headerTitle_Y - (2.5 * headerTitle_LineSpacing)
-headerField_Width = page_RightMargin - page_LeftMargin
-headerField_TallSection_X = page_RightMargin - headerImage_Width
-headerField_TallSection_Y = headerTitle_Y + headerTitle_LineSpacing
-headerField_TallSection_Row2 = headerField_TallSection_Y - headerField_RowSpacing
-headerField_Row2Upper = headerField_Start - headerField_RowSpacing
-headerField_Row2Lower = headerField_Row2Upper - headerField_RowSpacing
-headerField_RevDivider_Width = 60
-headerField_RevDivider = headerField_TallSection_X - headerField_RevDivider_Width
-headerField_LocationDivider = page_LeftMargin + ((headerField_Width - headerImage_Width) / 2) - (headerField_RevDivider_Width / 2)
-headerField_DateDivider = page_RightMargin - (headerImage_Width / 2)
+headerField_Address = ['Cardinal Compliance Consultants', '5353 Secor Rd.', 'Toledo, OH 43623', 'P: 419-882-9224']
+headerField_AddressBlock_Font = 'Times'
+headerField_AddressBlock_FontSize = 9
+headerField_AddressBlock_LineSpacing = 12
 
-headerField_DevelopedBy_Text_Y = headerField_TallSection_Y - headerField_Title_FontSize
-headerField_Row1_Text_Y = headerField_Start - headerField_Title_FontSize
-headerField_Row2_Text_Y = headerField_Row2Upper - headerField_Title_FontSize
-headerField_Text_Spacing = 5
-headerField_Description_Text_X = page_LeftMargin + headerField_Text_Spacing
-headerField_Facility_Text_X = headerField_Description_Text_X
-headerField_Location_Text_X = headerField_LocationDivider + headerField_Text_Spacing
-headerField_Rev_Text_X = headerField_RevDivider + headerField_Text_Spacing
-headerField_Date_Text_X = headerField_TallSection_X + headerField_Text_Spacing
-headerField_Origin_Text_X = headerField_DateDivider + headerField_Text_Spacing
-headerField_ProcedureNumber_Text_X = headerField_TallSection_X + headerField_Text_Spacing
+headerField_Row1_Offset = 0          # Address Block
+headerField_Row2_Offset = 0         # Description Row
+headerField_Row3_Offset = 0         # Facility Row
+
+headerField_Width = page_RightMargin - page_LeftMargin
+headerField_TallSectoin_Width = headerImage_Width
+headerField_Rev_Width = 60
+
+headerField_H_Line1 = headerTitle_Y + headerTitle_LineSpacing
+headerField_H_Line2 = headerField_H_Line1 - headerField_RowSpacing
+headerField_H_Line3 = headerField_H_Line2 - (len(headerField_Address) * headerField_AddressBlock_LineSpacing + 2) - headerField_Row1_Offset
+headerField_H_Line4 = headerField_H_Line3 - headerField_RowSpacing - headerField_Row2_Offset
+headerField_H_Line5 = headerField_H_Line4 - headerField_RowSpacing - headerField_Row3_Offset
+
+headerField_V_Line1 = page_LeftMargin
+headerField_V_Line2 = page_LeftMargin + ((headerField_Width - headerField_TallSectoin_Width) / 2) - (headerField_Rev_Width / 2)
+headerField_V_Line3 = page_RightMargin - headerField_TallSectoin_Width - headerField_Rev_Width
+headerField_V_Line4 = page_RightMargin - headerField_TallSectoin_Width
+headerField_V_Line5 = page_RightMargin - (headerField_TallSectoin_Width * (9/16))
+headerField_V_Line6 = page_RightMargin
+
+headerField_Row1_Text = headerField_H_Line1 - headerField_Title_FontSize
+headerField_Row2_Text = headerField_H_Line3 - headerField_Title_FontSize
+headerField_Row3_Text = headerField_H_Line4 - headerField_Title_FontSize
+
+headerField_HorizonalSpacing = 5
+headerField_Column1_Text = headerField_V_Line1 + headerField_HorizonalSpacing
+headerField_Column2_Text = headerField_V_Line2 + headerField_HorizonalSpacing
+headerField_Column3_Text = headerField_V_Line3 + headerField_HorizonalSpacing
+headerField_Column4_Text = headerField_V_Line4 + headerField_HorizonalSpacing
+headerField_Column5_Text = headerField_V_Line4 + (headerField_TallSectoin_Width / 2)
+headerField_Column6_Text = headerField_V_Line5 + headerField_HorizonalSpacing
+
+headerField_AddressBlock_X = headerField_Column4_Text
+headerField_AddressBlock_Y = headerField_H_Line2 - headerField_Description_FontSize
 
 
 
@@ -195,38 +214,43 @@ pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 pdf.setFont(headerTitle_Font, headerTitle_FontSize)
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
-pdf.drawImage('CardinalLogo.png', pageMargin, headerTitle_Y - headerImage_Height + headerTitle_LineSpacing, headerImage_Width, headerImage_Height )
+pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
 
 # Creating Header Field Outlines
 pdf.setLineWidth(0.25)
 
 # Horizontal Outline Lines
-pdf.line(page_LeftMargin, headerField_Start, page_RightMargin, headerField_Start)
-pdf.line(page_LeftMargin, headerField_Row2Upper, page_RightMargin, headerField_Row2Upper)
-pdf.line(page_LeftMargin, headerField_Row2Lower, page_RightMargin, headerField_Row2Lower)
-pdf.line(page_RightMargin, headerField_TallSection_Y, headerField_TallSection_X, headerField_TallSection_Y)
-pdf.line(page_RightMargin, headerField_TallSection_Row2, headerField_TallSection_X, headerField_TallSection_Row2)
+pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line6, headerField_H_Line1)
+pdf.line(headerField_V_Line4, headerField_H_Line2, headerField_V_Line6, headerField_H_Line2)
+pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line6, headerField_H_Line3)
+pdf.line(headerField_V_Line1, headerField_H_Line4, headerField_V_Line6, headerField_H_Line4)
+pdf.line(headerField_V_Line1, headerField_H_Line5, headerField_V_Line6, headerField_H_Line5)
 # Vertical Outline lines
-pdf.line(page_LeftMargin, headerField_Start, page_LeftMargin, headerField_Row2Lower)
-pdf.line(page_RightMargin, headerField_Row2Lower, page_RightMargin, headerField_TallSection_Y)
-pdf.line(headerField_TallSection_X, headerField_Row2Lower, headerField_TallSection_X, headerField_TallSection_Y)
+pdf.line(headerField_V_Line1, headerField_H_Line3, headerField_V_Line1, headerField_H_Line5)
+pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line4, headerField_H_Line5)
+pdf.line(headerField_V_Line6, headerField_H_Line1, headerField_V_Line6, headerField_H_Line5)
 # Vertical Divider Lines
-pdf.line(headerField_LocationDivider, headerField_Row2Upper, headerField_LocationDivider, headerField_Row2Lower)
-pdf.line(headerField_RevDivider, headerField_Row2Upper, headerField_RevDivider, headerField_Row2Lower)
-pdf.line(headerField_DateDivider, headerField_Row2Upper, headerField_DateDivider, headerField_Row2Lower)
+pdf.line(headerField_V_Line2,headerField_H_Line4, headerField_V_Line2, headerField_H_Line5)
+pdf.line(headerField_V_Line3,headerField_H_Line4, headerField_V_Line3, headerField_H_Line5)
+pdf.line(headerField_V_Line5,headerField_H_Line4, headerField_V_Line5, headerField_H_Line5)
 
 # Creating Header Fields Titles
 pdf.setFont(headerField_Title_Font, headerField_Title_FontSize)
-pdf.drawCentredString(headerField_TallSection_X + (headerImage_Width / 2), headerField_DevelopedBy_Text_Y, 'Developed by:')
-pdf.drawString(headerField_Description_Text_X, headerField_Row1_Text_Y, 'Description:')
-pdf.drawString(headerField_Facility_Text_X, headerField_Row2_Text_Y, 'Facility:')
-pdf.drawString(headerField_Location_Text_X, headerField_Row2_Text_Y, 'Location:')
-pdf.drawString(headerField_Rev_Text_X, headerField_Row2_Text_Y, 'Rev:')
-pdf.drawString(headerField_ProcedureNumber_Text_X, headerField_Row1_Text_Y,'Procedure #:')
-pdf.drawString(headerField_Date_Text_X, headerField_Row2_Text_Y, 'Date:')
-pdf.drawString(headerField_Origin_Text_X, headerField_Row2_Text_Y,'Origin:')
+pdf.drawCentredString(headerField_Column5_Text, headerField_Row1_Text, 'Developed By:')
+pdf.drawString(headerField_Column1_Text, headerField_Row2_Text, 'Description:')
+pdf.drawString(headerField_Column1_Text, headerField_Row3_Text, 'Facility:')
+pdf.drawString(headerField_Column2_Text, headerField_Row3_Text, 'Location:')
+pdf.drawString(headerField_Column3_Text, headerField_Row3_Text, 'Rev:')
+pdf.drawString(headerField_Column4_Text, headerField_Row2_Text, 'Procedure #:')
+pdf.drawString(headerField_Column4_Text, headerField_Row3_Text, 'Date:')
+pdf.drawString(headerField_Column6_Text, headerField_Row3_Text, 'Origin:')
 
-
+# Creating the Address Block
+pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
+for line in range(0,len(headerField_Address)):
+    pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
+    if line > 3:
+        headerField_Row1_Offset += headerField_AddressBlock_LineSpacing
 
 
 
