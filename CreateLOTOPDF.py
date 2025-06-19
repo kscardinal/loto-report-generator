@@ -128,8 +128,9 @@ pageMargin = 36                                                 # 0.50in
 page_LeftMargin = pageMargin
 page_RightMargin = pageWidth - pageMargin
 
-# Line Widths
+# Default
 defaultLineWidth = 0.25
+defaultColor = [0, 0, 0]
 
 # Header Title
 headerTitle_FontSize = 18
@@ -158,7 +159,7 @@ headerField_AddressBlock_Font = 'Times'
 headerField_AddressBlock_FontSize = 9
 headerField_AddressBlock_LineSpacing = 12
 
-headerField_Row1_Offset = 0          # Address Block
+headerField_Row1_Offset = (len(headerField_Address) * headerField_AddressBlock_LineSpacing + 2)          # Address Block
 headerField_Row2_Offset = 0         # Description Row
 headerField_Row3_Offset = 0         # Facility Row
 
@@ -168,7 +169,7 @@ headerField_Rev_Width = 60
 
 headerField_H_Line1 = headerTitle_Y + headerTitle_LineSpacing
 headerField_H_Line2 = headerField_H_Line1 - headerField_RowSpacing
-headerField_H_Line3 = headerField_H_Line2 - (len(headerField_Address) * headerField_AddressBlock_LineSpacing + 2) - headerField_Row1_Offset
+headerField_H_Line3 = headerField_H_Line2 - headerField_Row1_Offset
 headerField_H_Line4 = headerField_H_Line3 - headerField_RowSpacing - headerField_Row2_Offset
 headerField_H_Line5 = headerField_H_Line4 - headerField_RowSpacing - headerField_Row3_Offset
 
@@ -196,11 +197,11 @@ headerField_AddressBlock_Y = headerField_H_Line2 - headerField_Description_FontS
 
 # Machine Information Fields
 machineField_RowSpacing = 14
-machineField_Title_Font = 'Times'
+machineField_Title_Font = 'DM Serif Display'
 machineField_Title_FontSize = 10
 machineField_Title_LineSpacing = 12
 
-machineField_LargeText_Font = 'Times'
+machineField_LargeText_Font = 'DM Serif Display'
 machineField_LargeText_FontSize = 16
 machineField_LargeText_LineSpacing = 20
 
@@ -243,6 +244,39 @@ machineField_Column2_Text = machineField_LockImage_X + machineField_LockImage_Wi
 machineField_Column3_Text = page_RightMargin - ((machineField_Width / 2) / 2)
 
 
+# Shutdown Fields
+shutdownField_RowSpacing = 14
+shutdownField_Title_Font = 'DM Serif Display'
+shutdownField_Title_FontSize = 10
+shutdownField_Title_LineSpacing = 12
+shutdownField_Title_Color = [255, 255, 255]
+
+shutdownField_Description_Font = 'Inter'
+shutdownField_Description_FontSize = 8
+shutdownField_Description_LineSpacing = 10
+shutdownField_Description_LineLength = 135
+shutdownField_Description_MaxLines = 5
+shutdownField_Description = "1. Notify affecte personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-enrgization of all sources."
+
+shutdownField_Row1_Offset = (numLines(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines) * shutdownField_Description_LineSpacing + 2)           # Shutdown Sequence Instrutions
+
+shutdownField_Background = 'Red.png'
+
+shutdownField_Width = page_RightMargin - page_LeftMargin
+
+shutdownField_H_Line1 = machineField_H_Line5 - shutdownField_RowSpacing
+shutdownField_H_Line2 = shutdownField_H_Line1 - shutdownField_RowSpacing
+shutdownField_H_Line3 = shutdownField_H_Line2 - shutdownField_Row1_Offset
+
+shutdownField_V_Line1 = page_LeftMargin
+shutdownField_V_Line2 = page_RightMargin
+
+shutdownField_Row1_Text = shutdownField_H_Line1 - shutdownField_Title_FontSize
+shutdownField_Row2_Text = shutdownField_H_Line2 - shutdownField_Description_FontSize
+# shutdownField_Row3_Text = shutdownField_Row2_Text - shutdownField_Description_LineSpacing
+
+shutdownField_Column1_Text = pageWidth_Middle
+
 
 # Get Data
 data = loadData("data_2.json")
@@ -262,6 +296,10 @@ pdf.setFont(headerTitle_Font, headerTitle_FontSize)
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
 pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
+
+
+
+
 
 # Creating Header Field Outlines
 pdf.setLineWidth(defaultLineWidth)
@@ -297,7 +335,10 @@ pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
 for line in range(0,len(headerField_Address)):
     pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
     if line > 3:
-        headerField_Row1_Offset += headerField_AddressBlock_LineSpacing
+        headerField_Row1_Offset += headerField_AddressBlock_FontSize
+
+
+
 
 
 # Create Machine Field Outlintes
@@ -335,6 +376,30 @@ pdf.line(machineField_Square_Right, machineField_Square_Top, machineField_Square
 
 
 
+# Creating the Shutdown Fields
+pdf.setLineWidth(defaultLineWidth)
 
+# Horizontal Lines
+pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line1)
+pdf.line(shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_V_Line2, shutdownField_H_Line2)
+pdf.line(shutdownField_V_Line1, shutdownField_H_Line3, shutdownField_V_Line2, shutdownField_H_Line3)
+# Vertical Lines
+pdf.line(shutdownField_V_Line1, shutdownField_H_Line1, shutdownField_V_Line1, shutdownField_H_Line3)
+pdf.line(shutdownField_V_Line2, shutdownField_H_Line1, shutdownField_V_Line2, shutdownField_H_Line3)
+
+# Add Red
+pdf.drawImage(shutdownField_Background, shutdownField_V_Line1, shutdownField_H_Line2, shutdownField_Width, shutdownField_RowSpacing)
+
+# Add Shutdown Field Titles / Descriptions
+pdf.setFillColorRGB(shutdownField_Title_Color[0], shutdownField_Title_Color[1], shutdownField_Title_Color[2])
+pdf.setFont(shutdownField_Title_Font, shutdownField_Title_FontSize)
+pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row1_Text, 'SHUTDOWN SEQUENCE')
+
+pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
+pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
+for line in range(0, numLines(shutdownField_Description, 135, 5)):
+    pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, 135, 5)[line])
+    if line > 1:
+        shutdownField_Row1_Offset += shutdownField_Description_FontSize
 
 pdf.save()
