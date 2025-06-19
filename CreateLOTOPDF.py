@@ -475,11 +475,35 @@ pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf')
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
-print(firstPage())
-print(newPage())
+bottom = firstPage()
 
+# Iterate through all top-level keys and their values
+for device_name, device_data in data.items():
+    if "Sources" in device_data:  # Check if the "Sources" key exists
+        print(f"Device Name: {device_name}")
+        sources = device_data["Sources"]
 
+        # Iterate through the sources
+        for source_name, source_value in sources.items():
+            print(f"Source Name: {source_name}")
+            
+            charactersPerLine = 14
 
+            deviceHeight = numLines(source_value.get("Device"), charactersPerLine, 10) + 3 + numLines(source_value.get("Description"), charactersPerLine, 10)
+            IsolationMethodHeight = numLines(source_value.get("IsolationMethod"), charactersPerLine, 10)
+            verificationMethodHeight = numLines(source_value.get("VerificationMethod"), charactersPerLine, 10)
+
+            minHeight = 110
+            height = (max(deviceHeight, IsolationMethodHeight, verificationMethodHeight) * 11) + 16
+
+            if height < minHeight:
+                height = minHeight
+
+            spaceRemaining =  bottom - pageMargin
+            if spaceRemaining < 30:
+                newPage()
+            else: 
+                print("Same Page")
 
 
 
