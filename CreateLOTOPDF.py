@@ -195,6 +195,7 @@ headerField_Column6_Text = headerField_V_Line5 + headerField_HorizonalSpacing
 headerField_AddressBlock_X = headerField_Column4_Text
 headerField_AddressBlock_Y = headerField_H_Line2 - headerField_Description_FontSize
 
+
 # Machine Information Fields
 machineField_RowSpacing = 14
 machineField_Title_Font = 'DM Serif Display'
@@ -273,9 +274,45 @@ shutdownField_V_Line2 = page_RightMargin
 
 shutdownField_Row1_Text = shutdownField_H_Line1 - shutdownField_Title_FontSize
 shutdownField_Row2_Text = shutdownField_H_Line2 - shutdownField_Description_FontSize
-# shutdownField_Row3_Text = shutdownField_Row2_Text - shutdownField_Description_LineSpacing
 
 shutdownField_Column1_Text = pageWidth_Middle
+
+
+
+# Sources Title Block
+sourceTitleField_RowSpacing = 25
+sourceTitleField_Title_Font = 'Times'
+sourceTitleField_Title_FontSize = 10
+sourceTitleField_Title_LineSpacing = 12
+
+sourceTitleField_TextBlock = (page_RightMargin - page_LeftMargin) * (2 / 14)
+sourceTitleField_ImageBlock = (page_RightMargin - page_LeftMargin) * (3 / 14)
+
+sourceTitleField_H_Line1 = shutdownField_H_Line3
+sourceTitleField_H_Line2 = sourceTitleField_H_Line1 - sourceTitleField_RowSpacing
+
+sourceTitleField_V_Line1 = page_LeftMargin
+sourceTitleField_V_Line2 = page_LeftMargin + sourceTitleField_TextBlock
+sourceTitleField_V_Line3 = sourceTitleField_V_Line2 + sourceTitleField_TextBlock
+sourceTitleField_V_Line4 = pageWidth_Middle
+sourceTitleField_V_Line5 = pageWidth_Middle + sourceTitleField_TextBlock
+sourceTitleField_V_Line6 = sourceTitleField_V_Line5 + sourceTitleField_TextBlock
+sourceTitleField_V_Line7 = page_RightMargin
+
+sourceTitleField_Row1_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) + 2
+sourceTitleField_Row2_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 3
+sourceTitleField_Row3_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 7
+
+sourceTitleField_Column1_Text = sourceTitleField_V_Line1 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column2_Text = sourceTitleField_V_Line2 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column3_Text = sourceTitleField_V_Line3 + (sourceTitleField_ImageBlock / 2)
+sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
+
+
+
+
 
 
 # Get Data
@@ -296,10 +333,6 @@ pdf.setFont(headerTitle_Font, headerTitle_FontSize)
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
 pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
 pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
-
-
-
-
 
 # Creating Header Field Outlines
 pdf.setLineWidth(defaultLineWidth)
@@ -401,5 +434,37 @@ for line in range(0, numLines(shutdownField_Description, 135, 5)):
     pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, 135, 5)[line])
     if line > 1:
         shutdownField_Row1_Offset += shutdownField_Description_FontSize
+
+
+
+
+
+# Creating Source Title Row
+pdf.setLineWidth(defaultLineWidth)
+
+# Horizontal Lines
+pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line2, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
+# Vertical Lines
+pdf.line(sourceTitleField_V_Line1, sourceTitleField_H_Line1, sourceTitleField_V_Line1, sourceTitleField_H_Line2)
+pdf.line(sourceTitleField_V_Line7, sourceTitleField_H_Line1, sourceTitleField_V_Line7, sourceTitleField_H_Line2)
+# Vertical Dividers
+pdf.line(sourceTitleField_V_Line2, sourceTitleField_H_Line1, sourceTitleField_V_Line2, sourceTitleField_H_Line2)
+pdf.line(sourceTitleField_V_Line3, sourceTitleField_H_Line1, sourceTitleField_V_Line3, sourceTitleField_H_Line2)
+pdf.line(sourceTitleField_V_Line4, sourceTitleField_H_Line1, sourceTitleField_V_Line4, sourceTitleField_H_Line2)
+pdf.line(sourceTitleField_V_Line5, sourceTitleField_H_Line1, sourceTitleField_V_Line5, sourceTitleField_H_Line2)
+pdf.line(sourceTitleField_V_Line6, sourceTitleField_H_Line1, sourceTitleField_V_Line6, sourceTitleField_H_Line2)
+
+# Add Source Title Fields
+pdf.setFont(sourceTitleField_Title_Font, sourceTitleField_Title_FontSize)
+
+pdf.drawCentredString(sourceTitleField_Column1_Text, sourceTitleField_Row2_Text, 'Energy Source')
+pdf.drawCentredString(sourceTitleField_Column2_Text, sourceTitleField_Row2_Text, 'Device')
+pdf.drawCentredString(sourceTitleField_Column3_Text, sourceTitleField_Row2_Text, 'Isolation Point')
+pdf.drawCentredString(sourceTitleField_Column4_Text, sourceTitleField_Row2_Text, 'Isolation Method')
+pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row1_Text, 'Verification')
+pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, 'Method')
+pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, 'Verification Device')
+
+
 
 pdf.save()
