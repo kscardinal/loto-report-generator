@@ -3,7 +3,6 @@
 # pip install reportlab
 
 # IMPORT FUNCTIONS
-from fillpdf import fillpdfs
 from PIL import Image
 import json
 import shutil
@@ -12,59 +11,48 @@ from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 import math
 
-# RESIZE IMAGE WITH MAX HEIGHT
-def resize_height(filename, max_height):
-    width, height = Image.open(filename).size
-    ratio = height / max_height
-    return height / ratio, width / ratio
+# Resize image based on max height and/or width
+def resize_image(filename, max_height=None, max_width=None):
 
-# RESIZE IMAGE WITH MAX WIDTH
-def resize_width(filename, max_width):
-    width, height = Image.open(filename).size
-    ratio = width / max_width
-    return height / ratio, width / ratio
-
-# COMBINES BOTH TO RESIZE WITH MAX HEIGHT AND WIDTH
-def resize_to_fit(filename, max_height, max_width):
     original_width, original_height = Image.open(filename).size
 
-    # Calculate width and height ratios
-    width_ratio = original_width / max_width
-    height_ratio = original_height / max_height
+    if max_height and max_width:
+        width_ratio = original_width / max_width
+        height_ratio = original_height / max_height
 
-    # Use the larger ratio to determine the limiting factor
-    limiting_ratio = max(width_ratio, height_ratio)
+        limiting_ratio = max(width_ratio, height_ratio)
 
-    # Calculate new dimensions
+    elif max_height:
+        limiting_ratio = original_height / max_height
+
+    elif max_width:
+        limiting_ratio = original_width / max_width
+
+    else:
+        return original_height, original_width
+
     new_width = original_width / limiting_ratio
     new_height = original_height / limiting_ratio
 
     return new_height, new_width
 
-# ADD SPACE TO CERTAIN COMPONENTS
-def max_offset(offset, max_offset):
-    if offset > max_offset:
-        print("Offset too large")
-        return max_offset
-    else:
-        return offset
-
-# ERROR MESSAGE FUNCTION
+# Error message
 def printError(errorMessage):
     redColor = "\033[91m"
     whiteColor = "\033[0m"
     print(f"{redColor}{errorMessage}{whiteColor}")
 
-#SUCCESS MESSAGE FUNCTION
+# Success message
 def printSuccess(successMessage):
     greenColor = "\033[92m"
     whiteColor = "\033[0m"
     print(f"{greenColor}{successMessage}{whiteColor}")
 
-# LOAD json/data
+# Load json/data
 def loadData(fileName):
     try:
         with open(fileName, "r") as file:
@@ -72,14 +60,12 @@ def loadData(fileName):
     except  Exception as e:
         printError(f"Could not load json file: {e}")
 
-# GET DATA FROM json
-# FIX
-def getData(fileName, entryName):
-    data = loadData(fileName)
+# Get data from json json
+def getData(data, entryName):
     if entryName in data:
         return data[entryName]
     
-# GET PAGES
+# Get number of pages
 def pageCount(pdf_path):
     try:
         reader = PdfReader(pdf_path)
@@ -88,94 +74,85 @@ def pageCount(pdf_path):
         printError(f"Error reading PDF file: {e}")
         return 0
 
-# SPLITS TEXT IF NEEDED
+# Processes text for placement on PDF
+def processText(input_text, line_length, max_lines, return_lines=False):
+    words = input_text.split()
+    lines = []
+    current_line = []
+
+    for word in words:
+        if len(' '.join(current_line + [word])) <= line_length:
+            current_line.append(word)
+        else:
+            lines.append(' '.join(current_line).strip())
+            current_line = [word]
+            if len(lines) == max_lines:
+                break  # Stop if max_lines is reached
+
+    if current_line and len(lines) < max_lines:
+        lines.append(' '.join(current_line).strip())
+
+    return lines if return_lines else len(lines)
+
+# Splits text into lines
 def splitText(input_text, line_length, max_lines):
-    words = input_text.split()
-    lines = []
-    current_line = []
+    return processText(input_text, line_length, max_lines, return_lines=True)
 
-    for word in words:
-        # Check if adding the word exceeds the maximum line length
-        if len(' '.join(current_line + [word])) <= line_length:
-            current_line.append(word)
-        else:
-            # Finalize the current line and start a new one
-            lines.append(' '.join(current_line).strip())
-            current_line = [word]
-            if len(lines) == max_lines:
-                break  # Stop if max_lines is reached
-
-    # Add any remaining words to the last line (if space is available)
-    if current_line and len(lines) < max_lines:
-        lines.append(' '.join(current_line).strip())
-
-    return lines
-
-# RETURNS NUMBER OF LINES
-# FIX
+# Returns number of lines
 def numLines(input_text, line_length, max_lines):
-    words = input_text.split()
-    lines = []
-    current_line = []
+    return processText(input_text, line_length, max_lines, return_lines=False)
 
-    for word in words:
-        # Check if adding the word exceeds the maximum line length
-        if len(' '.join(current_line + [word])) <= line_length:
-            current_line.append(word)
-        else:
-            # Finalize the current line and start a new one
-            lines.append(' '.join(current_line).strip())
-            current_line = [word]
-            if len(lines) == max_lines:
-                break  # Stop if max_lines is reached
-
-    # Add any remaining words to the last line (if space is available)
-    if current_line and len(lines) < max_lines:
-        lines.append(' '.join(current_line).strip())
-
-    return len(lines)
-
-# CHECK IF FIELD HAS A VALUE
+# Check to see if variable exists
 def checkExists(fields, field_name):
     if fields.get(field_name):
         return True
     else:
         return False
     
-# MASK THE LENGTH OF VALUES
-# FIX (Optional paramter, default to false for adding the ...)    
-def checkLength_E(text, max_length):
-    return text[:max_length] + " ..." if len(text) > max_length else text
+def checkLength(text, max_length, add_ellipsis=False):
+    if len(text) > max_length:
+        return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
+    return text
 
-# CUT THE LENGTH OF VALUES
-# COMBINE WITH ABOVE
-def checkLength_C(text, max_length):
-        return text[:max_length] if len(text) > max_length else text
 
-# GET DATA
+# MAGIC Variables
+
+# Page Setup
+pageHeight = 792
+pageWidth = 612
+pageSize = pageWidth, pageHeight
+
+# Line Widths
+defaultLineWidth = 0.25
+
+# Font Sizes
+documentTitle_FS = 18
+
+# Fonts
+documentTitle_FT = 'DM Serif Display'
+
+
+
+# Get Data
 data = loadData("data_2.json")
 
-# CREATING PDF
+# Creating PDF and setting document title
 fileName = list(data.keys())[0]
 pdf = canvas.Canvas(fileName + ".pdf")
-
-# SETTING DOCUMENT TITLE
 pdf.setTitle(list(data.keys())[0])
 
-# REGIsTERING FONTS
+# Registering Fonts
 pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
-# CREATING HEADER TEMPLATE
-pdf.setFont('DM Serif Display', 18)
+# Creating Header Title
+pdf.setFont(documentTitle_FT, documentTitle_FS)
 pdf.drawCentredString(300, 790, "LOCKOUT-TAGOUT")
 pdf.drawCentredString(300, 770, "PROCEDURE")
 
 pdf.setLineWidth(0.25)
 
-# ADD MORE COMMENTS ABOUT WHAT THINGS DO
-# MAKE THESE NUMBERS PARAMETERIZED
 pdf.line(30, 750, 550, 750)
 pdf.line(30, 730, 550, 730)
 pdf.line(30, 710, 550, 710)
@@ -220,29 +197,29 @@ for form, fields in data.items():
 
     # SIMPLIFY CODE WITH THE SECOND STRING
     if checkExists(fields, "Description"):
-        pdf.drawString(85, 736, checkLength_E(fields.get("Description", ""), 60))
+        pdf.drawString(85, 736, checkLength(fields.get("Description", ""), 60, True))
     
     if checkExists(fields, "ProcedureNumber"):
-        pdf.drawString(455, 736, checkLength_E(fields.get("ProcedureNumber"), 12))
+        pdf.drawString(455, 736, checkLength(fields.get("ProcedureNumber"), 12, True))
 
     if checkExists(fields, "Facility"):
-        pdf.drawString(68, 715, checkLength_E(fields.get("Facility"), 29))
+        pdf.drawString(68, 715, checkLength(fields.get("Facility"), 29, True))
 
     if checkExists(fields, "Location"):
-        pdf.drawString(260, 715, checkLength_E(fields.get("Location"), 17))
+        pdf.drawString(260, 715, checkLength(fields.get("Location"), 17, True))
 
     if checkExists(fields, "Revision"):
-        pdf.drawString(373, 715, checkLength_C(fields.get("Revision"), 4))
+        pdf.drawString(373, 715, checkLength(fields.get("Revision"), 4))
 
     if checkExists(fields, "Date"):
-        pdf.drawString(425, 715, checkLength_C(fields.get("Date"), 8))
+        pdf.drawString(425, 715, checkLength(fields.get("Date"), 8))
 
     if checkExists(fields, "Origin"):
-        pdf.drawString(504, 715, checkLength_C(fields.get("Origin"), 8))
+        pdf.drawString(504, 715, checkLength(fields.get("Origin"), 8))
 
     if checkExists(fields, "IsolationPoints"):
         pdf.setFont('Inter', 20)
-        pdf.drawString(296, 657, checkLength_C(fields.get("IsolationPoints"), 3))
+        pdf.drawString(296, 657, checkLength(fields.get("IsolationPoints"), 3))
         pdf.setFont('Inter', 10)
 
     # MORE CLEAR VARIABLES (change int to lineNumber)
@@ -255,7 +232,7 @@ for form, fields in data.items():
                 additionalNotesOffset = (int - 5) * 11
     
     if checkExists(fields, "MachineImage"):
-        new_height, new_width = resize_to_fit(fields.get("MachineImage"), (110 + additionalNotesOffset), 180)
+        new_height, new_width = resize_image(fields.get("MachineImage"), (110 + additionalNotesOffset), 180)
         pdf.drawImage(fields.get("MachineImage"), (160 - (new_width / 2)), 555 - additionalNotesOffset, new_width, new_height)
 
 
@@ -471,12 +448,12 @@ if source1:
 
 
         if checkExists(fields, "S1_IsolationPoint"):
-            new_height, new_width = resize_to_fit(fields.get("S1_IsolationPoint"), height - 16, 100)
+            new_height, new_width = resize_image(fields.get("S1_IsolationPoint"), height - 16, 100)
             pdf.drawImage(fields.get("S1_IsolationPoint"), (235 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
 
 
         if checkExists(fields, "S1_VerificationDevice"):
-            new_height, new_width = resize_to_fit(fields.get("S1_VerificationDevice"), height - 16, 100)
+            new_height, new_width = resize_image(fields.get("S1_VerificationDevice"), height - 16, 100)
             pdf.drawImage(fields.get("S1_VerificationDevice"), (495 - (new_width / 2)), source1Middle - (new_height / 2), new_width, new_height)
 
 
