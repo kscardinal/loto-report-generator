@@ -118,9 +118,12 @@ def checkLength(text, max_length, add_ellipsis=False):
 # MAGIC Variables
 
 # Page Setup
+# 1pt = 1/72 inch
 pageHeight = 792
 pageWidth = 612
 pageSize = pageWidth, pageHeight
+pageMiddleWidth = pageWidth / 2
+pageMiddleHeight = pageHeight / 2
 
 # Line Widths
 defaultLineWidth = 0.25
