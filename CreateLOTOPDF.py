@@ -131,7 +131,6 @@ page_RightMargin = pageWidth - pageMargin
 # Line Widths
 defaultLineWidth = 0.25
 
-# Header
 # Header Title
 headerTitle_FontSize = 18
 headerTitle_Font = 'DM Serif Display'
@@ -195,6 +194,54 @@ headerField_Column6_Text = headerField_V_Line5 + headerField_HorizonalSpacing
 headerField_AddressBlock_X = headerField_Column4_Text
 headerField_AddressBlock_Y = headerField_H_Line2 - headerField_Description_FontSize
 
+# Machine Information Fields
+machineField_RowSpacing = 14
+machineField_Title_Font = 'Times'
+machineField_Title_FontSize = 10
+machineField_Title_LineSpacing = 12
+
+machineField_LargeText_Font = 'Times'
+machineField_LargeText_FontSize = 16
+machineField_LargeText_LineSpacing = 20
+
+machineField_LockImage = 'LockTag.png'
+
+machineField_Row1_Offset = 0        # Notes Field
+
+machineField_Width = page_RightMargin - page_LeftMargin
+
+machineField_H_Line1 = headerField_H_Line5 - machineField_RowSpacing
+machineField_H_Line2 = machineField_H_Line1 - machineField_RowSpacing
+machineField_H_Line3 = machineField_H_Line2 - (2 * machineField_Title_LineSpacing) - (2 * machineField_LargeText_FontSize)
+machineField_H_Line4 = machineField_H_Line3 - machineField_RowSpacing
+machineField_H_Line5 = machineField_H_Line4 - (machineField_Title_FontSize * 4) - machineField_Row1_Offset
+
+machineField_V_Line1 = page_LeftMargin
+machineField_V_Line2 = pageWidth_Middle
+machineField_V_Line3 = page_RightMargin
+
+machineField_Row1_Text = machineField_H_Line1 - machineField_Title_FontSize
+machineField_Row2_Text = machineField_H_Line2 - machineField_RowSpacing
+machineField_Row3_Text = machineField_Row2_Text - machineField_LargeText_LineSpacing
+machineField_Row4_Text = machineField_H_Line3 - machineField_Title_FontSize
+
+machineField_HorizontalSpacing = 10
+
+machineField_SquareSize = 40
+machineField_Square_Top = machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) + (machineField_SquareSize / 2)
+machineField_Square_Bottom = machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) - (machineField_SquareSize / 2)
+machineField_Square_Left = machineField_V_Line2 + machineField_HorizontalSpacing
+machineField_Square_Right = machineField_Square_Left + machineField_SquareSize
+
+machineField_LockImage_Height = 40
+machineField_LockImage_Width = machineField_LockImage_Height
+machineField_LockImage_X = machineField_Square_Right + machineField_HorizontalSpacing
+machineField_LockImage_Y = machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) - (machineField_LockImage_Height / 2)
+
+machineField_Column1_Text = page_LeftMargin + ((machineField_Width / 2) / 2)
+machineField_Column2_Text = machineField_LockImage_X + machineField_LockImage_Width + machineField_HorizontalSpacing
+machineField_Column3_Text = page_RightMargin - ((machineField_Width / 2) / 2)
+
 
 
 # Get Data
@@ -217,7 +264,7 @@ pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing,
 pdf.drawImage('CardinalLogo.png', headerImage_X, headerImage_Y, headerImage_Width, headerImage_Height )
 
 # Creating Header Field Outlines
-pdf.setLineWidth(0.25)
+pdf.setLineWidth(defaultLineWidth)
 
 # Horizontal Outline Lines
 pdf.line(headerField_V_Line4, headerField_H_Line1, headerField_V_Line6, headerField_H_Line1)
@@ -251,6 +298,41 @@ for line in range(0,len(headerField_Address)):
     pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
     if line > 3:
         headerField_Row1_Offset += headerField_AddressBlock_LineSpacing
+
+
+# Create Machine Field Outlintes
+pdf.setLineWidth(defaultLineWidth)
+
+# Horizontal Lines
+pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line3, machineField_H_Line1)
+pdf.line(machineField_V_Line1, machineField_H_Line2, machineField_V_Line2, machineField_H_Line2)
+pdf.line(machineField_V_Line2, machineField_H_Line3, machineField_V_Line3, machineField_H_Line3)
+pdf.line(machineField_V_Line2, machineField_H_Line4, machineField_V_Line3, machineField_H_Line4)
+pdf.line(machineField_V_Line1, machineField_H_Line5, machineField_V_Line3, machineField_H_Line5)
+# Vertical Lines
+pdf.line(machineField_V_Line1, machineField_H_Line1, machineField_V_Line1, machineField_H_Line5)
+pdf.line(machineField_V_Line2, machineField_H_Line1, machineField_V_Line2, machineField_H_Line5)
+pdf.line(machineField_V_Line3, machineField_H_Line1, machineField_V_Line3, machineField_H_Line5)
+
+# Creating Machine Fields Titles
+pdf.setFont(machineField_Title_Font, machineField_Title_FontSize)
+pdf.drawCentredString(machineField_Column1_Text, machineField_Row1_Text, 'Machine to be Locked Out')
+pdf.drawCentredString(machineField_Column3_Text, machineField_Row4_Text, 'Notes:')
+
+pdf.setFont(machineField_LargeText_Font, machineField_LargeText_FontSize)
+pdf.drawString(machineField_Column2_Text, machineField_Row2_Text, 'Isolation Points to be')
+pdf.drawString(machineField_Column2_Text, machineField_Row3_Text, 'Locked and Tagged')
+
+# Place Lock Tag Image
+pdf.drawImage(machineField_LockImage, machineField_LockImage_X, machineField_LockImage_Y, machineField_LockImage_Width, machineField_LockImage_Height)
+
+# Place Square
+pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Right, machineField_Square_Top)
+pdf.line(machineField_Square_Left, machineField_Square_Bottom, machineField_Square_Right, machineField_Square_Bottom)
+pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Left, machineField_Square_Bottom)
+pdf.line(machineField_Square_Right, machineField_Square_Top, machineField_Square_Right, machineField_Square_Bottom)
+
+
 
 
 
