@@ -1,19 +1,13 @@
-# pip install fillpdf
 # pip install pillow
 # pip install reportlab
 
-# IMPORT FUNCTIONS
+# Import Functions
 from PIL import Image
 import json
-import shutil
-import os
 from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib import colors
-import math
 
 # Resize image based on max height and/or width
 def resize_image(filename, max_height=None, max_width=None):
@@ -310,7 +304,7 @@ sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_Tex
 sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
 sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
-
+# Adds Header to current page
 def addHeader():
     # Creating Header Title
     pdf.setFont(headerTitle_Font, headerTitle_FontSize)
@@ -354,6 +348,7 @@ def addHeader():
         if line > 3:
             headerField_Row1_Offset += headerField_AddressBlock_FontSize
 
+# Adds Machine Information to current page
 def addMachineInfo():
     # Create Machine Field Outlintes
     pdf.setLineWidth(defaultLineWidth)
@@ -387,6 +382,7 @@ def addMachineInfo():
     pdf.line(machineField_Square_Left, machineField_Square_Top, machineField_Square_Left, machineField_Square_Bottom)
     pdf.line(machineField_Square_Right, machineField_Square_Top, machineField_Square_Right, machineField_Square_Bottom)
 
+# Add Shutdown Information to current page
 def addShutdownInfo():
     # Creating the Shutdown Fields
     pdf.setLineWidth(defaultLineWidth)
@@ -414,6 +410,7 @@ def addShutdownInfo():
         if line > 1:
             shutdownField_Row1_Offset += shutdownField_Description_FontSize
 
+# Add Soruce Titles to current page
 def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
     # Creating Source Title Row
     pdf.setLineWidth(defaultLineWidth)
@@ -448,19 +445,22 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
     pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, 'Method')
     pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, 'Verification Device')
 
-    return sourceTitleField_H_Line2 - headerField_RowSpacing
+    return sourceTitleField_H_Line2
 
+# Creates the template on the first page
 def firstPage():
     addHeader()
     addMachineInfo()
     addShutdownInfo()
-    return addSourceTitles()
+    bottom = addSourceTitles()
+    return bottom
 
+# Creates the template for a new page
 def newPage():
     pdf.showPage()
     addHeader()
-    return addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
-
+    bottom = addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
+    return bottom
 
 # Get Data
 data = loadData("data_3.json")
