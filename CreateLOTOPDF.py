@@ -448,28 +448,22 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
     pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, 'Method')
     pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, 'Verification Device')
 
+    return sourceTitleField_H_Line2 - headerField_RowSpacing
 
 def firstPage():
     addHeader()
     addMachineInfo()
     addShutdownInfo()
-    addSourceTitles()
+    return addSourceTitles()
 
 def newPage():
     pdf.showPage()
     addHeader()
-    addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
-
-
-
-
-
-
-
+    return addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
 
 
 # Get Data
-data = loadData("data_2.json")
+data = loadData("data_3.json")
 
 # Creating PDF and setting document title
 fileName = list(data.keys())[0]
@@ -481,8 +475,8 @@ pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf')
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
-firstPage()
-newPage()
+print(firstPage())
+print(newPage())
 
 
 
