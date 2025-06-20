@@ -325,14 +325,11 @@ restartField_Description_FontSize = 8
 restartField_Description_LineSpacing = 10
 restartField_Description_LineLength = 135
 restartField_Description_MaxLines = 5
-restartField_Description = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and re-energize machine. 5. Notify affected employees that servicing is complete"
+restartField_Description = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and re-energize machine. 5. Notify affected employees that servicing is complete."
 
 restartField_Row1_Offset = (numLines(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines) * restartField_Description_LineSpacing + 2)           # Restart Sequence Instrutions
 
 restartField_Background = 'Green.png'
-
-restartField_MinHeight = 100
-
 
 # Adds Header to current page
 def addHeader():
@@ -377,6 +374,8 @@ def addHeader():
         pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
         if line > 3:
             headerField_Row1_Offset += headerField_AddressBlock_FontSize
+
+    return headerField_H_Line5
 
 # Adds Machine Information to current page
 def addMachineInfo():
@@ -637,8 +636,8 @@ def addSource(import_bottom, import_height):
 # Add Restart Information to current page
 def addRestartInfo(bottom):
 
-    if (bottom - pageMargin) < restartField_MinHeight:
-        bottom = newPage() - restartField_RowSpacing
+    if (bottom - pageMargin) < (restartField_RowSpacing + restartField_Row1_Offset):
+        bottom = newPage_NoSourceTitles() - restartField_RowSpacing
 
     restartField_H_Line1 = bottom
     restartField_H_Line2 = restartField_H_Line1 - restartField_RowSpacing
@@ -678,6 +677,8 @@ def addRestartInfo(bottom):
     for line in range(0, numLines(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines)):
         pdf.drawCentredString(restartField_Column1_Text, restartField_Row2_Text - (line * restartField_Description_LineSpacing), splitText(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines)[line])
 
+    return restartField_H_Line3
+
 # Add Footer
 def addFooter(bottom):
     pass
@@ -695,6 +696,11 @@ def newPage():
     pdf.showPage()
     addHeader()
     bottom = addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
+    return bottom
+
+def newPage_NoSourceTitles():
+    pdf.showPage()
+    bottom = addHeader()
     return bottom
 
 # Get Data
@@ -735,15 +741,19 @@ for device_name, device_data in data.items():
 
             spaceRemaining =  bottom - pageMargin
 
-            if spaceRemaining <= height:
+            sourceField_Height = height
+            restartField_Height = restartField_RowSpacing + restartField_Row1_Offset
+
+            totalHeightNeeded = sourceField_Height + restartField_Height
+
+            if spaceRemaining <= sourceField_Height:
                 bottom = newPage()
-                spaceRemaining =  bottom - pageMargin
                 bottom = addSource(bottom, height)
             else: 
                 bottom = addSource(bottom, height)
 
 
-addRestartInfo(bottom)
+print(addRestartInfo(bottom))
 
 
 
