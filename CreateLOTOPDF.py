@@ -304,6 +304,9 @@ sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_Tex
 sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
 sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
+
+
+
 # Adds Header to current page
 def addHeader():
     # Creating Header Title
@@ -447,6 +450,77 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
 
     return sourceTitleField_H_Line2
 
+def addSource(import_bottom, import_height):
+    # Sources Blocks
+    sourceField_RowSpacing = 14
+    sourceField_Description_Font = 'Inter'
+    sourceField_Description_FontSize = 10
+    sourceField_Description_FontSpacing = 16
+
+    sourceField_TextBlock_Width = sourceTitleField_TextBlock
+    sourceField_ImageBlock_Width = sourceTitleField_ImageBlock
+
+    sourceField_H_Line1 = import_bottom
+    sourceField_H_Line2 = sourceField_H_Line1 - import_height
+
+    sourceField_V_Line1 = sourceTitleField_V_Line1
+    sourceField_V_Line2 = sourceTitleField_V_Line2
+    sourceField_V_Line3 = sourceTitleField_V_Line3
+    sourceField_V_Line4 = sourceTitleField_V_Line4
+    sourceField_V_Line5 = sourceTitleField_V_Line5
+    sourceField_V_Line6 = sourceTitleField_V_Line6
+    sourceField_V_Line7 = sourceTitleField_V_Line7
+
+    sourceField_Middle_Text = sourceField_H_Line1 - (import_height / 2)
+
+    sourceField_Column1_Text = sourceTitleField_Column1_Text
+    sourceField_Column2_Text = sourceTitleField_Column2_Text
+    sourceField_Column3_Text = sourceTitleField_Column3_Text
+    sourceField_Column4_Text = sourceTitleField_Column4_Text
+    sourceField_Column5_Text = sourceTitleField_Column5_Text
+    sourceField_Column6_Text = sourceTitleField_Column6_Text
+
+
+    # Horizontal Lines
+    pdf.line(sourceField_V_Line1, sourceField_H_Line2, sourceField_V_Line7, sourceField_H_Line2)
+    # Vertical Lines
+    pdf.line(sourceField_V_Line1, sourceField_H_Line1, sourceField_V_Line1, sourceField_H_Line2)
+    pdf.line(sourceField_V_Line7, sourceField_H_Line1, sourceField_V_Line7, sourceField_H_Line2)
+    # Vertical Divider Lines
+    pdf.line(sourceField_V_Line2, sourceField_H_Line1, sourceField_V_Line2, sourceField_H_Line2)
+    pdf.line(sourceField_V_Line3, sourceField_H_Line1, sourceField_V_Line3, sourceField_H_Line2)
+    pdf.line(sourceField_V_Line4, sourceField_H_Line1, sourceField_V_Line4, sourceField_H_Line2)
+    pdf.line(sourceField_V_Line5, sourceField_H_Line1, sourceField_V_Line5, sourceField_H_Line2)
+    pdf.line(sourceField_V_Line6, sourceField_H_Line1, sourceField_V_Line6, sourceField_H_Line2)
+
+    # Energy Source
+    pdf.setFont(sourceField_Description_Font, sourceField_Description_FontSize)
+    match source_value.get("EnergySource"):
+        case "Electric":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("VOLTS") + " V")
+        case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("S1_PSI") + " PSI")
+        case "Chemical":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + sourceField_Description_FontSpacing,  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text, source_value.get("ChemicalName"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - sourceField_Description_FontSpacing, source_value.get("PSI") + " PSI")
+        case "Gravity":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("LBS") + " lbs")
+        case "Thermal":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("TEMP") + " F")
+
+
+
+
+
+
+
+    return sourceField_H_Line2
+
 # Creates the template on the first page
 def firstPage():
     addHeader()
@@ -500,11 +574,13 @@ for device_name, device_data in data.items():
                 height = minHeight
 
             spaceRemaining =  bottom - pageMargin
-            if spaceRemaining < 30:
-                newPage()
+            if spaceRemaining <= 0:
+                print(f'New Page: {bottom}')
+                bottom = newPage()
+                bottom = addSource(bottom, height)
             else: 
-                print("Same Page")
-
+                print(f"Same Page: {bottom}")
+                bottom = addSource(bottom, height)
 
 
 

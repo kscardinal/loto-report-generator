@@ -18,7 +18,7 @@
         "CompletedDate": "06/05/2025",
         "Sources": {
             "Source 1": {
-                "EnergySource": "Chemical",
+                "EnergySource": "Electric",
                 "ChemicalName": "Boron",
                 "VOLTS": "240",
                 "PSI": "1500",
