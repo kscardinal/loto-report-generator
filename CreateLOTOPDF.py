@@ -109,12 +109,9 @@ def checkLength(text, max_length, add_ellipsis=False):
         return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
     return text
 
-
-# MAGIC Variables
-
+# GLOBAL VARIABLES
 # Page Setup
-# 1pt = 1/72 inch
-pageHeight = 792                                                # 11in
+pageHeight = 792                                                # 11in (1pt = 1/72 inch)
 pageWidth = 612                                                  # 8.5in
 pageSize = pageWidth, pageHeight
 pageWidth_Middle = pageWidth / 2
@@ -123,9 +120,11 @@ pageMargin = 36                                                 # 0.50in
 page_LeftMargin = pageMargin
 page_RightMargin = pageWidth - pageMargin
 
+
 # Default
 defaultLineWidth = 0.25
 defaultColor = [0, 0, 0]
+
 
 # Header Title
 headerTitle_FontSize = 18
@@ -141,7 +140,8 @@ headerImage_Height, headerImage_Width = resize_image(headerImage_Name, headerIma
 headerImage_X = page_LeftMargin
 headerImage_Y = headerTitle_Y - headerImage_Height + headerTitle_LineSpacing
 
-# Header Fields
+# Head
+# er Fields
 headerField_RowSpacing = 14
 headerField_Title_Font = 'Times'
 headerField_Title_FontSize =10
@@ -273,7 +273,6 @@ shutdownField_Row2_Text = shutdownField_H_Line2 - shutdownField_Description_Font
 shutdownField_Column1_Text = pageWidth_Middle
 
 
-
 # Sources Title Block
 sourceTitleField_RowSpacing = 25
 sourceTitleField_Title_Font = 'Times'
@@ -305,12 +304,34 @@ sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_Tex
 sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
 sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
+
 # Source Fields (The rest is inside the addSources() function because they need to be changed based on where they are in the doc.)
 sourceField_CharactersPerLine = 14
 sourceField_Device_MaxLines = 10
 sourceField_Description_MaxLines = 10
 sourceField_IsolationMethod_MaxLines = 10
 sourceField_VerificationMethod_MaxLines = 10
+
+
+# Restart Fields
+restartField_RowSpacing = 14
+restartField_Title_Font = 'DM Serif Display'
+restartField_Title_FontSize = 10
+restartField_Title_LineSpacing = 12
+restartField_Title_Color = [255, 255, 255]
+
+restartField_Description_Font = 'Inter'
+restartField_Description_FontSize = 8
+restartField_Description_LineSpacing = 10
+restartField_Description_LineLength = 135
+restartField_Description_MaxLines = 5
+restartField_Description = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and re-energize machine. 5. Notify affected employees that servicing is complete"
+
+restartField_Row1_Offset = (numLines(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines) * restartField_Description_LineSpacing + 2)           # Restart Sequence Instrutions
+
+restartField_Background = 'Green.png'
+
+restartField_MinHeight = 100
 
 
 # Adds Header to current page
@@ -414,10 +435,8 @@ def addShutdownInfo():
 
     pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
     pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
-    for line in range(0, numLines(shutdownField_Description, 135, 5)):
-        pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, 135, 5)[line])
-        if line > 1:
-            shutdownField_Row1_Offset += shutdownField_Description_FontSize
+    for line in range(0, numLines(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines)):
+        pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines)[line])
 
 # Add Soruce Titles to current page
 def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
@@ -615,6 +634,54 @@ def addSource(import_bottom, import_height):
 
     return sourceField_H_Line2
 
+# Add Restart Information to current page
+def addRestartInfo(bottom):
+
+    if (bottom - pageMargin) < restartField_MinHeight:
+        bottom = newPage() - restartField_RowSpacing
+
+    restartField_H_Line1 = bottom
+    restartField_H_Line2 = restartField_H_Line1 - restartField_RowSpacing
+    restartField_H_Line3 = restartField_H_Line2 - restartField_Row1_Offset
+
+    restartField_V_Line1 = page_LeftMargin
+    restartField_V_Line2 = page_RightMargin
+    
+    restartField_Row1_Text = restartField_H_Line1 - restartField_Title_FontSize
+    restartField_Row2_Text = restartField_H_Line2 - restartField_Description_FontSize
+
+    restartField_Column1_Text = pageWidth_Middle
+
+    restartField_Width = page_RightMargin - page_LeftMargin
+
+    # Creating the Restart Fields
+    pdf.setLineWidth(defaultLineWidth)
+
+    # Horizontal Lines
+    pdf.line(restartField_V_Line1, restartField_H_Line1, restartField_V_Line2, restartField_H_Line1)
+    pdf.line(restartField_V_Line1, restartField_H_Line2, restartField_V_Line2, restartField_H_Line2)
+    pdf.line(restartField_V_Line1, restartField_H_Line3, restartField_V_Line2, restartField_H_Line3)
+    # Vertical Lines
+    pdf.line(restartField_V_Line1, restartField_H_Line1, restartField_V_Line1, restartField_H_Line3)
+    pdf.line(restartField_V_Line2, restartField_H_Line1, restartField_V_Line2, restartField_H_Line3)
+
+    # Add Green
+    pdf.drawImage(restartField_Background, restartField_V_Line1, restartField_H_Line2, restartField_Width, restartField_RowSpacing)
+
+    # Add Restart Field Titles / Descriptions
+    pdf.setFillColorRGB(restartField_Title_Color[0], restartField_Title_Color[1], restartField_Title_Color[2])
+    pdf.setFont(restartField_Title_Font, restartField_Title_FontSize)
+    pdf.drawCentredString(restartField_Column1_Text, restartField_Row1_Text, 'RESTART SEQUENCE')
+
+    pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
+    pdf.setFont(restartField_Description_Font, restartField_Description_FontSize)
+    for line in range(0, numLines(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines)):
+        pdf.drawCentredString(restartField_Column1_Text, restartField_Row2_Text - (line * restartField_Description_LineSpacing), splitText(restartField_Description, restartField_Description_LineLength, restartField_Description_MaxLines)[line])
+
+# Add Footer
+def addFooter(bottom):
+    pass
+
 # Creates the template on the first page
 def firstPage():
     addHeader()
@@ -643,6 +710,7 @@ pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf')
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
+# Create the First Page
 bottom = firstPage()
 
 # Iterate through all top-level keys and their values
@@ -666,18 +734,16 @@ for device_name, device_data in data.items():
                 height = minHeight
 
             spaceRemaining =  bottom - pageMargin
+
             if spaceRemaining <= height:
                 bottom = newPage()
                 spaceRemaining =  bottom - pageMargin
-                print(f'New Page: {bottom} - {height} = {spaceRemaining}')
                 bottom = addSource(bottom, height)
             else: 
-                print(f"Same Page: {bottom} - {height} = {spaceRemaining}")
                 bottom = addSource(bottom, height)
 
 
-
-
+addRestartInfo(bottom)
 
 
 
