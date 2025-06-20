@@ -453,11 +453,13 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
 
 def addSource(import_bottom, import_height):
     # Sources Blocks
-    sourceField_RowSpacing = 11
+    sourceField_RowSpacing = 16
     sourceField_Font = 'Inter'
     sourceField_FontSize = 10
     sourceField_EnergySource_LineSpacing = 16
     sourceField_Device_LineSpacing = 11
+    sourceField_IsolationMethod_LineSpacing = 11
+    sourceField_VerificationMethod_LineSpacing = 11
 
     sourceField_TextBlock_Width = sourceTitleField_TextBlock
     sourceField_ImageBlock_Width = sourceTitleField_ImageBlock
@@ -474,13 +476,20 @@ def addSource(import_bottom, import_height):
     sourceField_V_Line7 = sourceTitleField_V_Line7
 
     sourceField_Middle_Text = sourceField_H_Line1 - (import_height / 2)
+    sourceField_Middle_Image = sourceField_H_Line1 - (import_height / 2)
+
+    sourceField_IsolationPoint_MaxHeight = import_height - sourceField_RowSpacing
+    sourceField_IsolationPoint_MaxWidth = (sourceField_V_Line4 - sourceField_V_Line3) - sourceField_RowSpacing
+
+    sourceField_VerificationDevice_MaxHeight = import_height - sourceField_RowSpacing
+    sourceField_VerificationDevice_MaxWidth = (sourceField_V_Line7 - sourceField_V_Line6) - sourceField_RowSpacing
 
     sourceField_Column1_Text = sourceTitleField_Column1_Text
     sourceField_Column2_Text = sourceTitleField_Column2_Text
-    sourceField_Column3_Text = sourceTitleField_Column3_Text
+    sourceField_Column3_Image = sourceField_V_Line3 + (sourceField_ImageBlock_Width / 2)            # Still need to subtract half the image width but that needs to happen after resizing
     sourceField_Column4_Text = sourceTitleField_Column4_Text
     sourceField_Column5_Text = sourceTitleField_Column5_Text
-    sourceField_Column6_Text = sourceTitleField_Column6_Text
+    sourceField_Column6_Image = sourceField_V_Line6 + (sourceField_ImageBlock_Width / 2)             # Still need to subtract half the image width but that needs to happen after resizing
 
     sourceField_BlankText = "_____________"
     sourceField_BlankText_V = "___________"
@@ -558,6 +567,43 @@ def addSource(import_bottom, import_height):
         for line in range(len(device)):
             pdf.drawCentredString(sourceField_Column2_Text, sourceField_Middle_Text + (((math.floor(len(device) / 2) - 1) * sourceField_Device_LineSpacing) + 5) - (sourceField_Device_LineSpacing * line), device[line])
 
+    # Isolation Method
+    if 'IsolationMethod' in source_value:
+        sourceField_IsolationMethod_NumLines = numLines(source_value.get('IsolationMethod', ''), sourceField_CharactersPerLine, sourceField_IsolationMethod_MaxLines)
+        sourceField_IsolationMethod_Lines = splitText(source_value.get('IsolationMethod', ''), sourceField_CharactersPerLine, sourceField_IsolationMethod_MaxLines)
+        if sourceField_IsolationMethod_NumLines % 2 == 1:
+            for line in range(sourceField_IsolationMethod_NumLines):
+                pdf.drawCentredString(sourceField_Column4_Text, sourceField_Middle_Text + (math.floor(sourceField_IsolationMethod_NumLines / 2) * sourceField_IsolationMethod_LineSpacing) - (sourceField_IsolationMethod_LineSpacing * line), sourceField_IsolationMethod_Lines[line])
+        else:
+            for line in range(sourceField_IsolationMethod_NumLines):
+                pdf.drawCentredString(sourceField_Column4_Text, sourceField_Middle_Text + (((math.floor(sourceField_IsolationMethod_NumLines / 2) - 1) * sourceField_IsolationMethod_LineSpacing) + 5) - (sourceField_IsolationMethod_LineSpacing * line), sourceField_IsolationMethod_Lines[line])
+    else:
+        pdf.drawCentredString(sourceField_Column4_Text, sourceField_Middle_Text, sourceField_BlankText)
+
+
+    # Verification Method
+    if 'VerificationMethod' in source_value:
+        sourceField_VerificationMethod_NumLines = numLines(source_value.get('VerificationMethod', ''), sourceField_CharactersPerLine, sourceField_VerificationMethod_MaxLines)
+        sourceField_VerificationMethod_Lines = splitText(source_value.get('VerificationMethod', ''), sourceField_CharactersPerLine, sourceField_VerificationMethod_MaxLines)
+        if sourceField_VerificationMethod_NumLines % 2 == 1:
+            for line in range(sourceField_VerificationMethod_NumLines):
+                pdf.drawCentredString(sourceField_Column5_Text, sourceField_Middle_Text + (math.floor(sourceField_VerificationMethod_NumLines / 2) * sourceField_VerificationMethod_LineSpacing) - (sourceField_VerificationMethod_LineSpacing * line), sourceField_VerificationMethod_Lines[line])
+        else:
+            for line in range(sourceField_VerificationMethod_NumLines):
+                pdf.drawCentredString(sourceField_Column5_Text, sourceField_Middle_Text + (((math.floor(sourceField_VerificationMethod_NumLines / 2) - 1) * sourceField_VerificationMethod_LineSpacing) + 5) - (sourceField_VerificationMethod_LineSpacing * line), sourceField_VerificationMethod_Lines[line])
+    else:
+        pdf.drawCentredString(sourceField_Column5_Text, sourceField_Middle_Text, sourceField_BlankText)
+
+
+    # Isolation Point
+    sourceField_IsolationPoint_NewHeight, sourceField_IsolationPoint_NewWidth = resize_image(source_value.get('IsolationPoint', 'ImageNotFound.jpg'), sourceField_IsolationPoint_MaxHeight, sourceField_IsolationPoint_MaxWidth)
+    pdf.drawImage(source_value.get('IsolationPoint', 'ImageNotFound.jpg'), sourceField_Column3_Image - (sourceField_IsolationPoint_NewWidth / 2), sourceField_Middle_Image - (sourceField_IsolationPoint_NewHeight / 2), sourceField_IsolationPoint_NewWidth, sourceField_IsolationPoint_NewHeight)
+
+
+
+    # Verification Device
+    sourceField_VerificationDevice_NewHeight, sourceField_VerificationDevice_NewWidth = resize_image(source_value.get('VerificationDevice', 'ImageNotFound.jpg'), sourceField_VerificationDevice_MaxHeight, sourceField_VerificationDevice_MaxWidth)
+    pdf.drawImage(source_value.get('VerificationDevice','ImageNotFound.jpg'), sourceField_Column6_Image - (sourceField_VerificationDevice_NewWidth / 2), sourceField_Middle_Image - (sourceField_VerificationDevice_NewHeight / 2), sourceField_VerificationDevice_NewWidth, sourceField_VerificationDevice_NewHeight )
 
 
 
