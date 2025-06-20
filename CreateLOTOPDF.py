@@ -8,6 +8,7 @@ from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+import math
 
 # Resize image based on max height and/or width
 def resize_image(filename, max_height=None, max_width=None):
@@ -452,10 +453,11 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
 
 def addSource(import_bottom, import_height):
     # Sources Blocks
-    sourceField_RowSpacing = 14
-    sourceField_Description_Font = 'Inter'
-    sourceField_Description_FontSize = 10
-    sourceField_Description_FontSpacing = 16
+    sourceField_RowSpacing = 11
+    sourceField_Font = 'Inter'
+    sourceField_FontSize = 10
+    sourceField_EnergySource_LineSpacing = 16
+    sourceField_Device_LineSpacing = 11
 
     sourceField_TextBlock_Width = sourceTitleField_TextBlock
     sourceField_ImageBlock_Width = sourceTitleField_ImageBlock
@@ -480,6 +482,12 @@ def addSource(import_bottom, import_height):
     sourceField_Column5_Text = sourceTitleField_Column5_Text
     sourceField_Column6_Text = sourceTitleField_Column6_Text
 
+    sourceField_BlankText = "_____________"
+    sourceField_BlankText_V = "___________"
+    sourceField_BlankText_PSI = "_________"
+    sourceField_BlankText_LBS = "_________"
+    sourceField_BlankText_TEMP = "________"
+    sourceField_BlankText_Tag = "______"
 
     # Horizontal Lines
     pdf.line(sourceField_V_Line1, sourceField_H_Line2, sourceField_V_Line7, sourceField_H_Line2)
@@ -494,26 +502,61 @@ def addSource(import_bottom, import_height):
     pdf.line(sourceField_V_Line6, sourceField_H_Line1, sourceField_V_Line6, sourceField_H_Line2)
 
     # Energy Source
-    pdf.setFont(sourceField_Description_Font, sourceField_Description_FontSize)
-    match source_value.get("EnergySource"):
+    pdf.setFont(sourceField_Font, sourceField_FontSize)
+    match source_value.get("EnergySource", "Other"):
         case "Electric":
-            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("VOLTS") + " V")
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_EnergySource_LineSpacing / 2),  source_value.get("EnergySource", sourceField_BlankText))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_EnergySource_LineSpacing / 2), source_value.get("VOLTS", sourceField_BlankText_V) + " V")
         case "Natural Gas" | "Steam" | "Hydraulic" | "Regrigerant":
-            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("S1_PSI") + " PSI")
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_EnergySource_LineSpacing / 2),  source_value.get("EnergySource"))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_EnergySource_LineSpacing / 2), source_value.get("S1_PSI", sourceField_BlankText_PSI) + " PSI")
         case "Chemical":
-            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + sourceField_Description_FontSpacing,  source_value.get("EnergySource"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text, source_value.get("ChemicalName"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - sourceField_Description_FontSpacing, source_value.get("PSI") + " PSI")
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + sourceField_EnergySource_LineSpacing,  source_value.get("EnergySource", sourceField_BlankText))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text, source_value.get("ChemicalName", sourceField_BlankText))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - sourceField_EnergySource_LineSpacing, source_value.get("PSI", sourceField_BlankText_PSI) + " PSI")
         case "Gravity":
-            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("LBS") + " lbs")
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_EnergySource_LineSpacing / 2),  source_value.get("EnergySource", sourceField_BlankText))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_EnergySource_LineSpacing / 2), source_value.get("LBS", sourceField_BlankText_LBS) + " lbs")
         case "Thermal":
-            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_Description_FontSpacing / 2),  source_value.get("EnergySource"))
-            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_Description_FontSpacing / 2), source_value.get("TEMP") + " F")
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_EnergySource_LineSpacing / 2),  source_value.get("EnergySource", sourceField_BlankText))
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_EnergySource_LineSpacing / 2), source_value.get("TEMP", sourceField_BlankText_TEMP) + " F")
+        case "Other":
+            pdf.drawCentredString(sourceField_Column1_Text,  sourceField_Middle_Text + (sourceField_EnergySource_LineSpacing / 2),  sourceField_BlankText)
+            pdf.drawCentredString(sourceField_Column1_Text, sourceField_Middle_Text - (sourceField_EnergySource_LineSpacing / 2), sourceField_BlankText)
 
+    # Device 
 
+    device = []
+
+    if 'Device' in source_value:
+        deviceLines = splitText(source_value.get('Device', sourceField_BlankText), sourceField_CharactersPerLine, sourceField_Device_MaxLines)
+        for line in range(len(deviceLines)):
+            device.append(deviceLines[line])
+    else:
+        device.append(sourceField_BlankText)
+    
+    if 'Tag' in source_value:
+        device.append("")
+        device.append('Tag: #' + source_value.get('Tag', sourceField_BlankText_Tag))
+        device.append("")
+    else:
+        device.append("")
+        device.append("Tag: #______")
+        device.append("")
+
+    if 'Description' in source_value:
+        descriptionLines = splitText(source_value.get('Description', sourceField_BlankText), sourceField_CharactersPerLine, sourceField_Description_MaxLines)
+        for line in range(len(descriptionLines)):
+            device.append(descriptionLines[line])
+    else:
+        device.append(sourceField_BlankText)
+
+    if len(device) % 2 == 1:
+        for line in range(len(device)):
+            pdf.drawCentredString(sourceField_Column2_Text, sourceField_Middle_Text + (math.floor(len(device) / 2) * sourceField_Device_LineSpacing) - (sourceField_Device_LineSpacing * line), device[line])
+    else:
+        for line in range(len(device)):
+            pdf.drawCentredString(sourceField_Column2_Text, sourceField_Middle_Text + (((math.floor(len(device) / 2) - 1) * sourceField_Device_LineSpacing) + 5) - (sourceField_Device_LineSpacing * line), device[line])
 
 
 
@@ -561,11 +604,16 @@ for device_name, device_data in data.items():
         for source_name, source_value in sources.items():
             print(f"Source Name: {source_name}")
             
-            charactersPerLine = 14
+            sourceField_CharactersPerLine = 14
+            sourceField_Device_MaxLines = 10
+            sourceField_Description_MaxLines = 10
+            sourceField_IsolationMethod_MaxLines = 10
+            sourceField_VerificationMethod_MaxLines = 10
 
-            deviceHeight = numLines(source_value.get("Device"), charactersPerLine, 10) + 3 + numLines(source_value.get("Description"), charactersPerLine, 10)
-            IsolationMethodHeight = numLines(source_value.get("IsolationMethod"), charactersPerLine, 10)
-            verificationMethodHeight = numLines(source_value.get("VerificationMethod"), charactersPerLine, 10)
+
+            deviceHeight = numLines(source_value.get("Device", ""), sourceField_CharactersPerLine, sourceField_Device_MaxLines) + 3 + numLines(source_value.get("Description", ""), sourceField_CharactersPerLine, sourceField_Description_MaxLines)
+            IsolationMethodHeight = numLines(source_value.get("IsolationMethod", ""), sourceField_CharactersPerLine, sourceField_IsolationMethod_MaxLines)
+            verificationMethodHeight = numLines(source_value.get("VerificationMethod", ""), sourceField_CharactersPerLine, sourceField_VerificationMethod_MaxLines)
 
             minHeight = 110
             height = (max(deviceHeight, IsolationMethodHeight, verificationMethodHeight) * 11) + 16
@@ -575,11 +623,12 @@ for device_name, device_data in data.items():
 
             spaceRemaining =  bottom - pageMargin
             if spaceRemaining <= height:
-                print(f'New Page: {bottom}')
                 bottom = newPage()
+                spaceRemaining =  bottom - pageMargin
+                print(f'New Page: {bottom} - {height} = {spaceRemaining}')
                 bottom = addSource(bottom, height)
             else: 
-                print(f"Same Page: {bottom}")
+                print(f"Same Page: {bottom} - {height} = {spaceRemaining}")
                 bottom = addSource(bottom, height)
 
 
