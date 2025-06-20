@@ -574,7 +574,7 @@ for device_name, device_data in data.items():
                 height = minHeight
 
             spaceRemaining =  bottom - pageMargin
-            if spaceRemaining <= 0:
+            if spaceRemaining <= height:
                 print(f'New Page: {bottom}')
                 bottom = newPage()
                 bottom = addSource(bottom, height)
