@@ -466,6 +466,7 @@ def addSource(import_bottom, import_height):
     sourceField_Device_LineSpacing = 11
     sourceField_IsolationMethod_LineSpacing = 11
     sourceField_VerificationMethod_LineSpacing = 11
+    sourceField_DefaultImage = 'ImageNotFound.jpg'
 
     sourceField_TextBlock_Width = sourceTitleField_TextBlock
     sourceField_ImageBlock_Width = sourceTitleField_ImageBlock
@@ -602,14 +603,14 @@ def addSource(import_bottom, import_height):
 
 
     # Isolation Point
-    sourceField_IsolationPoint_NewHeight, sourceField_IsolationPoint_NewWidth = resize_image(source_value.get('IsolationPoint', 'ImageNotFound.jpg'), sourceField_IsolationPoint_MaxHeight, sourceField_IsolationPoint_MaxWidth)
-    pdf.drawImage(source_value.get('IsolationPoint', 'ImageNotFound.jpg'), sourceField_Column3_Image - (sourceField_IsolationPoint_NewWidth / 2), sourceField_Middle_Image - (sourceField_IsolationPoint_NewHeight / 2), sourceField_IsolationPoint_NewWidth, sourceField_IsolationPoint_NewHeight)
+    sourceField_IsolationPoint_NewHeight, sourceField_IsolationPoint_NewWidth = resize_image(source_value.get('IsolationPoint', sourceField_DefaultImage), sourceField_IsolationPoint_MaxHeight, sourceField_IsolationPoint_MaxWidth)
+    pdf.drawImage(source_value.get('IsolationPoint', sourceField_DefaultImage), sourceField_Column3_Image - (sourceField_IsolationPoint_NewWidth / 2), sourceField_Middle_Image - (sourceField_IsolationPoint_NewHeight / 2), sourceField_IsolationPoint_NewWidth, sourceField_IsolationPoint_NewHeight)
 
 
 
     # Verification Device
-    sourceField_VerificationDevice_NewHeight, sourceField_VerificationDevice_NewWidth = resize_image(source_value.get('VerificationDevice', 'ImageNotFound.jpg'), sourceField_VerificationDevice_MaxHeight, sourceField_VerificationDevice_MaxWidth)
-    pdf.drawImage(source_value.get('VerificationDevice','ImageNotFound.jpg'), sourceField_Column6_Image - (sourceField_VerificationDevice_NewWidth / 2), sourceField_Middle_Image - (sourceField_VerificationDevice_NewHeight / 2), sourceField_VerificationDevice_NewWidth, sourceField_VerificationDevice_NewHeight )
+    sourceField_VerificationDevice_NewHeight, sourceField_VerificationDevice_NewWidth = resize_image(source_value.get('VerificationDevice', sourceField_DefaultImage), sourceField_VerificationDevice_MaxHeight, sourceField_VerificationDevice_MaxWidth)
+    pdf.drawImage(source_value.get('VerificationDevice',sourceField_DefaultImage), sourceField_Column6_Image - (sourceField_VerificationDevice_NewWidth / 2), sourceField_Middle_Image - (sourceField_VerificationDevice_NewHeight / 2), sourceField_VerificationDevice_NewWidth, sourceField_VerificationDevice_NewHeight )
 
 
     return sourceField_H_Line2
