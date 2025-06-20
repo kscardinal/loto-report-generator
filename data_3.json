@@ -17,7 +17,7 @@
         "ApprovedByCompany": "Sonnaz Group, LLC",
         "CompletedDate": "06/05/2025",
         "Sources": {
-            "Source 1": {
+            "Source_1": {
                 "EnergySource": "Electric",
                 "ChemicalName": "Boron",
                 "VOLTS": "240",
@@ -32,8 +32,38 @@
                 "VerificationMethod": "Verification Method",
                 "VerificationDevice": "test_1.jpg"
             },
-            "Source 2" : {
+            "Source_2" : {
                 "EnergySource": "Chemical",
+                "ChemicalName": "Boron",
+                "VOLTS": "240",
+                "PSI": "1500",
+                "LBS":"666",
+                "TEMP": "15,000",
+                "Device": "Lower component to full down position",
+                "Tag": "1234",
+                "Description": "Description Description Description",
+                "IsolationPoint": "test_1.jpg",
+                "IsolationMethod": "Isolation Method",
+                "VerificationMethod": "Verification Method",
+                "VerificationDevice": "test_1.jpg"
+            },
+            "Source_3" : {
+                "EnergySource": "Gravity",
+                "ChemicalName": "Boron",
+                "VOLTS": "240",
+                "PSI": "1500",
+                "LBS":"666",
+                "TEMP": "15,000",
+                "Device": "Lower component to full down position",
+                "Tag": "1234",
+                "Description": "Description Description Description",
+                "IsolationPoint": "test_1.jpg",
+                "IsolationMethod": "Isolation Method",
+                "VerificationMethod": "Verification Method",
+                "VerificationDevice": "test_1.jpg"
+            },
+            "Source_4" : {
+                "EnergySource": "Thermal",
                 "ChemicalName": "Boron",
                 "VOLTS": "240",
                 "PSI": "1500",
