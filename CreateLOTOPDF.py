@@ -305,7 +305,12 @@ sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_Tex
 sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
 sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
-
+# Source Fields (The rest is inside the addSources() function because they need to be changed based on where they are in the doc.)
+sourceField_CharactersPerLine = 14
+sourceField_Device_MaxLines = 10
+sourceField_Description_MaxLines = 10
+sourceField_IsolationMethod_MaxLines = 10
+sourceField_VerificationMethod_MaxLines = 10
 
 
 # Adds Header to current page
@@ -451,6 +456,7 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
 
     return sourceTitleField_H_Line2
 
+# Add Source to table
 def addSource(import_bottom, import_height):
     # Sources Blocks
     sourceField_RowSpacing = 16
@@ -606,8 +612,6 @@ def addSource(import_bottom, import_height):
     pdf.drawImage(source_value.get('VerificationDevice','ImageNotFound.jpg'), sourceField_Column6_Image - (sourceField_VerificationDevice_NewWidth / 2), sourceField_Middle_Image - (sourceField_VerificationDevice_NewHeight / 2), sourceField_VerificationDevice_NewWidth, sourceField_VerificationDevice_NewHeight )
 
 
-
-
     return sourceField_H_Line2
 
 # Creates the template on the first page
@@ -649,13 +653,6 @@ for device_name, device_data in data.items():
         # Iterate through the sources
         for source_name, source_value in sources.items():
             print(f"Source Name: {source_name}")
-            
-            sourceField_CharactersPerLine = 14
-            sourceField_Device_MaxLines = 10
-            sourceField_Description_MaxLines = 10
-            sourceField_IsolationMethod_MaxLines = 10
-            sourceField_VerificationMethod_MaxLines = 10
-
 
             deviceHeight = numLines(source_value.get("Device", ""), sourceField_CharactersPerLine, sourceField_Device_MaxLines) + 3 + numLines(source_value.get("Description", ""), sourceField_CharactersPerLine, sourceField_Description_MaxLines)
             IsolationMethodHeight = numLines(source_value.get("IsolationMethod", ""), sourceField_CharactersPerLine, sourceField_IsolationMethod_MaxLines)
