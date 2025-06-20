@@ -119,6 +119,23 @@ pageHeight_Middle = pageHeight / 2
 pageMargin = 36                                                 # 0.50in
 page_LeftMargin = pageMargin
 page_RightMargin = pageWidth - pageMargin
+page_MarginWidth = page_RightMargin - page_LeftMargin
+
+
+# Data
+data = loadData("data_3.json")
+
+
+# Creating PDF and setting document title
+fileName = list(data.keys())[0]
+pdf = canvas.Canvas(fileName + "_WIP.pdf", pageSize)
+pdf.setTitle(list(data.keys())[0])
+
+
+# Registering Fonts
+pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
+pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
+pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 
 # Default
@@ -132,6 +149,7 @@ headerTitle_Font = 'DM Serif Display'
 headerTitle_LineSpacing = 20
 headerTitle_Y = pageHeight - 54             # 0.75in
 
+
 # Header Image
 headerImage_Name = 'CardinalLogo.png'
 headerImage_Width = 144                               # 2in
@@ -140,8 +158,8 @@ headerImage_Height, headerImage_Width = resize_image(headerImage_Name, headerIma
 headerImage_X = page_LeftMargin
 headerImage_Y = headerTitle_Y - headerImage_Height + headerTitle_LineSpacing
 
-# Head
-# er Fields
+
+# Header Fields
 headerField_RowSpacing = 14
 headerField_Title_Font = 'Times'
 headerField_Title_FontSize =10
@@ -331,6 +349,27 @@ restartField_Row1_Offset = (numLines(restartField_Description, restartField_Desc
 
 restartField_Background = 'Green.png'
 
+
+# Footer Fields
+footerField_RowSpacing = 14
+footerField_Title_Font = 'DM Serif Display'
+footerField_Title_FontSize = 10
+footerField_Title_LineSpacing = 12
+
+footerField_SubTitle_Font = 'Inter'
+footerField_SubTitle_FontSize = 9
+footerField_SubTitle_LineSpacing = 12
+footerField_SubTitle_LineLength = 25
+footerField_SubTitle_MaxLines = 5
+
+footerField_Description_Font = 'Inter'
+footerField_Description_FontSize = 9
+footerField_Description_LineSpacing = 12
+footerField_Description_LineLength = 120
+footerField_Description_MaxLines = 5
+
+
+
 # Adds Header to current page
 def addHeader():
     # Creating Header Title
@@ -436,6 +475,8 @@ def addShutdownInfo():
     pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
     for line in range(0, numLines(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines)):
         pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row2_Text - (line * shutdownField_Description_LineSpacing), splitText(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines)[line])
+
+    return shutdownField_H_Line3
 
 # Add Soruce Titles to current page
 def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
@@ -681,14 +722,57 @@ def addRestartInfo(bottom):
 
 # Add Footer
 def addFooter(bottom):
-    pass
+    
+    if (bottom - pageMargin) < 100:
+        bottom = newPage_NoSourceTitles()
+
+    footerField_Description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + source_value.get('ApprovedBy', '_______________________________') + "."
+
+    footerField_Row1_Offset = (numLines(footerField_Description, footerField_Description_LineLength, footerField_Description_MaxLines) * footerField_Description_LineSpacing + 2)           # Footer Description
+
+    footerField_PreparedBy_Lines = numLines(data[fileName].get('PreparedBy', 'Cardinal Compliance Consultants'), footerField_SubTitle_LineLength, footerField_SubTitle_MaxLines)
+    footerField_ApprovedBy_Lines = numLines(data[fileName].get('ApprovedBy_2', 'Cardinal Compliance Consultants'), footerField_SubTitle_LineLength, footerField_SubTitle_MaxLines)
+
+    footerField_Row2_Offset = max(footerField_PreparedBy_Lines , footerField_ApprovedBy_Lines)
+
+    footerField_Row1_Text = bottom - (2 * footerField_RowSpacing)
+    footerField_Row2_Text = footerField_Row1_Text - (footerField_RowSpacing * (3/2))
+    footerField_Row3_Text = footerField_Row2_Text -  (footerField_RowSpacing * (3/2)) - footerField_Row1_Offset
+    footerField_Row4_Text = footerField_Row3_Text - footerField_RowSpacing
+    footerField_Row5_Text = footerField_Row4_Text - footerField_RowSpacing - footerField_Row2_Offset
+    footerField_Row6_Text = footerField_Row5_Text - footerField_SubTitle_LineSpacing
+
+    footerField_Column1_Text = page_LeftMargin
+    footerField_Column2_Text = footerField_Column1_Text + (page_MarginWidth * (1/8))
+    footerField_Column3_Text = footerField_Column2_Text + (page_MarginWidth * (2/8))
+    footerField_Column4_Text = footerField_Column3_Text + (page_MarginWidth * (1/8))
+    footerField_Column5_Text = footerField_Column4_Text + (page_MarginWidth * (2/8))
+    footerField_Column6_Text = footerField_Column5_Text + (page_MarginWidth * (1/8))
+
+
+    # Adding Title
+    pdf.setFont(footerField_Title_Font, footerField_Title_FontSize)
+    pdf.drawString(footerField_Column1_Text, footerField_Row1_Text, "Lockout Procedure Approval Data:")
+
+    # Adding Description
+    pdf.setFont(footerField_Description_Font, footerField_Description_FontSize)
+    for line in range(0, numLines(footerField_Description, footerField_Description_LineLength, footerField_Description_MaxLines)):
+        pdf.drawString(footerField_Column1_Text, footerField_Row2_Text - (line * footerField_Description_LineSpacing), splitText(footerField_Description, footerField_Description_LineLength, footerField_Description_MaxLines)[line])
+
+    # Adding Sub-Titles
+    pdf.setFont(footerField_SubTitle_Font, footerField_SubTitle_FontSize)
+    pdf.drawString(footerField_Column1_Text, footerField_Row3_Text, "Prepared by:")
+    pdf.line(footerField_Column2_Text, footerField_Row3_Text, (footerField_Column3_Text - footerField_RowSpacing), footerField_Row3_Text)
+    pdf.drawString(footerField_Column3_Text, footerField_Row3_Text, "Approved by:")
+    pdf.line(footerField_Column4_Text, footerField_Row3_Text, (footerField_Column5_Text - footerField_RowSpacing), footerField_Row3_Text)
+    pdf.drawString(footerField_Column5_Text, footerField_Row3_Text, "Date:")
 
 # Creates the template on the first page
 def firstPage():
     addHeader()
     addMachineInfo()
-    addShutdownInfo()
-    bottom = addSourceTitles()
+    bottom = addShutdownInfo()
+    bottom = addSourceTitles(bottom)
     return bottom
 
 # Creates the template for a new page
@@ -698,23 +782,13 @@ def newPage():
     bottom = addSourceTitles(headerField_H_Line5 - headerField_RowSpacing)
     return bottom
 
+# Creates the templare for a new page without the sources at top for when you need a new page but don't have any new sources on that new page
 def newPage_NoSourceTitles():
     pdf.showPage()
     bottom = addHeader()
     return bottom
 
-# Get Data
-data = loadData("data_3.json")
 
-# Creating PDF and setting document title
-fileName = list(data.keys())[0]
-pdf = canvas.Canvas(fileName + "_WIP.pdf", pageSize)
-pdf.setTitle(list(data.keys())[0])
-
-# Registering Fonts
-pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 # Create the First Page
 bottom = firstPage()
@@ -752,9 +826,11 @@ for device_name, device_data in data.items():
             else: 
                 bottom = addSource(bottom, height)
 
+# Adds the Restart Squence Information
+addRestartInfo(bottom)
 
-print(addRestartInfo(bottom))
-
+# Adds Footer
+addFooter(bottom)
 
 
 
