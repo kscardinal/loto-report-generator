@@ -104,6 +104,7 @@ def checkExists(fields, field_name):
     else:
         return False
     
+# Checks the length of a string and truncates it
 def checkLength(text, max_length, add_ellipsis=False):
     if len(text) > max_length:
         return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
@@ -140,7 +141,7 @@ pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 # Default
 defaultLineWidth = 0.25
-defaultColor = [0, 0, 0]
+defaultColor = [0, 0, 0]                                 # Black
 
 
 # Header Title
@@ -177,7 +178,7 @@ headerField_Row2_Offset = 0         # Description Row
 headerField_Row3_Offset = 0         # Facility Row
 
 headerField_Width = page_RightMargin - page_LeftMargin
-headerField_TallSectoin_Width = headerImage_Width
+headerField_TallSection_Width = headerImage_Width
 headerField_Rev_Width = 60
 
 headerField_H_Line1 = headerTitle_Y + headerTitle_LineSpacing
@@ -187,10 +188,10 @@ headerField_H_Line4 = headerField_H_Line3 - headerField_RowSpacing - headerField
 headerField_H_Line5 = headerField_H_Line4 - headerField_RowSpacing - headerField_Row3_Offset
 
 headerField_V_Line1 = page_LeftMargin
-headerField_V_Line2 = page_LeftMargin + ((headerField_Width - headerField_TallSectoin_Width) / 2) - (headerField_Rev_Width / 2)
-headerField_V_Line3 = page_RightMargin - headerField_TallSectoin_Width - headerField_Rev_Width
-headerField_V_Line4 = page_RightMargin - headerField_TallSectoin_Width
-headerField_V_Line5 = page_RightMargin - (headerField_TallSectoin_Width * (9/16))
+headerField_V_Line2 = page_LeftMargin + ((headerField_Width - headerField_TallSection_Width) / 2) - (headerField_Rev_Width / 2)
+headerField_V_Line3 = page_RightMargin - headerField_TallSection_Width - headerField_Rev_Width
+headerField_V_Line4 = page_RightMargin - headerField_TallSection_Width
+headerField_V_Line5 = page_RightMargin - (headerField_TallSection_Width * (9/16))
 headerField_V_Line6 = page_RightMargin
 
 headerField_Row1_Text = headerField_H_Line1 - headerField_Title_FontSize
@@ -202,7 +203,7 @@ headerField_Column1_Text = headerField_V_Line1 + headerField_HorizonalSpacing
 headerField_Column2_Text = headerField_V_Line2 + headerField_HorizonalSpacing
 headerField_Column3_Text = headerField_V_Line3 + headerField_HorizonalSpacing
 headerField_Column4_Text = headerField_V_Line4 + headerField_HorizonalSpacing
-headerField_Column5_Text = headerField_V_Line4 + (headerField_TallSectoin_Width / 2)
+headerField_Column5_Text = headerField_V_Line4 + (headerField_TallSection_Width / 2)
 headerField_Column6_Text = headerField_V_Line5 + headerField_HorizonalSpacing
 
 headerField_AddressBlock_X = headerField_Column4_Text
@@ -270,7 +271,7 @@ shutdownField_Description_FontSize = 8
 shutdownField_Description_LineSpacing = 10
 shutdownField_Description_LineLength = 135
 shutdownField_Description_MaxLines = 5
-shutdownField_Description = "1. Notify affecte personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-enrgization of all sources."
+shutdownField_Description = "1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-enrgization of all sources."
 
 shutdownField_Row1_Offset = (numLines(shutdownField_Description, shutdownField_Description_LineLength, shutdownField_Description_MaxLines) * shutdownField_Description_LineSpacing + 2)           # Shutdown Sequence Instrutions
 
@@ -409,7 +410,7 @@ def addHeader():
 
     # Creating the Address Block
     pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
-    for line in range(0,len(headerField_Address)):
+    for line in range(len(headerField_Address)):
         pdf.drawString(headerField_AddressBlock_X, headerField_AddressBlock_Y - (line * headerField_AddressBlock_LineSpacing), headerField_Address[line])
         if line > 3:
             headerField_Row1_Offset += headerField_AddressBlock_FontSize
@@ -726,7 +727,7 @@ def addFooter(bottom):
     if (bottom - pageMargin) < 100:
         bottom = newPage_NoSourceTitles()
 
-    footerField_Description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + source_value.get('ApprovedBy', '_______________________________') + "."
+    footerField_Description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data[fileName].get('ApprovedBy_1', '_' *25) + "."
 
     footerField_Row1_Offset = (numLines(footerField_Description, footerField_Description_LineLength, footerField_Description_MaxLines) * footerField_Description_LineSpacing + 2)           # Footer Description
 
@@ -827,7 +828,7 @@ for device_name, device_data in data.items():
                 bottom = addSource(bottom, height)
 
 # Adds the Restart Squence Information
-addRestartInfo(bottom)
+bottom = addRestartInfo(bottom)
 
 # Adds Footer
 addFooter(bottom)
