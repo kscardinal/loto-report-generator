@@ -183,6 +183,7 @@ def addHeader():
     headerField_Facility_LineLimit = 5
     headerField_Location_LineLength = 24
     headerField_Location_LineLimit = 5
+    headerField_Revision_LineLength = 5
 
     headerField_Description_Height = numLines(data['Description'], headerField_Description_LineLength, headerField_Description_LineLimit)
     headerField_Location_Height = numLines(data['Location'], headerField_Location_LineLength, headerField_Location_LineLimit)
@@ -206,7 +207,7 @@ def addHeader():
     headerField_V_Line2 = page_LeftMargin + ((headerField_Width - headerField_TallSection_Width) / 2) - (headerField_Rev_Width / 2)
     headerField_V_Line3 = page_RightMargin - headerField_TallSection_Width - headerField_Rev_Width
     headerField_V_Line4 = page_RightMargin - headerField_TallSection_Width
-    headerField_V_Line5 = page_RightMargin - (headerField_TallSection_Width * (9/16))
+    headerField_V_Line5 = page_RightMargin - (headerField_TallSection_Width * (17/32))
     headerField_V_Line6 = page_RightMargin
 
     headerField_Row1_Text = headerField_H_Line1 - headerField_Title_FontSize
@@ -228,6 +229,9 @@ def addHeader():
     headerField_ProcedureNumber_X = headerField_Column4_Text + 53
     headerField_Facility_X = headerField_Column1_Text + 37
     headerField_Location_X = headerField_Column2_Text + 42
+    headerField_Revision_X = headerField_Column3_Text + 20
+    headerField_Date_X = headerField_Column4_Text + 25
+    headerField_Origin_X = headerField_Column6_Text + 30
 
     # Creating Header Title
     pdf.setFont(headerTitle_Font, headerTitle_FontSize)
@@ -273,6 +277,10 @@ def addHeader():
         pdf.drawString(headerField_Facility_X, headerField_Row3_Text - (line * headerField_Description_LineSpacing), splitText(data['Facility'], headerField_Facility_LineLength, headerField_Facility_LineLimit)[line])
     for line in range(headerField_Location_Height):
         pdf.drawString(headerField_Location_X, headerField_Row3_Text - (line * headerField_Description_LineSpacing), splitText(data['Location'], headerField_Location_LineLength, headerField_Location_LineLimit)[line])
+    pdf.drawString(headerField_Revision_X, headerField_Row3_Text, data['Revision'][0:headerField_Revision_LineLength])
+    pdf.setFont(headerField_Description_Font, 8)
+    pdf.drawString(headerField_Date_X, headerField_Row3_Text, data['Date'])
+    pdf.drawString(headerField_Origin_X, headerField_Row3_Text, data['Origin'])
 
     # Creating the Address Block
     pdf.setFont(headerField_AddressBlock_Font, headerField_AddressBlock_FontSize)
