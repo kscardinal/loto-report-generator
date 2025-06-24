@@ -175,22 +175,22 @@ def addHeader():
     header_Field_Address_Width = header_Image_Width
 
     # Header Description
-    header_Field_Description_Height = numLines(data['Description'], header_Field_Description_LineLength, header_Field_Description_LineLimit)
     header_Field_Description_LineLength = 78
     header_Field_Description_LineLimit = 5
+    header_Field_Description_Height = numLines(data['Description'], header_Field_Description_LineLength, header_Field_Description_LineLimit)
     
     # Header Procedure Number
     header_Field_ProcedureNumber_LineLength = 16
     
     # Header Facility
-    header_Field_Facility_Height = numLines(data['Facility'], header_Field_Facility_LineLength, header_Field_Facility_LineLimit)
     header_Field_Facility_LineLength = 26
     header_Field_Facility_LineLimit = 5
-    
+    header_Field_Facility_Height = numLines(data['Facility'], header_Field_Facility_LineLength, header_Field_Facility_LineLimit)
+
     # Header Location
-    header_Field_Location_Height = numLines(data['Location'], header_Field_Location_LineLength, header_Field_Location_LineLimit)
     header_Field_Location_LineLength = 26
     header_Field_Location_LineLimit = 5
+    header_Field_Location_Height = numLines(data['Location'], header_Field_Location_LineLength, header_Field_Location_LineLimit)
     
     # Header Revision
     header_Field_Revision_LineLength = 6
@@ -213,7 +213,7 @@ def addHeader():
     header_Field_V_Line2 = page_LeftMargin + ((page_MarginWidth - header_Field_Address_Width) / 2) - (header_Field_Revision_Width / 2)
     header_Field_V_Line3 = page_RightMargin - header_Field_Address_Width - header_Field_Revision_Width
     header_Field_V_Line4 = page_RightMargin - header_Field_Address_Width
-    header_Field_V_Line5 = page_RightMargin - (header_Field_Address_Width * (17/32))
+    header_Field_V_Line5 = page_RightMargin - (header_Field_Address_Width * (2 / 5))
     header_Field_V_Line6 = page_RightMargin
 
     # Text Locations - Rows
@@ -250,7 +250,7 @@ def addHeader():
     headerField_Revision_X = header_Field_Column3_Text + 20
 
     # Header - Date Location
-    headerField_Date_X = header_Field_Column4_Text + 22
+    headerField_Date_X = header_Field_Column4_Text + 23
 
     # Header - Origin Location
     headerField_Origin_X = header_Field_Column6_Text + 30
