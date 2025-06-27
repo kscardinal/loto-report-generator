@@ -356,9 +356,24 @@ def addHeader():
         header_Field_H_Line5,
     )
     # Vertical Divider Lines
-    pdf.line(header_Field_V_Line2, header_Field_H_Line4, header_Field_V_Line2, header_Field_H_Line5,)
-    pdf.line(header_Field_V_Line3, header_Field_H_Line4, header_Field_V_Line3, header_Field_H_Line5,)
-    pdf.line(header_Field_V_Line5, header_Field_H_Line4, header_Field_V_Line5, header_Field_H_Line5,)
+    pdf.line(
+        header_Field_V_Line2,
+        header_Field_H_Line4,
+        header_Field_V_Line2,
+        header_Field_H_Line5,
+    )
+    pdf.line(
+        header_Field_V_Line3,
+        header_Field_H_Line4,
+        header_Field_V_Line3,
+        header_Field_H_Line5,
+    )
+    pdf.line(
+        header_Field_V_Line5,
+        header_Field_H_Line4,
+        header_Field_V_Line5,
+        header_Field_H_Line5,
+    )
 
     # Creating Header Fields Titles
     pdf.setFont(header_Field_Title_Font, header_Field_Title_FontSize)
