@@ -1,0 +1,63 @@
+{
+    "Description": "Air Compressor #2",
+    "ProcedureNumber": "41",
+    "Facility": "Game One",
+    "Location": "Maintenance Room",
+    "Revision": "0",
+    "Date": "01/02/2025",
+    "Origin": "01",
+    "MachineImage": "test_2.jpg",
+    "IsolationPoints": "2",
+    "Notes": null,
+    "ApprovedBy": "Rich Barcum",
+    "PreparedBy": "Mike Auble",
+    "ApprovedByCompany": "Cardinal Compliance Consultants",
+    "CompletedDate": "01/02/2025",
+    "Sources": [
+        {
+            "EnergySource": "Electric",
+            "ChemicalName": null,
+            "VOLTS": null,
+            "PSI": null,
+            "LBS": null,
+            "TEMP": null,
+            "Device": "Disconnect",
+            "Tag": "0001",
+            "Description": null,
+            "IsolationPoint": "test_1.jpg",
+            "IsolationMethod": "Lock out disconnect",
+            "VerificationMethod": "Power Button",
+            "VerificationDevice": "test_2.jpg"
+        },
+        {
+            "EnergySource": "Electric",
+            "ChemicalName": "Oxygen",
+            "VOLTS": "240",
+            "PSI": "1500",
+            "LBS":"666",
+            "TEMP": "6,000",
+            "Device": "Lower component to full down position",
+            "Tag": "1234",
+            "Description": "Description Description Description",
+            "IsolationPoint": "test_2.jpg",
+            "IsolationMethod": "Isolation Method",
+            "VerificationMethod": "Verification Method",
+            "VerificationDevice": "test_1.jpg"
+        },
+        {
+            "EnergySource": "Electric",
+            "ChemicalName": "Carbon",
+            "VOLTS": "240",
+            "PSI": "1500",
+            "LBS":"666",
+            "TEMP": "3,000",
+            "Device": "Lower component to full down position",
+            "Tag": "1234",
+            "Description": "Description Description Description",
+            "IsolationPoint": "test_1.jpg",
+            "IsolationMethod": "Isolation Method",
+            "VerificationMethod": "Verification Method",
+            "VerificationDevice": "test_2.jpg"
+        }
+    ]
+}
