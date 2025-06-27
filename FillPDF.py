@@ -3,12 +3,14 @@
 # pip install reportlab
 
 # IMPORT FUNCTIONS
-from fillpdf import fillpdfs
-from PIL import Image
 import json
-import shutil
 import os
+import shutil
+
+from PIL import Image
 from PyPDF2 import PdfReader
+
+from fillpdf import fillpdfs
 
 
 # DUPLICATE FILE
@@ -136,13 +138,9 @@ def resizeImage(image_path, spot_width, spot_height):
 
 
 # ADD IMAGE TO PDF
-def placeImage(
-    image_file, top, left, input_file, output_file, page, width=256, height=256
-):
+def placeImage(image_file, top, left, input_file, output_file, page, width=256, height=256):
     try:
-        fillpdfs.place_image(
-            image_file, top, left, input_file, output_file, page, width, height
-        )
+        fillpdfs.place_image(image_file, top, left, input_file, output_file, page, width, height)
         os.remove(input_file)
         os.remove(image_file)
         rename_file(output_file, input_file)
@@ -273,12 +271,8 @@ def fillPDF():
                         template_field_data.get("max_width", ""),
                         template_field_data.get("max_height", ""),
                     )
-                    starting_x = template_field_data["center_x_pos"] - (
-                        image_size[0] / 2
-                    )
-                    starting_y = template_field_data["center_y_pos"] - (
-                        image_size[1] / 2
-                    )
+                    starting_x = template_field_data["center_x_pos"] - (image_size[0] / 2)
+                    starting_y = template_field_data["center_y_pos"] - (image_size[1] / 2)
                     placeImage(
                         image_size[2],
                         starting_x,
@@ -293,9 +287,7 @@ def fillPDF():
             if "Source" in field_name:
                 for field_name_2, field_value_2 in field_value.items():
 
-                    template_field_data_2 = template_fields.get(field_name, {}).get(
-                        field_name_2, {}
-                    )
+                    template_field_data_2 = template_fields.get(field_name, {}).get(field_name_2, {})
 
                     if template_field_data_2.get("field_type", "") == "SLT":
                         placeText(
@@ -327,12 +319,8 @@ def fillPDF():
                             template_field_data_2.get("max_width", ""),
                             template_field_data_2.get("max_height", ""),
                         )
-                        starting_x = template_field_data_2["center_x_pos"] - (
-                            image_size[0] / 2
-                        )
-                        starting_y = template_field_data_2["center_y_pos"] - (
-                            image_size[1] / 2
-                        )
+                        starting_x = template_field_data_2["center_x_pos"] - (image_size[0] / 2)
+                        starting_y = template_field_data_2["center_y_pos"] - (image_size[1] / 2)
                         placeImage(
                             image_size[2],
                             starting_x,
