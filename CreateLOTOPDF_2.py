@@ -151,6 +151,11 @@ pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 
+# Adds new Page
+def new_page():
+    pdf.showPage()
+
+
 # Adds Header to current page
 def add_header():
     # Sets default parameters for a clean slate
@@ -475,8 +480,87 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN):
     return h_line5
 
 
+# Add Shutdown Sequence
+def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN):
+    # Sets default parameters for a clean slate
+    set_default()
+
+    title_font = 'DM Serif Display'
+    title_font_size = 10
+    title_line_spacing = 14
+    title_font_color = [255, 255, 255]
+
+    row_spacing = 14
+
+    body_font = 'Inter'
+    body_font_size = 8
+    body_line_spacing = 10
+    body_line_length = 135
+    body_line_limit = 5
+    body_background = 'Red.png'
+
+    shutdown_sequence = "1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-energization of all sources."
+
+    body_num_lines = num_lines(shutdown_sequence, body_line_length, body_line_limit)
+    body_lines = split_text(shutdown_sequence, body_line_length, body_line_limit)
+
+    total_height = title_line_spacing + body_num_lines * (body_line_spacing + 2)
+
+
+     # Checking if new page is needed
+    if import_bottom - total_height < PAGE_MARGIN:
+        new_page()
+        import_bottom = add_header() - row_spacing
+        new_page_bool = True
+    else:
+        new_page_bool = False
+
+    h_line1 = import_bottom
+    h_line2 = h_line1 - title_line_spacing
+    h_line3 = h_line2 - body_num_lines * (body_line_spacing + 2)
+
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_RIGHT_MARGIN
+
+    # Horizontal Lines
+    if new_page_bool: 
+        pdf.line(v_line1, h_line1, v_line2, h_line1)
+    pdf.line(v_line1, h_line2, v_line2, h_line2)
+    pdf.line(v_line1, h_line3, v_line2, h_line3)
+    
+    # Vertical Lines
+    pdf.line(v_line1, h_line1, v_line1, h_line3)
+    pdf.line(v_line2, h_line1, v_line2, h_line3)
+
+    # Background color
+    pdf.drawImage(body_background, v_line1, h_line2, USABLE_WIDTH, title_line_spacing)
+
+    # Text
+    column1_text = PAGE_WIDTH_MIDDLE
+
+    row1_text = h_line1 - title_font_size
+    row2_text = h_line2 - body_font_size
+
+    # Title Text
+    pdf.setFillColorRGB(title_font_color[0], title_font_color[1], title_font_color[2])
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawCentredString(column1_text, row1_text, 'SHUTDOWN SEQUENCE')
+
+    # Body Text
+    pdf.setFillColorRGB(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2])
+    pdf.setFont(body_font, body_font_size)
+    for line in range(body_num_lines):
+        pdf.drawCentredString(column1_text, row2_text - (line * body_line_spacing), body_lines[line])
+
+
+    ic('Adding Shutdown Sequence')
+    return 'hello'
+
+
+
 
 
 bottom = add_header()
 bottom = add_machine_info(bottom)
+bottom = add_shutdown_sequence(bottom)
 pdf.save()
