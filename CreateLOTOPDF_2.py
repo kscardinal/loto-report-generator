@@ -108,6 +108,13 @@ def check_length(text: str, max_length: int, add_ellipsis: bool = False):
     return text
 
 
+# Set Default
+def set_default():
+    pdf.setFont(DEFAULT_FONT, DEFAULT_FONT_SIZE)
+    pdf.setLineWidth(DEFAULT_LINE_WIDTH)
+    pdf.setFillColorRGB(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2])
+
+
 # Global variables for page setup and defaults
 
 # Page dimensions (in points, 1 pt = 1/72 inch)
@@ -124,6 +131,9 @@ PAGE_HEIGHT_MIDDLE = PAGE_HEIGHT / 2
 # Default
 DEFAULT_LINE_WIDTH = 0.25  # This was arbitrary but looks like what it was
 DEFAULT_COLOR = [0, 0, 0]  # Black
+DEFAULT_FONT = 'Inter'
+DEFAULT_FONT_SIZE = 10
+DEFAULT_ROW_SPACING = 14
 
 # Data
 data_file = 'data_4.json'
@@ -143,190 +153,320 @@ pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 # Adds Header to current page
 def add_header():
-    # Header Title
-    header_title_font_size = 18
-    header_title_font = 'DM Serif Display'
-    header_title_line_spacing = 20
-    header_title_y = PAGE_HEIGHT - 54  # 0.75in
+    # Sets default parameters for a clean slate
+    set_default()
+    
+    # Page Title
+    page_title_font_size = 18
+    page_title_font = 'DM Serif Display'
+    page_title_line_spacing = 20
+    page_title_y = PAGE_HEIGHT - 54  # 0.75in
 
     # Header Image
-    header_image_name = 'CardinalLogo.png'
-    header_image_width = 144  # 2in
-    header_image_height = 72
-    header_image_height, header_image_width = resize_image(header_image_name, header_image_height, header_image_width)
-    header_image_x = PAGE_LEFT_MARGIN
-    header_image_y = header_title_y - header_image_height + header_title_line_spacing
+    image_name = 'CardinalLogo.png'
+    image_width = 144  # 2in
+    image_height = 72
+    image_height, image_width = resize_image(image_name, image_height, image_width)
+    image_x = PAGE_LEFT_MARGIN
+    image_y = page_title_y - image_height + page_title_line_spacing
 
     # Header Field Options
-    header_field_row_spacing = 14
-    header_field_title_font = 'Times'
-    header_field_title_font_size = 10
-    header_field_body_font = 'Inter'
-    header_field_body_font_size = 9
-    header_field_body_line_spacing = 12
+    row_spacing = 14
+    title_font = 'Times'
+    title_font_size = 10
+    body_font = 'Inter'
+    body_font_size = 9
+    body_line_spacing = 12
 
     # Header Address Block
-    header_field_address = ['Cardinal Compliance Consultants', '5353 Secor Rd.', 'Toledo, OH 43623', 'P: 419-882-9224']
-    header_field_address_font = 'Times'
-    header_field_address_font_size = 9
-    header_field_address_line_spacing = 12
-    header_field_address_width = header_image_width
+    address = ['Cardinal Compliance Consultants', '5353 Secor Rd.', 'Toledo, OH 43623', 'P: 419-882-9224']
+    address_font = 'Times'
+    address_font_size = 9
+    address_line_spacing = 12
+    address_width = image_width
 
     # Header Description
-    header_field_description_line_length = 78
-    header_field_description_line_limit = 5
-    header_field_description_height = num_lines(data['Description'], header_field_description_line_length,
-                                                header_field_description_line_limit)
+    description_line_length = 78
+    description_line_limit = 5
+    description_height = num_lines(data['Description'], description_line_length,
+                                                description_line_limit)
 
     # Header Procedure Number
-    header_field_procedure_number_line_length = 16
+    procedure_number_line_length = 16
 
     # Header Facility
-    header_field_facility_line_length = 26
-    header_field_facility_line_limit = 5
-    header_field_facility_height = num_lines(data['Facility'], header_field_facility_line_length,
-                                             header_field_facility_line_limit)
+    facility_line_length = 26
+    facility_line_limit = 5
+    facility_height = num_lines(data['Facility'], facility_line_length,
+                                             facility_line_limit)
 
     # Header Location
-    header_field_location_line_length = 26
-    header_field_location_line_limit = 5
-    header_field_location_height = num_lines(data['Location'], header_field_location_line_length,
-                                             header_field_location_line_limit)
+    location_line_length = 26
+    location_line_limit = 5
+    location_height = num_lines(data['Location'], location_line_length,
+                                             location_line_limit)
 
     # Header Revision
-    header_field_revision_line_length = 6
-    header_field_revision_width = 60
+    revision_line_length = 6
+    revision_width = 60
 
     # Row Offset for Dynamic Data Entry
-    header_field_row1_offset = (len(header_field_address) * header_field_address_line_spacing + 2)  # Address Block
-    header_field_row2_offset = (header_field_description_height * header_field_body_line_spacing) + 2  # Description Row
-    header_field_row3_offset = max(header_field_facility_height,
-                                   header_field_location_height) * header_field_body_line_spacing + 2  # Facility Row
+    row1_height = (len(address) * address_line_spacing + 2)  # Address Block
+    row2_height = (description_height * body_line_spacing) + 2  # Description Row
+    row3_height = max(facility_height,
+                                   location_height) * body_line_spacing + 2  # Facility Row
 
     # Horizontal Lines (1 = top, 5 = bottom)
-    header_field_h_line1 = header_title_y + header_title_line_spacing
-    header_field_h_line2 = header_field_h_line1 - header_field_row_spacing
-    header_field_h_line3 = header_field_h_line2 - header_field_row1_offset
-    header_field_h_line4 = header_field_h_line3 - header_field_row2_offset
-    header_field_h_line5 = header_field_h_line4 - header_field_row3_offset
+    h_line1 = page_title_y + page_title_line_spacing
+    h_line2 = h_line1 - row_spacing
+    h_line3 = h_line2 - row1_height
+    h_line4 = h_line3 - row2_height
+    h_line5 = h_line4 - row3_height
 
     # Vertical Lines (1 = left, 6 = Right)
-    header_field_v_line1 = PAGE_LEFT_MARGIN
-    header_field_v_line2 = PAGE_LEFT_MARGIN + ((USABLE_WIDTH - header_field_address_width) / 2) - (
-                header_field_revision_width / 2)
-    header_field_v_line3 = PAGE_RIGHT_MARGIN - header_field_address_width - header_field_revision_width
-    header_field_v_line4 = PAGE_RIGHT_MARGIN - header_field_address_width
-    header_field_v_line5 = PAGE_RIGHT_MARGIN - (header_field_address_width * (2 / 5))
-    header_field_v_line6 = PAGE_RIGHT_MARGIN
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_LEFT_MARGIN + ((USABLE_WIDTH - address_width) / 2) - (
+                revision_width / 2)
+    v_line3 = PAGE_RIGHT_MARGIN - address_width - revision_width
+    v_line4 = PAGE_RIGHT_MARGIN - address_width
+    v_line5 = PAGE_RIGHT_MARGIN - (address_width * (2 / 5))
+    v_line6 = PAGE_RIGHT_MARGIN
 
     # Text Locations - Rows
-    header_field_row1_text = header_field_h_line1 - header_field_title_font_size
-    header_field_row2_text = header_field_h_line3 - header_field_title_font_size
-    header_field_row3_text = header_field_h_line4 - header_field_title_font_size
+    row1_text = h_line1 - title_font_size
+    row2_text = h_line3 - title_font_size
+    row3_text = h_line4 - title_font_size
 
     # Text Locations - Columns
-    header_field_horizonal_spacing = 3
-    header_field_column1_text = header_field_v_line1 + header_field_horizonal_spacing
-    header_field_column2_text = header_field_v_line2 + header_field_horizonal_spacing
-    header_field_column3_text = header_field_v_line3 + header_field_horizonal_spacing
-    header_field_column4_text = header_field_v_line4 + header_field_horizonal_spacing
-    header_field_column5_text = header_field_v_line4 + (header_field_address_width / 2)
-    header_field_column6_text = header_field_v_line5 + header_field_horizonal_spacing
+    horizonal_spacing = 3
+    column1_text = v_line1 + horizonal_spacing
+    column2_text = v_line2 + horizonal_spacing
+    column3_text = v_line3 + horizonal_spacing
+    column4_text = v_line4 + horizonal_spacing
+    column5_text = v_line4 + (address_width / 2)
+    column6_text = v_line5 + horizonal_spacing
 
     # Header - Address Block Locations
-    header_field_address_block_x = header_field_column4_text
-    header_field_address_block_y = header_field_h_line2 - header_field_body_font_size
+    address_block_x = column4_text
+    address_block_y = h_line2 - body_font_size
 
     # Header - Description Location
-    header_field_description_x = header_field_column1_text + 53
+    description_x = column1_text + 53
 
     # Header - Procedure Number Location
-    header_field_procedure_number_x = header_field_column4_text + 53
+    procedure_number_x = column4_text + 53
 
     # Header - Facility Location
-    header_field_facility_x = header_field_column1_text + 37
+    facility_x = column1_text + 37
 
     # Header - Location
-    header_field_location_x = header_field_column2_text + 42
+    location_x = column2_text + 42
 
     # Header - Revision Location
-    header_field_revision_x = header_field_column3_text + 20
+    revision_x = column3_text + 20
 
     # Header - Date Location
-    header_field_date_x = header_field_column4_text + 23
+    date_x = column4_text + 23
 
     # Header - Origin Location
-    header_field_origin_x = header_field_column6_text + 30
+    origin_x = column6_text + 30
 
     # Creating Header Title
-    pdf.setFont(header_title_font, header_title_font_size)
-    pdf.drawCentredString(PAGE_WIDTH_MIDDLE, header_title_y, "LOCKOUT-TAGOUT")
-    pdf.drawCentredString(PAGE_WIDTH_MIDDLE, header_title_y - header_title_line_spacing, "PROCEDURE")
-    pdf.drawImage('CardinalLogo.png', header_image_x, header_image_y, header_image_width, header_image_height)
+    pdf.setFont(page_title_font, page_title_font_size)
+    pdf.drawCentredString(PAGE_WIDTH_MIDDLE, page_title_y, "LOCKOUT-TAGOUT")
+    pdf.drawCentredString(PAGE_WIDTH_MIDDLE, page_title_y - page_title_line_spacing, "PROCEDURE")
+    pdf.drawImage('CardinalLogo.png', image_x, image_y, image_width, image_height)
 
     # Creating Header Field Outlines
     pdf.setLineWidth(DEFAULT_LINE_WIDTH)
 
     # Horizontal Outline Lines
-    pdf.line(header_field_v_line4, header_field_h_line1, header_field_v_line6, header_field_h_line1)
-    pdf.line(header_field_v_line4, header_field_h_line2, header_field_v_line6, header_field_h_line2)
-    pdf.line(header_field_v_line1, header_field_h_line3, header_field_v_line6, header_field_h_line3)
-    pdf.line(header_field_v_line1, header_field_h_line4, header_field_v_line6, header_field_h_line4)
-    pdf.line(header_field_v_line1, header_field_h_line5, header_field_v_line6, header_field_h_line5)
+    pdf.line(v_line4, h_line1, v_line6, h_line1)
+    pdf.line(v_line4, h_line2, v_line6, h_line2)
+    pdf.line(v_line1, h_line3, v_line6, h_line3)
+    pdf.line(v_line1, h_line4, v_line6, h_line4)
+    pdf.line(v_line1, h_line5, v_line6, h_line5)
     # Vertical Outline lines
-    pdf.line(header_field_v_line1, header_field_h_line3, header_field_v_line1, header_field_h_line5)
-    pdf.line(header_field_v_line4, header_field_h_line1, header_field_v_line4, header_field_h_line5)
-    pdf.line(header_field_v_line6, header_field_h_line1, header_field_v_line6, header_field_h_line5)
+    pdf.line(v_line1, h_line3, v_line1, h_line5)
+    pdf.line(v_line4, h_line1, v_line4, h_line5)
+    pdf.line(v_line6, h_line1, v_line6, h_line5)
     # Vertical Divider Lines
-    pdf.line(header_field_v_line2, header_field_h_line4, header_field_v_line2, header_field_h_line5)
-    pdf.line(header_field_v_line3, header_field_h_line4, header_field_v_line3, header_field_h_line5)
-    pdf.line(header_field_v_line5, header_field_h_line4, header_field_v_line5, header_field_h_line5)
+    pdf.line(v_line2, h_line4, v_line2, h_line5)
+    pdf.line(v_line3, h_line4, v_line3, h_line5)
+    pdf.line(v_line5, h_line4, v_line5, h_line5)
 
     # Creating Header Fields Titles
-    pdf.setFont(header_field_title_font, header_field_title_font_size)
-    pdf.drawCentredString(header_field_column5_text, header_field_row1_text, 'Developed By:')
-    pdf.drawString(header_field_column1_text, header_field_row2_text, 'Description:')
-    pdf.drawString(header_field_column1_text, header_field_row3_text, 'Facility:')
-    pdf.drawString(header_field_column2_text, header_field_row3_text, 'Location:')
-    pdf.drawString(header_field_column3_text, header_field_row3_text, 'Rev:')
-    pdf.drawString(header_field_column4_text, header_field_row2_text, 'Procedure #:')
-    pdf.drawString(header_field_column4_text, header_field_row3_text, 'Date:')
-    pdf.drawString(header_field_column6_text, header_field_row3_text, 'Origin:')
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawCentredString(column5_text, row1_text, 'Developed By:')
+    pdf.drawString(column1_text, row2_text, 'Description:')
+    pdf.drawString(column1_text, row3_text, 'Facility:')
+    pdf.drawString(column2_text, row3_text, 'Location:')
+    pdf.drawString(column3_text, row3_text, 'Rev:')
+    pdf.drawString(column4_text, row2_text, 'Procedure #:')
+    pdf.drawString(column4_text, row3_text, 'Date:')
+    pdf.drawString(column6_text, row3_text, 'Origin:')
 
     # Creating Header Field Text
-    pdf.setFont(header_field_body_font, header_field_body_font_size)
-    for line in range(header_field_description_height):
-        pdf.drawString(header_field_description_x, header_field_row2_text - (line * header_field_body_line_spacing),
-                       split_text(data['Description'], header_field_description_line_length,
-                                  header_field_description_line_limit)[line])
-    pdf.drawString(header_field_procedure_number_x, header_field_row2_text,
-                   check_length(data['ProcedureNumber'], header_field_procedure_number_line_length, False))
-    for line in range(header_field_facility_height):
-        pdf.drawString(header_field_facility_x, header_field_row3_text - (line * header_field_body_line_spacing),
-                       split_text(data['Facility'], header_field_facility_line_length, header_field_facility_line_limit)[
+    pdf.setFont(body_font, body_font_size)
+    for line in range(description_height):
+        pdf.drawString(description_x, row2_text - (line * body_line_spacing),
+                       split_text(data['Description'], description_line_length,
+                                  description_line_limit)[line])
+    pdf.drawString(procedure_number_x, row2_text,
+                   check_length(data['ProcedureNumber'], procedure_number_line_length, False))
+    for line in range(facility_height):
+        pdf.drawString(facility_x, row3_text - (line * body_line_spacing),
+                       split_text(data['Facility'], facility_line_length, facility_line_limit)[
                            line])
-    for line in range(header_field_location_height):
-        pdf.drawString(header_field_location_x, header_field_row3_text - (line * header_field_body_line_spacing),
-                       split_text(data['Location'], header_field_location_line_length, header_field_location_line_limit)[
+    for line in range(location_height):
+        pdf.drawString(location_x, row3_text - (line * body_line_spacing),
+                       split_text(data['Location'], location_line_length, location_line_limit)[
                            line])
-    pdf.drawString(header_field_revision_x, header_field_row3_text, data['Revision'][0:header_field_revision_line_length])
+    pdf.drawString(revision_x, row3_text, data['Revision'][0:revision_line_length])
     pdf.setFont("Inter", 9)
-    pdf.drawString(header_field_date_x, header_field_row3_text, data['Date'])
-    pdf.drawString(header_field_origin_x, header_field_row3_text, data['Origin'])
+    pdf.drawString(date_x, row3_text, data['Date'])
+    pdf.drawString(origin_x, row3_text, data['Origin'])
 
     # Creating the Address Block
-    pdf.setFont(header_field_address_font, header_field_address_font_size)
-    for line in range(len(header_field_address)):
-        pdf.drawString(header_field_address_block_x,
-                       header_field_address_block_y - (line * header_field_address_line_spacing),
-                       header_field_address[line])
+    pdf.setFont(address_font, address_font_size)
+    for line in range(len(address)):
+        pdf.drawString(address_block_x,
+                       address_block_y - (line * address_line_spacing),
+                       address[line])
         if line > 3:
-            header_field_row1_offset += header_field_address_font_size
+            row1_height += address_font_size
 
     # Return the bottom of this section for use as start of next
-    ic(data)
-    return header_field_h_line5
+    ic('Adding Header')
+    return h_line5
 
 
-add_header()
+def add_machine_info(import_bottom: float = PAGE_MARGIN):
+    # Sets default parameters for a clean slate
+    set_default()
+
+    # Machine Info Formatting Options
+    row_spacing = 14
+    title_font = 'DM Serif Display'
+    title_font_size = 10
+    sub_title_font = 'Times'
+    sub_title_font_size = 10
+    body_font = 'Inter'
+    body_font_size = 9
+    body_line_spacing = 12
+
+    # Square Formatting Options
+    square_height = 40
+    square_width = square_height
+
+    # Isolation Points Formatting Options
+    isolation_point_title_font = 'DM Serif Display'
+    isolation_point_title_font_size = 16
+    isolation_points_font = 'Inter'
+    
+    isolation_points = data.get('IsolationPoints', '0')
+    if len(isolation_points) == 1:
+        isolation_points_font_size = 36
+    elif len(isolation_points) == 2:
+        isolation_points_font_size = 28
+    elif len(isolation_points) >= 3:
+        isolation_points_font_size = 20
+        isolation_points = isolation_points[:3]
+
+    # Lock Tag Foratting Options
+    lock_image_file = 'LockTag.png'
+    lock_image_height = 40
+    lock_image_width = lock_image_height
+    lock_image_height, lock_image_width = resize_image(lock_image_file, lock_image_height, lock_image_width)
+
+    # Notes Formatting Options
+    notes_line_length = 60
+    notes_line_limit = 5
+    notes_height = num_lines(data.get('Notes', ''), notes_line_length, notes_line_limit)
+
+    # Notes Block Height
+    if (notes_height * body_line_spacing + 2) > (row_spacing * 3):
+        row1_height = (notes_height * body_line_spacing + 2)  
+    else:
+        row1_height = (row_spacing * 3)
+
+    h_line1 = import_bottom - DEFAULT_ROW_SPACING
+    h_line2 = h_line1 - row_spacing
+    h_line3 = h_line2 - (3.5 * row_spacing)
+    h_line4 = h_line3 - row_spacing
+    h_line5 = h_line4 - row1_height
+
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_WIDTH_MIDDLE
+    v_line3 = PAGE_RIGHT_MARGIN
+
+    vertical_text_spacing = 3
+    row1_text = h_line1 - title_font_size
+    row2_text = (h_line1 - ((h_line1 - h_line3) / 2)) + (isolation_point_title_font_size / 2) - vertical_text_spacing
+    row3_text = (h_line1 - ((h_line1 - h_line3) / 2)) - (isolation_points_font_size / 3)
+    row4_text = (h_line1 - ((h_line1 - h_line3) / 2)) - (isolation_point_title_font_size) + vertical_text_spacing
+    row5_text = h_line3 - title_font_size
+    row6_text = h_line4 - title_font_size
+
+    horizontal_text_spacing = 3
+    horizontal_image_spacing = 10
+    column1_text = (v_line1 + ((v_line2 - v_line1) / 2))
+    column2_text = v_line2 + horizontal_text_spacing
+    column3_text = v_line2 + horizontal_image_spacing + (lock_image_width / 2)
+    column4_text = v_line2 + lock_image_width + square_width + (3 * horizontal_image_spacing)
+    column5_text = (v_line2 + ((v_line3 - v_line2) / 2))
+    
+    # Horizontal Lines
+    pdf.line(v_line1, h_line1, v_line3, h_line1)
+    pdf.line(v_line1, h_line2, v_line2, h_line2)
+    pdf.line(v_line2, h_line3, v_line3, h_line3)
+    pdf.line(v_line2, h_line4, v_line3, h_line4)
+    pdf.line(v_line1, h_line5, v_line3, h_line5)
+
+    # Vertical Lines
+    pdf.line(v_line1, h_line1, v_line1, h_line5)
+    pdf.line(v_line2, h_line1, v_line2, h_line5)
+    pdf.line(v_line3, h_line1, v_line3, h_line5)
+
+    # Titles
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawCentredString(column1_text, row1_text, 'Machine to be Locked Out')
+    pdf.setFont(sub_title_font, sub_title_font_size)
+    pdf.drawCentredString(column5_text, row5_text, 'Notes:')
+    pdf.setFont(isolation_point_title_font, isolation_point_title_font_size)
+    pdf.drawString(column4_text, row2_text, 'Isolation Points to be')
+    pdf.drawString(column4_text, row4_text, 'Locked and Tagged')
+
+    # Square
+    square_left = v_line2 + horizontal_image_spacing
+    square_right = square_left + square_width
+    square_top = (h_line1 - ((h_line1 - h_line3) / 2)) + (square_height / 2)
+    square_bottom = square_top - square_height
+    pdf.line(square_left, square_top, square_right, square_top)
+    pdf.line(square_right, square_top, square_right, square_bottom)
+    pdf.line(square_right, square_bottom, square_left, square_bottom)
+    pdf.line(square_left, square_bottom, square_left, square_top)
+
+    # Lock Tag Image
+    pdf.drawImage(lock_image_file, square_right + horizontal_image_spacing, (h_line1 - ((h_line1 - h_line3) / 2)) - (lock_image_height / 2), lock_image_width, lock_image_height)
+
+    # Isolation Points
+    pdf.setFont(isolation_points_font, isolation_points_font_size)
+    pdf.drawCentredString(column3_text, row3_text, isolation_points)
+
+    # Notes Text
+    pdf.setFont(body_font, body_font_size)
+    notes = split_text(data.get('Notes', ''), notes_line_length, notes_line_limit)
+    for line in range(len(notes)):
+        pdf.drawString(column2_text, row6_text - (line * body_line_spacing), notes[line])
+
+
+    ic('Adding Machine Info')
+    return h_line5
+
+
+
+
+bottom = add_header()
+bottom = add_machine_info(bottom)
 pdf.save()
