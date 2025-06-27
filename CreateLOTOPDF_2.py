@@ -531,7 +531,7 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
 
 
      # Checking if new page is needed
-    if import_bottom - total_height - DEFAULT_ROW_SPACING < PAGE_MARGIN:
+    if import_bottom - total_height - DEFAULT_ROW_SPACING <= PAGE_MARGIN:
         import_bottom = new_page()
 
 
@@ -699,7 +699,6 @@ def add_source(source: dict, import_bottom:float, import_height:float) -> float:
     isolation_method_line_limit = 10
     verification_method_line_limit = 10
 
-
     # Horizontal Lines
     pdf.line(v_line1, h_line1, v_line7, h_line1)
     pdf.line(v_line1, h_line2, v_line7, h_line2)
@@ -740,7 +739,6 @@ def add_source(source: dict, import_bottom:float, import_height:float) -> float:
 
 
 
-    ic('Add Source')
     return h_line2
 
     
@@ -749,10 +747,41 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     # Sets default parameters for a clean slate
     set_default()
 
-    bottom = add_source_titles(import_bottom)
-    bottom = add_source(data['Sources'][0], bottom, 110)
+    line_length = 14
+    device_line_limit = 10
+    description_line_limit = 10
+    isolation_method_line_limit = 10
+    verification_method_line_limit = 10
 
-    ic('Added Sources')
+    sources = data['Sources']
+
+    for source_num in range(len(sources)):
+
+        source = sources[source_num]
+
+        device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(source.get('Description', ''), line_length, description_line_limit)
+        isolation_method_height = num_lines(source.get('IsolationMethod', ''), line_length, isolation_method_line_limit)
+        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length, verification_method_line_limit)
+
+        minHeight = 110
+        height = (max(device_height, isolation_method_height, verification_method_height) * 11) + 16
+
+        if height < minHeight:
+            height = minHeight
+
+
+        if source_num == 0:
+            if import_bottom - DEFAULT_ROW_SPACING - SOURCE_TITLE_BLOCK_HEIGHT - height <= PAGE_MARGIN:
+                bottom = new_page_title()
+            else:
+                bottom = add_source_titles(import_bottom)
+        else:
+            if bottom - height <= PAGE_MARGIN:
+                bottom = new_page_title()
+
+        bottom = add_source(source, bottom, height)
+            
+
 
 
 bottom = first_page()
