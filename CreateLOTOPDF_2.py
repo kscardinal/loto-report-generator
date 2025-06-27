@@ -128,6 +128,8 @@ USABLE_WIDTH = PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN
 PAGE_WIDTH_MIDDLE = PAGE_WIDTH / 2
 PAGE_HEIGHT_MIDDLE = PAGE_HEIGHT / 2
 
+SOURCE_TITLE_BLOCK_HEIGHT = 25
+
 # Default
 DEFAULT_LINE_WIDTH = 0.25  # This was arbitrary but looks like what it was
 DEFAULT_COLOR = [0, 0, 0]  # Black
@@ -151,13 +153,34 @@ pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
 
 
-# Adds new Page
-def new_page():
+# Adds First Page
+def first_page() -> float:
+    bottom = add_header()
+    bottom = add_machine_info(bottom)
+    bottom = add_shutdown_sequence(bottom)
+
+    return bottom
+
+
+# Adds new Page (Inclduing Source Titles)
+def new_page_title() -> float:
     pdf.showPage()
+    bottom = add_header()
+    bottom = add_source_titles(bottom)
+
+    return bottom
+
+
+# Adds new Page (Excluding Source Titles)
+def new_page() -> float:
+    pdf.showPage()
+    bottom = add_header()
+
+    return bottom
 
 
 # Adds Header to current page
-def add_header():
+def add_header() -> float:
     # Sets default parameters for a clean slate
     set_default()
     
@@ -347,7 +370,7 @@ def add_header():
 
 
 # Adds Machine Info
-def add_machine_info(import_bottom: float = PAGE_MARGIN):
+def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     # Sets default parameters for a clean slate
     set_default()
 
@@ -481,7 +504,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN):
 
 
 # Add Shutdown Sequence
-def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN):
+def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     # Sets default parameters for a clean slate
     set_default()
 
@@ -508,14 +531,11 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN):
 
 
      # Checking if new page is needed
-    if import_bottom - total_height < PAGE_MARGIN:
-        new_page()
-        import_bottom = add_header() - row_spacing
-        new_page_bool = True
-    else:
-        new_page_bool = False
+    if import_bottom - total_height - DEFAULT_ROW_SPACING < PAGE_MARGIN:
+        import_bottom = new_page()
 
-    h_line1 = import_bottom
+
+    h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - title_line_spacing
     h_line3 = h_line2 - body_num_lines * (body_line_spacing + 2)
 
@@ -523,8 +543,7 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN):
     v_line2 = PAGE_RIGHT_MARGIN
 
     # Horizontal Lines
-    if new_page_bool: 
-        pdf.line(v_line1, h_line1, v_line2, h_line1)
+    pdf.line(v_line1, h_line1, v_line2, h_line1)
     pdf.line(v_line1, h_line2, v_line2, h_line2)
     pdf.line(v_line1, h_line3, v_line2, h_line3)
     
@@ -554,13 +573,189 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN):
 
 
     ic('Adding Shutdown Sequence')
-    return 'hello'
+    return h_line3
+
+
+# Add Source Title Block
+def add_source_titles(import_bottom:float) -> float:
+    # Sets default parameters for a clean slate
+    set_default()
+
+    title_font = 'Times'
+    title_font_size = 10
+    title_line_spacing = 12
+    title_row_spacing = SOURCE_TITLE_BLOCK_HEIGHT
+
+    text_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (2 / 14)
+    image_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (3 / 14)
+
+    h_line1 = import_bottom - DEFAULT_ROW_SPACING
+    h_line2 = h_line1 - title_row_spacing
+
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_LEFT_MARGIN + text_block_width
+    v_line3 = v_line2 + text_block_width
+    v_line4 = PAGE_WIDTH_MIDDLE
+    v_line5 = PAGE_WIDTH_MIDDLE + text_block_width
+    v_line6 = v_line5 + text_block_width
+    v_line7 = PAGE_RIGHT_MARGIN
+
+    row1_text = h_line1 - ((h_line1 - h_line2) / 2) + 2
+    row2_text = h_line1 - ((h_line1 - h_line2) / 2) - 3
+    row3_text = h_line1 - ((h_line1 - h_line2) / 2) - 7
+
+    column1_text = v_line1 + (text_block_width / 2)
+    column2_text = v_line2 + (text_block_width / 2)
+    column3_text = v_line3 + (image_block_width / 2)
+    column4_text = v_line4 + (text_block_width / 2)
+    column5_text = v_line5 + (text_block_width / 2)
+    column6_text = v_line6 + (image_block_width / 2)
+
+
+    # Horizontal Lines
+    pdf.line(v_line1, h_line1, v_line7, h_line1)
+    pdf.line(v_line1, h_line2, v_line7, h_line2)
+
+    # Vertical lines
+    pdf.line(v_line1, h_line1, v_line1, h_line2)
+    pdf.line(v_line2, h_line1, v_line2, h_line2)
+    pdf.line(v_line3, h_line1, v_line3, h_line2)
+    pdf.line(v_line4, h_line1, v_line4, h_line2)
+    pdf.line(v_line5, h_line1, v_line5, h_line2)
+    pdf.line(v_line6, h_line1, v_line6, h_line2)
+    pdf.line(v_line7, h_line1, v_line7, h_line2)
+
+
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawCentredString(column1_text, row2_text, 'Energy Source')
+    pdf.drawCentredString(column2_text, row2_text, 'Device')
+    pdf.drawCentredString(column3_text, row2_text, 'Isolation Point')
+    pdf.drawCentredString(column4_text, row2_text, 'Isolation Method')
+    pdf.drawCentredString(column5_text,row1_text, 'Verification')
+    pdf.drawCentredString(column5_text, row3_text, 'Method')
+    pdf.drawCentredString(column6_text, row2_text, 'Verification Device')
+
+
+    ic('Adding Source Titles')
+    return h_line2
+
+
+# Add Source
+def add_source(source: dict, import_bottom:float, import_height:float) -> float:
+    # Sets default parameters for a clean slate
+    set_default()
+
+    # Sources Blocks
+    row_spacing = 16
+    body_font = "Inter"
+    body_font_size = 10
+    energy_source_line_spacing = 16
+    device_line_spacing = 11
+    isolation_method_line_spacing = 11
+    verification_method_line_spacing = 11
+    default_image = "ImageNotFound.jpg"
+
+    text_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (2 / 14)
+    image_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (3 / 14)
+
+    h_line1 = import_bottom
+    h_line2 = h_line1 - import_height
+
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_LEFT_MARGIN + text_block_width
+    v_line3 = v_line2 + text_block_width
+    v_line4 = PAGE_WIDTH_MIDDLE
+    v_line5 = PAGE_WIDTH_MIDDLE + text_block_width
+    v_line6 = v_line5 + text_block_width
+    v_line7 = PAGE_RIGHT_MARGIN
+
+    column1_text = v_line1 + (text_block_width / 2)
+    column2_text = v_line2 + (text_block_width / 2)
+    column3_image = v_line3 + (image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+    column4_text = v_line4 + (text_block_width / 2)
+    column5_text = v_line5 + (text_block_width / 2)
+    column6_image = v_line6 + (image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+
+    text_block_middle_width = h_line1 - (import_height / 2)
+    image_block_middle_width = h_line1 - (import_height / 2)
+
+    isolation_point_max_height = import_height - row_spacing
+    isolation_point_max_width = (v_line4 - v_line3) - row_spacing
+
+    verification_device_max_height = import_height - row_spacing
+    verification_device_max_width = (v_line7 - v_line6) - row_spacing
+
+    
+    blank_text = "_____________"
+    blank_text_v = "___________"
+    blank_text_psi = "_________"
+    blank_text_lbs = "_________"
+    blank_text_temp = "________"
+    blank_text_tag = "______"
+
+    line_length = 14
+    device_line_limit = 10
+    description_line_limit = 10
+    isolation_method_line_limit = 10
+    verification_method_line_limit = 10
+
+
+    # Horizontal Lines
+    pdf.line(v_line1, h_line1, v_line7, h_line1)
+    pdf.line(v_line1, h_line2, v_line7, h_line2)
+    # Vertical Lines
+    pdf.line(v_line1, h_line1, v_line1, h_line2)
+    pdf.line(v_line2, h_line1, v_line2, h_line2)
+    pdf.line(v_line3, h_line1, v_line3, h_line2)
+    pdf.line(v_line4, h_line1, v_line4, h_line2)
+    pdf.line(v_line5, h_line1, v_line5, h_line2)
+    pdf.line(v_line6, h_line1, v_line6, h_line2)
+    pdf.line(v_line7,  h_line1, v_line7, h_line2)
+
+
+    # Add Energy Source
+    pdf.setFont(body_font, body_font_size)
+    match source.get('EnergySource', 'Other'):
+        case 'Electric':
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('VOLTS', blank_text_v))
+        case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Regrigerant':
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('PSI', blank_text_psi))
+        case 'Chemical':
+            pdf.drawCentredString(column1_text, text_block_middle_width + energy_source_line_spacing, source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width, source.get('ChemicalName', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - energy_source_line_spacing, source.get('PSI', blank_text_psi))
+        case 'Gravity':
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('LBS', blank_text_lbs))
+        case 'Thermal':
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('TEMP', blank_text_temp))
+        case 'Other':
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), blank_text)
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), blank_text)
 
 
 
 
 
-bottom = add_header()
-bottom = add_machine_info(bottom)
-bottom = add_shutdown_sequence(bottom)
+    ic('Add Source')
+    return h_line2
+
+    
+# Adds all sources
+def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
+    # Sets default parameters for a clean slate
+    set_default()
+
+    bottom = add_source_titles(import_bottom)
+    bottom = add_source(data['Sources'][0], bottom, 110)
+
+    ic('Added Sources')
+
+
+bottom = first_page()
+bottom = add_sources(bottom)
+
 pdf.save()

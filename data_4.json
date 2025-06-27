@@ -15,12 +15,12 @@
     "CompletedDate": "01/02/2025",
     "Sources": [
         {
-            "EnergySource": "Electric",
-            "ChemicalName": "",
-            "VOLTS": "",
-            "PSI": "",
-            "LBS": "",
-            "TEMP": "",
+            "EnergySource": "Chemical",
+            "ChemicalName": "Oxygen",
+            "VOLTS": "12,000",
+            "PSI": "12,000",
+            "LBS": "12,000",
+            "TEMP": "12,000",
             "Device": "Disconnect",
             "Tag": "0001",
             "Description": "",
