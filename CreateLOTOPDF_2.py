@@ -2,12 +2,14 @@
 # pip install reportlab
 
 # Import Functions
-from PIL import Image
 import json
+
+from icecream import ic
+from PIL import Image
 from PyPDF2 import PdfReader
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 
 
 # Resize image based on max height and/or width
@@ -106,7 +108,7 @@ def numLines(input_text, line_length, max_lines):
     return processText(input_text, line_length, max_lines, return_lines=False)
 
 
-# Check to see if variable exists
+# Check to see if a variable exists
 def checkExists(fields, field_name):
     if fields.get(field_name):
         return True
@@ -167,9 +169,7 @@ def addHeader():
     header_Image_Name = "CardinalLogo.png"
     header_Image_Width = 144  # 2in
     header_Image_Height = 72
-    header_Image_Height, header_Image_Width = resize_image(
-        header_Image_Name, header_Image_Height, header_Image_Width
-    )
+    header_Image_Height, header_Image_Width = resize_image(header_Image_Name, header_Image_Height, header_Image_Width)
     header_Image_X = page_LeftMargin
     header_Image_Y = header_Title_Y - header_Image_Height + header_Title_LineSpacing
 
@@ -228,16 +228,10 @@ def addHeader():
     header_Field_Revision_Width = 60
 
     # Row Offset for Dynamic Data Entry
-    header_Field_Row1_Offset = (
-        len(header_Field_Address) * header_Field_Address_LineSpacing + 2
-    )  # Address Block
-    header_Field_Row2_Offset = (
-        header_Field_Description_Height * header_Field_Body_LineSpacing
-    ) + 2  # Description Row
+    header_Field_Row1_Offset = len(header_Field_Address) * header_Field_Address_LineSpacing + 2  # Address Block
+    header_Field_Row2_Offset = (header_Field_Description_Height * header_Field_Body_LineSpacing) + 2  # Description Row
     header_Field_Row3_Offset = (
-        max(header_Field_Facility_Height, header_Field_Location_Height)
-        * header_Field_Body_LineSpacing
-        + 2
+        max(header_Field_Facility_Height, header_Field_Location_Height) * header_Field_Body_LineSpacing + 2
     )  # Facility Row
 
     # Horizontal Lines (1 = top, 5 = bottom)
@@ -250,13 +244,9 @@ def addHeader():
     # Vertical Lines (1 = left, 6 = Right)
     header_Field_V_Line1 = page_LeftMargin
     header_Field_V_Line2 = (
-        page_LeftMargin
-        + ((page_MarginWidth - header_Field_Address_Width) / 2)
-        - (header_Field_Revision_Width / 2)
+        page_LeftMargin + ((page_MarginWidth - header_Field_Address_Width) / 2) - (header_Field_Revision_Width / 2)
     )
-    header_Field_V_Line3 = (
-        page_RightMargin - header_Field_Address_Width - header_Field_Revision_Width
-    )
+    header_Field_V_Line3 = page_RightMargin - header_Field_Address_Width - header_Field_Revision_Width
     header_Field_V_Line4 = page_RightMargin - header_Field_Address_Width
     header_Field_V_Line5 = page_RightMargin - (header_Field_Address_Width * (2 / 5))
     header_Field_V_Line6 = page_RightMargin
@@ -303,9 +293,7 @@ def addHeader():
     # Creating Header Title
     pdf.setFont(header_Title_Font, header_Title_FontSize)
     pdf.drawCentredString(pageWidth_Middle, header_Title_Y, "LOCKOUT-TAGOUT")
-    pdf.drawCentredString(
-        pageWidth_Middle, header_Title_Y - header_Title_LineSpacing, "PROCEDURE"
-    )
+    pdf.drawCentredString(pageWidth_Middle, header_Title_Y - header_Title_LineSpacing, "PROCEDURE")
     pdf.drawImage(
         "CardinalLogo.png",
         header_Image_X,
@@ -368,30 +356,13 @@ def addHeader():
         header_Field_H_Line5,
     )
     # Vertical Divider Lines
-    pdf.line(
-        header_Field_V_Line2,
-        header_Field_H_Line4,
-        header_Field_V_Line2,
-        header_Field_H_Line5,
-    )
-    pdf.line(
-        header_Field_V_Line3,
-        header_Field_H_Line4,
-        header_Field_V_Line3,
-        header_Field_H_Line5,
-    )
-    pdf.line(
-        header_Field_V_Line5,
-        header_Field_H_Line4,
-        header_Field_V_Line5,
-        header_Field_H_Line5,
-    )
+    pdf.line(header_Field_V_Line2, header_Field_H_Line4, header_Field_V_Line2, header_Field_H_Line5,)
+    pdf.line(header_Field_V_Line3, header_Field_H_Line4, header_Field_V_Line3, header_Field_H_Line5,)
+    pdf.line(header_Field_V_Line5, header_Field_H_Line4, header_Field_V_Line5, header_Field_H_Line5,)
 
     # Creating Header Fields Titles
     pdf.setFont(header_Field_Title_Font, header_Field_Title_FontSize)
-    pdf.drawCentredString(
-        header_Field_Column5_Text, header_Field_Row1_Text, "Developed By:"
-    )
+    pdf.drawCentredString(header_Field_Column5_Text, header_Field_Row1_Text, "Developed By:")
     pdf.drawString(header_Field_Column1_Text, header_Field_Row2_Text, "Description:")
     pdf.drawString(header_Field_Column1_Text, header_Field_Row3_Text, "Facility:")
     pdf.drawString(header_Field_Column2_Text, header_Field_Row3_Text, "Location:")
@@ -415,9 +386,7 @@ def addHeader():
     pdf.drawString(
         headerField_ProcedureNumber_X,
         header_Field_Row2_Text,
-        checkLength(
-            data["ProcedureNumber"], header_Field_ProcedureNumber_LineLength, False
-        ),
+        checkLength(data["ProcedureNumber"], header_Field_ProcedureNumber_LineLength, False),
     )
     for line in range(header_Field_Facility_Height):
         pdf.drawString(

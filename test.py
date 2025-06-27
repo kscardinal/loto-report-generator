@@ -1,7 +1,8 @@
 # IMPORT FUNCTIONS
-from fillpdf import fillpdfs
-import shutil
 import os
+import shutil
+
+from fillpdf import fillpdfs
 
 
 # DUPLICATE FILE

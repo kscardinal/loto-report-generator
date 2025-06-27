@@ -2,13 +2,14 @@
 # pip install reportlab
 
 # Import Functions
-from PIL import Image
 import json
-from PyPDF2 import PdfReader
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 import math
+
+from PIL import Image
+from PyPDF2 import PdfReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 
 
 # Resize image based on max height and/or width
@@ -167,9 +168,7 @@ headerTitle_Y = pageHeight - 54  # 0.75in
 headerImage_Name = "CardinalLogo.png"
 headerImage_Width = 144  # 2in
 headerImage_Height = 72
-headerImage_Height, headerImage_Width = resize_image(
-    headerImage_Name, headerImage_Height, headerImage_Width
-)
+headerImage_Height, headerImage_Width = resize_image(headerImage_Name, headerImage_Height, headerImage_Width)
 headerImage_X = page_LeftMargin
 headerImage_Y = headerTitle_Y - headerImage_Height + headerTitle_LineSpacing
 
@@ -192,9 +191,7 @@ headerField_AddressBlock_Font = "Times"
 headerField_AddressBlock_FontSize = 9
 headerField_AddressBlock_LineSpacing = 12
 
-headerField_Row1_Offset = (
-    len(headerField_Address) * headerField_AddressBlock_LineSpacing + 2
-)  # Address Block
+headerField_Row1_Offset = len(headerField_Address) * headerField_AddressBlock_LineSpacing + 2  # Address Block
 headerField_Row2_Offset = 0  # Description Row
 headerField_Row3_Offset = 0  # Facility Row
 
@@ -205,22 +202,12 @@ headerField_Rev_Width = 60
 headerField_H_Line1 = headerTitle_Y + headerTitle_LineSpacing
 headerField_H_Line2 = headerField_H_Line1 - headerField_RowSpacing
 headerField_H_Line3 = headerField_H_Line2 - headerField_Row1_Offset
-headerField_H_Line4 = (
-    headerField_H_Line3 - headerField_RowSpacing - headerField_Row2_Offset
-)
-headerField_H_Line5 = (
-    headerField_H_Line4 - headerField_RowSpacing - headerField_Row3_Offset
-)
+headerField_H_Line4 = headerField_H_Line3 - headerField_RowSpacing - headerField_Row2_Offset
+headerField_H_Line5 = headerField_H_Line4 - headerField_RowSpacing - headerField_Row3_Offset
 
 headerField_V_Line1 = page_LeftMargin
-headerField_V_Line2 = (
-    page_LeftMargin
-    + ((headerField_Width - headerField_TallSection_Width) / 2)
-    - (headerField_Rev_Width / 2)
-)
-headerField_V_Line3 = (
-    page_RightMargin - headerField_TallSection_Width - headerField_Rev_Width
-)
+headerField_V_Line2 = page_LeftMargin + ((headerField_Width - headerField_TallSection_Width) / 2) - (headerField_Rev_Width / 2)
+headerField_V_Line3 = page_RightMargin - headerField_TallSection_Width - headerField_Rev_Width
 headerField_V_Line4 = page_RightMargin - headerField_TallSection_Width
 headerField_V_Line5 = page_RightMargin - (headerField_TallSection_Width * (9 / 16))
 headerField_V_Line6 = page_RightMargin
@@ -259,15 +246,9 @@ machineField_Width = page_RightMargin - page_LeftMargin
 
 machineField_H_Line1 = headerField_H_Line5 - machineField_RowSpacing
 machineField_H_Line2 = machineField_H_Line1 - machineField_RowSpacing
-machineField_H_Line3 = (
-    machineField_H_Line2
-    - (2 * machineField_Title_LineSpacing)
-    - (2 * machineField_LargeText_FontSize)
-)
+machineField_H_Line3 = machineField_H_Line2 - (2 * machineField_Title_LineSpacing) - (2 * machineField_LargeText_FontSize)
 machineField_H_Line4 = machineField_H_Line3 - machineField_RowSpacing
-machineField_H_Line5 = (
-    machineField_H_Line4 - (machineField_Title_FontSize * 4) - machineField_Row1_Offset
-)
+machineField_H_Line5 = machineField_H_Line4 - (machineField_Title_FontSize * 4) - machineField_Row1_Offset
 
 machineField_V_Line1 = page_LeftMargin
 machineField_V_Line2 = pageWidth_Middle
@@ -281,15 +262,9 @@ machineField_Row4_Text = machineField_H_Line3 - machineField_Title_FontSize
 machineField_HorizontalSpacing = 10
 
 machineField_SquareSize = 40
-machineField_Square_Top = (
-    machineField_H_Line1
-    - ((machineField_H_Line1 - machineField_H_Line3) / 2)
-    + (machineField_SquareSize / 2)
-)
+machineField_Square_Top = machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) + (machineField_SquareSize / 2)
 machineField_Square_Bottom = (
-    machineField_H_Line1
-    - ((machineField_H_Line1 - machineField_H_Line3) / 2)
-    - (machineField_SquareSize / 2)
+    machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) - (machineField_SquareSize / 2)
 )
 machineField_Square_Left = machineField_V_Line2 + machineField_HorizontalSpacing
 machineField_Square_Right = machineField_Square_Left + machineField_SquareSize
@@ -298,17 +273,11 @@ machineField_LockImage_Height = 40
 machineField_LockImage_Width = machineField_LockImage_Height
 machineField_LockImage_X = machineField_Square_Right + machineField_HorizontalSpacing
 machineField_LockImage_Y = (
-    machineField_H_Line1
-    - ((machineField_H_Line1 - machineField_H_Line3) / 2)
-    - (machineField_LockImage_Height / 2)
+    machineField_H_Line1 - ((machineField_H_Line1 - machineField_H_Line3) / 2) - (machineField_LockImage_Height / 2)
 )
 
 machineField_Column1_Text = page_LeftMargin + ((machineField_Width / 2) / 2)
-machineField_Column2_Text = (
-    machineField_LockImage_X
-    + machineField_LockImage_Width
-    + machineField_HorizontalSpacing
-)
+machineField_Column2_Text = machineField_LockImage_X + machineField_LockImage_Width + machineField_HorizontalSpacing
 machineField_Column3_Text = page_RightMargin - ((machineField_Width / 2) / 2)
 
 
@@ -373,40 +342,16 @@ sourceTitleField_V_Line5 = pageWidth_Middle + sourceTitleField_TextBlock
 sourceTitleField_V_Line6 = sourceTitleField_V_Line5 + sourceTitleField_TextBlock
 sourceTitleField_V_Line7 = page_RightMargin
 
-sourceTitleField_Row1_Text = (
-    sourceTitleField_H_Line1
-    - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-    + 2
-)
-sourceTitleField_Row2_Text = (
-    sourceTitleField_H_Line1
-    - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-    - 3
-)
-sourceTitleField_Row3_Text = (
-    sourceTitleField_H_Line1
-    - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-    - 7
-)
+sourceTitleField_Row1_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) + 2
+sourceTitleField_Row2_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 3
+sourceTitleField_Row3_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 7
 
-sourceTitleField_Column1_Text = sourceTitleField_V_Line1 + (
-    sourceTitleField_TextBlock / 2
-)
-sourceTitleField_Column2_Text = sourceTitleField_V_Line2 + (
-    sourceTitleField_TextBlock / 2
-)
-sourceTitleField_Column3_Text = sourceTitleField_V_Line3 + (
-    sourceTitleField_ImageBlock / 2
-)
-sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (
-    sourceTitleField_TextBlock / 2
-)
-sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (
-    sourceTitleField_TextBlock / 2
-)
-sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (
-    sourceTitleField_ImageBlock / 2
-)
+sourceTitleField_Column1_Text = sourceTitleField_V_Line1 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column2_Text = sourceTitleField_V_Line2 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column3_Text = sourceTitleField_V_Line3 + (sourceTitleField_ImageBlock / 2)
+sourceTitleField_Column4_Text = sourceTitleField_V_Line4 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column5_Text = sourceTitleField_V_Line5 + (sourceTitleField_TextBlock / 2)
+sourceTitleField_Column6_Text = sourceTitleField_V_Line6 + (sourceTitleField_ImageBlock / 2)
 
 
 # Source Fields (The rest is inside the addSources() function because they need to be changed based on where they are in the doc.)
@@ -468,9 +413,7 @@ def addHeader():
     # Creating Header Title
     pdf.setFont(headerTitle_Font, headerTitle_FontSize)
     pdf.drawCentredString(pageWidth_Middle, headerTitle_Y, "LOCKOUT-TAGOUT")
-    pdf.drawCentredString(
-        pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE"
-    )
+    pdf.drawCentredString(pageWidth_Middle, headerTitle_Y - headerTitle_LineSpacing, "PROCEDURE")
     pdf.drawImage(
         "CardinalLogo.png",
         headerImage_X,
@@ -554,9 +497,7 @@ def addHeader():
 
     # Creating Header Fields Titles
     pdf.setFont(headerField_Title_Font, headerField_Title_FontSize)
-    pdf.drawCentredString(
-        headerField_Column5_Text, headerField_Row1_Text, "Developed By:"
-    )
+    pdf.drawCentredString(headerField_Column5_Text, headerField_Row1_Text, "Developed By:")
     pdf.drawString(headerField_Column1_Text, headerField_Row2_Text, "Description:")
     pdf.drawString(headerField_Column1_Text, headerField_Row3_Text, "Facility:")
     pdf.drawString(headerField_Column2_Text, headerField_Row3_Text, "Location:")
@@ -637,18 +578,12 @@ def addMachineInfo():
 
     # Creating Machine Fields Titles
     pdf.setFont(machineField_Title_Font, machineField_Title_FontSize)
-    pdf.drawCentredString(
-        machineField_Column1_Text, machineField_Row1_Text, "Machine to be Locked Out"
-    )
+    pdf.drawCentredString(machineField_Column1_Text, machineField_Row1_Text, "Machine to be Locked Out")
     pdf.drawCentredString(machineField_Column3_Text, machineField_Row4_Text, "Notes:")
 
     pdf.setFont(machineField_LargeText_Font, machineField_LargeText_FontSize)
-    pdf.drawString(
-        machineField_Column2_Text, machineField_Row2_Text, "Isolation Points to be"
-    )
-    pdf.drawString(
-        machineField_Column2_Text, machineField_Row3_Text, "Locked and Tagged"
-    )
+    pdf.drawString(machineField_Column2_Text, machineField_Row2_Text, "Isolation Points to be")
+    pdf.drawString(machineField_Column2_Text, machineField_Row3_Text, "Locked and Tagged")
 
     # Place Lock Tag Image
     pdf.drawImage(
@@ -740,9 +675,7 @@ def addShutdownInfo():
         shutdownField_Title_Color[2],
     )
     pdf.setFont(shutdownField_Title_Font, shutdownField_Title_FontSize)
-    pdf.drawCentredString(
-        shutdownField_Column1_Text, shutdownField_Row1_Text, "SHUTDOWN SEQUENCE"
-    )
+    pdf.drawCentredString(shutdownField_Column1_Text, shutdownField_Row1_Text, "SHUTDOWN SEQUENCE")
 
     pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
     pdf.setFont(shutdownField_Description_Font, shutdownField_Description_FontSize)
@@ -774,21 +707,9 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
 
     sourceTitleField_H_Line1 = newStartingYPos
     sourceTitleField_H_Line2 = sourceTitleField_H_Line1 - sourceTitleField_RowSpacing
-    sourceTitleField_Row1_Text = (
-        sourceTitleField_H_Line1
-        - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-        + 2
-    )
-    sourceTitleField_Row2_Text = (
-        sourceTitleField_H_Line1
-        - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-        - 3
-    )
-    sourceTitleField_Row3_Text = (
-        sourceTitleField_H_Line1
-        - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2)
-        - 7
-    )
+    sourceTitleField_Row1_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) + 2
+    sourceTitleField_Row2_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 3
+    sourceTitleField_Row3_Text = sourceTitleField_H_Line1 - ((sourceTitleField_H_Line1 - sourceTitleField_H_Line2) / 2) - 7
 
     # Horizontal Lines
     pdf.line(
@@ -851,27 +772,13 @@ def addSourceTitles(newStartingYPos=sourceTitleField_H_Line1):
     # Add Source Title Fields
     pdf.setFont(sourceTitleField_Title_Font, sourceTitleField_Title_FontSize)
 
-    pdf.drawCentredString(
-        sourceTitleField_Column1_Text, sourceTitleField_Row2_Text, "Energy Source"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column2_Text, sourceTitleField_Row2_Text, "Device"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column3_Text, sourceTitleField_Row2_Text, "Isolation Point"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column4_Text, sourceTitleField_Row2_Text, "Isolation Method"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column5_Text, sourceTitleField_Row1_Text, "Verification"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, "Method"
-    )
-    pdf.drawCentredString(
-        sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, "Verification Device"
-    )
+    pdf.drawCentredString(sourceTitleField_Column1_Text, sourceTitleField_Row2_Text, "Energy Source")
+    pdf.drawCentredString(sourceTitleField_Column2_Text, sourceTitleField_Row2_Text, "Device")
+    pdf.drawCentredString(sourceTitleField_Column3_Text, sourceTitleField_Row2_Text, "Isolation Point")
+    pdf.drawCentredString(sourceTitleField_Column4_Text, sourceTitleField_Row2_Text, "Isolation Method")
+    pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row1_Text, "Verification")
+    pdf.drawCentredString(sourceTitleField_Column5_Text, sourceTitleField_Row3_Text, "Method")
+    pdf.drawCentredString(sourceTitleField_Column6_Text, sourceTitleField_Row2_Text, "Verification Device")
 
     return sourceTitleField_H_Line2
 
@@ -906,14 +813,10 @@ def addSource(import_bottom, import_height):
     sourceField_Middle_Image = sourceField_H_Line1 - (import_height / 2)
 
     sourceField_IsolationPoint_MaxHeight = import_height - sourceField_RowSpacing
-    sourceField_IsolationPoint_MaxWidth = (
-        sourceField_V_Line4 - sourceField_V_Line3
-    ) - sourceField_RowSpacing
+    sourceField_IsolationPoint_MaxWidth = (sourceField_V_Line4 - sourceField_V_Line3) - sourceField_RowSpacing
 
     sourceField_VerificationDevice_MaxHeight = import_height - sourceField_RowSpacing
-    sourceField_VerificationDevice_MaxWidth = (
-        sourceField_V_Line7 - sourceField_V_Line6
-    ) - sourceField_RowSpacing
+    sourceField_VerificationDevice_MaxWidth = (sourceField_V_Line7 - sourceField_V_Line6) - sourceField_RowSpacing
 
     sourceField_Column1_Text = sourceTitleField_Column1_Text
     sourceField_Column2_Text = sourceTitleField_Column2_Text
@@ -1109,10 +1012,7 @@ def addSource(import_bottom, import_height):
             pdf.drawCentredString(
                 sourceField_Column2_Text,
                 sourceField_Middle_Text
-                + (
-                    ((math.floor(len(device) / 2) - 1) * sourceField_Device_LineSpacing)
-                    + 5
-                )
+                + (((math.floor(len(device) / 2) - 1) * sourceField_Device_LineSpacing) + 5)
                 - (sourceField_Device_LineSpacing * line),
                 device[line],
             )
@@ -1134,10 +1034,7 @@ def addSource(import_bottom, import_height):
                 pdf.drawCentredString(
                     sourceField_Column4_Text,
                     sourceField_Middle_Text
-                    + (
-                        math.floor(sourceField_IsolationMethod_NumLines / 2)
-                        * sourceField_IsolationMethod_LineSpacing
-                    )
+                    + (math.floor(sourceField_IsolationMethod_NumLines / 2) * sourceField_IsolationMethod_LineSpacing)
                     - (sourceField_IsolationMethod_LineSpacing * line),
                     sourceField_IsolationMethod_Lines[line],
                 )
@@ -1146,20 +1043,12 @@ def addSource(import_bottom, import_height):
                 pdf.drawCentredString(
                     sourceField_Column4_Text,
                     sourceField_Middle_Text
-                    + (
-                        (
-                            (math.floor(sourceField_IsolationMethod_NumLines / 2) - 1)
-                            * sourceField_IsolationMethod_LineSpacing
-                        )
-                        + 5
-                    )
+                    + (((math.floor(sourceField_IsolationMethod_NumLines / 2) - 1) * sourceField_IsolationMethod_LineSpacing) + 5)
                     - (sourceField_IsolationMethod_LineSpacing * line),
                     sourceField_IsolationMethod_Lines[line],
                 )
     else:
-        pdf.drawCentredString(
-            sourceField_Column4_Text, sourceField_Middle_Text, sourceField_BlankText
-        )
+        pdf.drawCentredString(sourceField_Column4_Text, sourceField_Middle_Text, sourceField_BlankText)
 
     # Verification Method
     if "VerificationMethod" in source_value:
@@ -1178,10 +1067,7 @@ def addSource(import_bottom, import_height):
                 pdf.drawCentredString(
                     sourceField_Column5_Text,
                     sourceField_Middle_Text
-                    + (
-                        math.floor(sourceField_VerificationMethod_NumLines / 2)
-                        * sourceField_VerificationMethod_LineSpacing
-                    )
+                    + (math.floor(sourceField_VerificationMethod_NumLines / 2) * sourceField_VerificationMethod_LineSpacing)
                     - (sourceField_VerificationMethod_LineSpacing * line),
                     sourceField_VerificationMethod_Lines[line],
                 )
@@ -1191,30 +1077,20 @@ def addSource(import_bottom, import_height):
                     sourceField_Column5_Text,
                     sourceField_Middle_Text
                     + (
-                        (
-                            (
-                                math.floor(sourceField_VerificationMethod_NumLines / 2)
-                                - 1
-                            )
-                            * sourceField_VerificationMethod_LineSpacing
-                        )
+                        ((math.floor(sourceField_VerificationMethod_NumLines / 2) - 1) * sourceField_VerificationMethod_LineSpacing)
                         + 5
                     )
                     - (sourceField_VerificationMethod_LineSpacing * line),
                     sourceField_VerificationMethod_Lines[line],
                 )
     else:
-        pdf.drawCentredString(
-            sourceField_Column5_Text, sourceField_Middle_Text, sourceField_BlankText
-        )
+        pdf.drawCentredString(sourceField_Column5_Text, sourceField_Middle_Text, sourceField_BlankText)
 
     # Isolation Point
-    sourceField_IsolationPoint_NewHeight, sourceField_IsolationPoint_NewWidth = (
-        resize_image(
-            source_value.get("IsolationPoint", sourceField_DefaultImage),
-            sourceField_IsolationPoint_MaxHeight,
-            sourceField_IsolationPoint_MaxWidth,
-        )
+    sourceField_IsolationPoint_NewHeight, sourceField_IsolationPoint_NewWidth = resize_image(
+        source_value.get("IsolationPoint", sourceField_DefaultImage),
+        sourceField_IsolationPoint_MaxHeight,
+        sourceField_IsolationPoint_MaxWidth,
     )
     pdf.drawImage(
         source_value.get("IsolationPoint", sourceField_DefaultImage),
@@ -1316,9 +1192,7 @@ def addRestartInfo(bottom):
         restartField_Title_Color[2],
     )
     pdf.setFont(restartField_Title_Font, restartField_Title_FontSize)
-    pdf.drawCentredString(
-        restartField_Column1_Text, restartField_Row1_Text, "RESTART SEQUENCE"
-    )
+    pdf.drawCentredString(restartField_Column1_Text, restartField_Row1_Text, "RESTART SEQUENCE")
 
     pdf.setFillColorRGB(defaultColor[0], defaultColor[1], defaultColor[2])
     pdf.setFont(restartField_Description_Font, restartField_Description_FontSize)
@@ -1376,21 +1250,13 @@ def addFooter(bottom):
         footerField_SubTitle_MaxLines,
     )
 
-    footerField_Row2_Offset = max(
-        footerField_PreparedBy_Lines, footerField_ApprovedBy_Lines
-    )
+    footerField_Row2_Offset = max(footerField_PreparedBy_Lines, footerField_ApprovedBy_Lines)
 
     footerField_Row1_Text = bottom - (2 * footerField_RowSpacing)
     footerField_Row2_Text = footerField_Row1_Text - (footerField_RowSpacing * (3 / 2))
-    footerField_Row3_Text = (
-        footerField_Row2_Text
-        - (footerField_RowSpacing * (3 / 2))
-        - footerField_Row1_Offset
-    )
+    footerField_Row3_Text = footerField_Row2_Text - (footerField_RowSpacing * (3 / 2)) - footerField_Row1_Offset
     footerField_Row4_Text = footerField_Row3_Text - footerField_RowSpacing
-    footerField_Row5_Text = (
-        footerField_Row4_Text - footerField_RowSpacing - footerField_Row2_Offset
-    )
+    footerField_Row5_Text = footerField_Row4_Text - footerField_RowSpacing - footerField_Row2_Offset
     footerField_Row6_Text = footerField_Row5_Text - footerField_SubTitle_LineSpacing
 
     footerField_Column1_Text = page_LeftMargin
@@ -1509,9 +1375,7 @@ for device_name, device_data in data.items():
             )
 
             minHeight = 110
-            height = (
-                max(deviceHeight, IsolationMethodHeight, verificationMethodHeight) * 11
-            ) + 16
+            height = (max(deviceHeight, IsolationMethodHeight, verificationMethodHeight) * 11) + 16
 
             if height < minHeight:
                 height = minHeight
