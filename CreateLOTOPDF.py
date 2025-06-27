@@ -1,5 +1,5 @@
-# pip install pillow
-# pip install reportlab
+# DEPENDECIES
+# pillow, reportlab, ice cream
 
 # Import Functions
 import json
