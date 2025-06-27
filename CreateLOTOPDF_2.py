@@ -341,6 +341,7 @@ def add_header():
     return h_line5
 
 
+# Adds Machine Info
 def add_machine_info(import_bottom: float = PAGE_MARGIN):
     # Sets default parameters for a clean slate
     set_default()
@@ -389,6 +390,9 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN):
         row1_height = (notes_height * body_line_spacing + 2)  
     else:
         row1_height = (row_spacing * 3)
+
+    # Machine Image Formatting Options
+    machine_image_file = 'test_1.jpg'
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -459,6 +463,12 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN):
     notes = split_text(data.get('Notes', ''), notes_line_length, notes_line_limit)
     for line in range(len(notes)):
         pdf.drawString(column2_text, row6_text - (line * body_line_spacing), notes[line])
+
+    # Machine Image
+    machine_image_max_height = h_line2 - h_line5 - row_spacing
+    machine_image_max_width = v_line2 - v_line1 - row_spacing
+    machine_image_height, machine_image_width = resize_image(machine_image_file, machine_image_max_height, machine_image_max_width)
+    pdf.drawImage(machine_image_file, (v_line1 + ((v_line2 - v_line1) / 2)) - (machine_image_width / 2), (h_line2 - ((h_line2 - h_line5) / 2)) - (machine_image_height / 2), machine_image_width, machine_image_height)
 
 
     ic('Adding Machine Info')
