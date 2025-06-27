@@ -207,6 +207,21 @@ def fillPDF():
                     starting_x = template_field_data["center_x_pos"] - (image_size[0] / 2)
                     starting_y = template_field_data["center_y_pos"] - (image_size[1] / 2)
                     placeImage(image_size[2], starting_x, starting_y, file_name, "in-progress.pdf", template_field_data["page"], image_size[0], image_size[1])
+            
+            if "Source" in field_name:
+                for field_name_2, field_value_2 in field_value.items():
+                    
+                    template_field_data_2 = template_fields.get(field_name, {}).get(field_name_2, {})
+
+                    if template_field_data_2.get('field_type', '') == "SLT":
+                        placeText(field_value_2, template_field_data_2.get('x_pos', ''), template_field_data_2.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data_2.get('page', ''), template_field_data_2.get('font_size', ''))
+                    elif template_field_data_2.get('field_type', '') == "MLT":
+                        placeText(splitText(field_value_2, template_field_data_2.get('max_length', ''), template_field_data_2.get('max_lines', '')), template_field_data_2.get('x_pos', ''), template_field_data_2.get('y_pos', ''), file_name, "in-progress.pdf", template_field_data_2.get('page', ''), template_field_data_2.get('font_size', ''))
+                    elif template_field_data_2.get('field_type', '') == "IMG":
+                        image_size = resizeImage(field_value_2, template_field_data_2.get('max_width', ''), template_field_data_2.get('max_height',''))
+                        starting_x = template_field_data_2["center_x_pos"] - (image_size[0] / 2)
+                        starting_y = template_field_data_2["center_y_pos"] - (image_size[1] / 2)
+                        placeImage(image_size[2], starting_x, starting_y, file_name, "in-progress.pdf", template_field_data_2["page"], image_size[0], image_size[1])
 
 
 fillPDF()

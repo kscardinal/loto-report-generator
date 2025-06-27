@@ -120,6 +120,115 @@
             "max_length": 10, 
             "font_size": 10, 
             "page": 2
+        },
+        "Source 1": {
+            "EnergySource": {
+                "field_type": "SLT",
+                "x_pos": 41,
+                "y_pos": 323,
+                "max_length": 10,
+                "font_size": 10,
+                "page": 1
+            },
+            "VOLTS": {
+                "field_type": "SLT",
+                "x_pos": 41,
+                "y_pos": 335,
+                "max_length": 10,
+                "font_size": 10,
+                "page": 1
+            },
+            "PSI": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "ChemicalName": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "LBS": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "TEMP": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "Device": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "Tag": {
+                "field_type": "SLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "Description": {
+                "field_type": "MLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_lines": 3,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "IsolationPoint": {
+                "field_type": "IMG",
+                "center_x_pos": 183, 
+                "center_y_pos": 207,
+                "max_width": 256, 
+                "max_height": 100, 
+                "page": 1
+            },
+            "IsolationMethod": {
+                "field_type": "MLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_lines": 3,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "VerificationMethod": {
+                "field_type": "MLT",
+                "x_pos": 0,
+                "y_pos": 0,
+                "max_lines": 3,
+                "max_length": 16,
+                "font_size": 10,
+                "page": 1
+            },
+            "VerificationDevice": {
+                "field_type": "IMG",
+                "center_x_pos": 183, 
+                "center_y_pos": 207,
+                "max_width": 256, 
+                "max_height": 100, 
+                "page": 1
+            }
         }
     },
     "Construction Inspection Form": {
