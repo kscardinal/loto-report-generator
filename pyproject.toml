@@ -1,0 +1,17 @@
+[project]
+name = "loto-python"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Kyle Schang", email = "kyle@schang.net" }
+]
+requires-python = ">=3.13.2"
+dependencies = [
+    "pillow>=11.2.1",
+    "reportlab>=4.4.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
