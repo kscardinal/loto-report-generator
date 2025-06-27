@@ -1,13 +1,11 @@
 # IMPORT FUNCTIONS
 from fillpdf import fillpdfs
-from PIL import Image
-import json
 import shutil
 import os
-from PyPDF2 import PdfReader
+
 
 # DUPLICATE FILE
-def duplicate_pdf(input_path, output_path = "untitled.pdf"):
+def duplicate_pdf(input_path, output_path="untitled.pdf"):
     try:
         base_name, extension = os.path.splitext(output_path)
         counter = 1
@@ -18,6 +16,7 @@ def duplicate_pdf(input_path, output_path = "untitled.pdf"):
         return output_path
     except Exception as e:
         print(f"Could not duplicate file: {e}")
+
 
 def rename_file(old_name, new_name):
     try:
@@ -34,6 +33,7 @@ def rename_file(old_name, new_name):
         print(f"Permission denied while renaming {old_name}.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
 
 duplicate_pdf("LOTO_Fillable.pdf")
 fillpdfs.place_text("Electric", 41, 325, "untitled.pdf", "in-progress.pdf", 1, 10)
