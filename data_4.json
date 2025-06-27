@@ -23,7 +23,7 @@
             "TEMP": "12,000",
             "Device": "Disconnect",
             "Tag": "0001",
-            "Description": "",
+            "Description": "Description",
             "IsolationPoint": "test_1.jpg",
             "IsolationMethod": "Lock out disconnect",
             "VerificationMethod": "Power Button",
@@ -43,6 +43,21 @@
             "IsolationMethod": "Isolation Method",
             "VerificationMethod": "Verification Method",
             "VerificationDevice": "test_1.jpg"
+        },
+        {
+            "EnergySource": "Electric",
+            "ChemicalName": "Carbon",
+            "VOLTS": "240",
+            "PSI": "1500",
+            "LBS":"666",
+            "TEMP": "3,000",
+            "Device": "Lower component to full down position",
+            "Tag": "1234",
+            "Description": "Description Description Description",
+            "IsolationPoint": "test_1.jpg",
+            "IsolationMethod": "Isolation Method",
+            "VerificationMethod": "Verification Method",
+            "VerificationDevice": "test_2.jpg"
         },
         {
             "EnergySource": "Electric",
