@@ -183,7 +183,7 @@ def new_page() -> float:
 def add_header() -> float:
     # Sets default parameters for a clean slate
     set_default()
-    
+
     # Page Title
     page_title_font_size = 18
     page_title_font = 'DM Serif Display'
@@ -217,7 +217,7 @@ def add_header() -> float:
     description_line_length = 78
     description_line_limit = 5
     description_height = num_lines(data['Description'], description_line_length,
-                                                description_line_limit)
+                                   description_line_limit)
 
     # Header Procedure Number
     procedure_number_line_length = 16
@@ -226,13 +226,13 @@ def add_header() -> float:
     facility_line_length = 26
     facility_line_limit = 5
     facility_height = num_lines(data['Facility'], facility_line_length,
-                                             facility_line_limit)
+                                facility_line_limit)
 
     # Header Location
     location_line_length = 26
     location_line_limit = 5
     location_height = num_lines(data['Location'], location_line_length,
-                                             location_line_limit)
+                                location_line_limit)
 
     # Header Revision
     revision_line_length = 6
@@ -242,7 +242,7 @@ def add_header() -> float:
     row1_height = (len(address) * address_line_spacing + 2)  # Address Block
     row2_height = (description_height * body_line_spacing) + 2  # Description Row
     row3_height = max(facility_height,
-                                   location_height) * body_line_spacing + 2  # Facility Row
+                      location_height) * body_line_spacing + 2  # Facility Row
 
     # Horizontal Lines (1 = top, 5 = bottom)
     h_line1 = page_title_y + page_title_line_spacing
@@ -254,7 +254,7 @@ def add_header() -> float:
     # Vertical Lines (1 = left, 6 = Right)
     v_line1 = PAGE_LEFT_MARGIN
     v_line2 = PAGE_LEFT_MARGIN + ((USABLE_WIDTH - address_width) / 2) - (
-                revision_width / 2)
+            revision_width / 2)
     v_line3 = PAGE_RIGHT_MARGIN - address_width - revision_width
     v_line4 = PAGE_RIGHT_MARGIN - address_width
     v_line5 = PAGE_RIGHT_MARGIN - (address_width * (2 / 5))
@@ -392,7 +392,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     isolation_point_title_font = 'DM Serif Display'
     isolation_point_title_font_size = 16
     isolation_points_font = 'Inter'
-    
+
     isolation_points = data.get('IsolationPoints', '0')
     if len(isolation_points) == 1:
         isolation_points_font_size = 36
@@ -415,7 +415,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Notes Block Height
     if (notes_height * body_line_spacing + 2) > (row_spacing * 3):
-        row1_height = (notes_height * body_line_spacing + 2)  
+        row1_height = (notes_height * body_line_spacing + 2)
     else:
         row1_height = (row_spacing * 3)
 
@@ -447,7 +447,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     column3_text = v_line2 + horizontal_image_spacing + (lock_image_width / 2)
     column4_text = v_line2 + lock_image_width + square_width + (3 * horizontal_image_spacing)
     column5_text = (v_line2 + ((v_line3 - v_line2) / 2))
-    
+
     # Horizontal Lines
     pdf.line(v_line1, h_line1, v_line3, h_line1)
     pdf.line(v_line1, h_line2, v_line2, h_line2)
@@ -480,7 +480,8 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.line(square_left, square_bottom, square_left, square_top)
 
     # Lock Tag Image
-    pdf.drawImage(lock_image_file, square_right + horizontal_image_spacing, (h_line1 - ((h_line1 - h_line3) / 2)) - (lock_image_height / 2), lock_image_width, lock_image_height)
+    pdf.drawImage(lock_image_file, square_right + horizontal_image_spacing,
+                  (h_line1 - ((h_line1 - h_line3) / 2)) - (lock_image_height / 2), lock_image_width, lock_image_height)
 
     # Isolation Points
     pdf.setFont(isolation_points_font, isolation_points_font_size)
@@ -495,9 +496,11 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     # Machine Image
     machine_image_max_height = h_line2 - h_line5 - row_spacing
     machine_image_max_width = v_line2 - v_line1 - row_spacing
-    machine_image_height, machine_image_width = resize_image(machine_image_file, machine_image_max_height, machine_image_max_width)
-    pdf.drawImage(machine_image_file, (v_line1 + ((v_line2 - v_line1) / 2)) - (machine_image_width / 2), (h_line2 - ((h_line2 - h_line5) / 2)) - (machine_image_height / 2), machine_image_width, machine_image_height)
-
+    machine_image_height, machine_image_width = resize_image(machine_image_file, machine_image_max_height,
+                                                             machine_image_max_width)
+    pdf.drawImage(machine_image_file, (v_line1 + ((v_line2 - v_line1) / 2)) - (machine_image_width / 2),
+                  (h_line2 - ((h_line2 - h_line5) / 2)) - (machine_image_height / 2), machine_image_width,
+                  machine_image_height)
 
     ic('Adding Machine Info')
     return h_line5
@@ -529,11 +532,9 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
 
     total_height = title_line_spacing + body_num_lines * (body_line_spacing + 2)
 
-
-     # Checking if new page is needed
+    # Checking if new page is needed
     if import_bottom - total_height - DEFAULT_ROW_SPACING <= PAGE_MARGIN:
         import_bottom = new_page()
-
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - title_line_spacing
@@ -546,7 +547,7 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.line(v_line1, h_line1, v_line2, h_line1)
     pdf.line(v_line1, h_line2, v_line2, h_line2)
     pdf.line(v_line1, h_line3, v_line2, h_line3)
-    
+
     # Vertical Lines
     pdf.line(v_line1, h_line1, v_line1, h_line3)
     pdf.line(v_line2, h_line1, v_line2, h_line3)
@@ -571,13 +572,12 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     for line in range(body_num_lines):
         pdf.drawCentredString(column1_text, row2_text - (line * body_line_spacing), body_lines[line])
 
-
     ic('Adding Shutdown Sequence')
     return h_line3
 
 
 # Add Source Title Block
-def add_source_titles(import_bottom:float) -> float:
+def add_source_titles(import_bottom: float) -> float:
     # Sets default parameters for a clean slate
     set_default()
 
@@ -611,7 +611,6 @@ def add_source_titles(import_bottom:float) -> float:
     column5_text = v_line5 + (text_block_width / 2)
     column6_text = v_line6 + (image_block_width / 2)
 
-
     # Horizontal Lines
     pdf.line(v_line1, h_line1, v_line7, h_line1)
     pdf.line(v_line1, h_line2, v_line7, h_line2)
@@ -625,23 +624,21 @@ def add_source_titles(import_bottom:float) -> float:
     pdf.line(v_line6, h_line1, v_line6, h_line2)
     pdf.line(v_line7, h_line1, v_line7, h_line2)
 
-
     pdf.setFont(title_font, title_font_size)
     pdf.drawCentredString(column1_text, row2_text, 'Energy Source')
     pdf.drawCentredString(column2_text, row2_text, 'Device')
     pdf.drawCentredString(column3_text, row2_text, 'Isolation Point')
     pdf.drawCentredString(column4_text, row2_text, 'Isolation Method')
-    pdf.drawCentredString(column5_text,row1_text, 'Verification')
+    pdf.drawCentredString(column5_text, row1_text, 'Verification')
     pdf.drawCentredString(column5_text, row3_text, 'Method')
     pdf.drawCentredString(column6_text, row2_text, 'Verification Device')
-
 
     ic('Adding Source Titles')
     return h_line2
 
 
 # Add Source
-def add_source(source: dict, import_bottom:float, import_height:float) -> float:
+def add_source(source: dict, import_bottom: float, import_height: float) -> float:
     # Sets default parameters for a clean slate
     set_default()
 
@@ -671,10 +668,12 @@ def add_source(source: dict, import_bottom:float, import_height:float) -> float:
 
     column1_text = v_line1 + (text_block_width / 2)
     column2_text = v_line2 + (text_block_width / 2)
-    column3_image = v_line3 + (image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+    column3_image = v_line3 + (
+                image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
     column4_text = v_line4 + (text_block_width / 2)
     column5_text = v_line5 + (text_block_width / 2)
-    column6_image = v_line6 + (image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+    column6_image = v_line6 + (
+                image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
 
     text_block_middle_width = h_line1 - (import_height / 2)
     image_block_middle_width = h_line1 - (import_height / 2)
@@ -685,7 +684,6 @@ def add_source(source: dict, import_bottom:float, import_height:float) -> float:
     verification_device_max_height = import_height - row_spacing
     verification_device_max_width = (v_line7 - v_line6) - row_spacing
 
-    
     blank_text = "_____________"
     blank_text_v = "___________"
     blank_text_psi = "_________"
@@ -709,39 +707,44 @@ def add_source(source: dict, import_bottom:float, import_height:float) -> float:
     pdf.line(v_line4, h_line1, v_line4, h_line2)
     pdf.line(v_line5, h_line1, v_line5, h_line2)
     pdf.line(v_line6, h_line1, v_line6, h_line2)
-    pdf.line(v_line7,  h_line1, v_line7, h_line2)
-
+    pdf.line(v_line7, h_line1, v_line7, h_line2)
 
     # Add Energy Source
     pdf.setFont(body_font, body_font_size)
     match source.get('EnergySource', 'Other'):
         case 'Electric':
-            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('VOLTS', blank_text_v))
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
+                                  source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
+                                  source.get('VOLTS', blank_text_v))
         case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Regrigerant':
-            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('PSI', blank_text_psi))
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
+                                  source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
+                                  source.get('PSI', blank_text_psi))
         case 'Chemical':
-            pdf.drawCentredString(column1_text, text_block_middle_width + energy_source_line_spacing, source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width + energy_source_line_spacing,
+                                  source.get('EnergySource', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width, source.get('ChemicalName', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width - energy_source_line_spacing, source.get('PSI', blank_text_psi))
+            pdf.drawCentredString(column1_text, text_block_middle_width - energy_source_line_spacing,
+                                  source.get('PSI', blank_text_psi))
         case 'Gravity':
-            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('LBS', blank_text_lbs))
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
+                                  source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
+                                  source.get('LBS', blank_text_lbs))
         case 'Thermal':
-            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), source.get('EnergySource', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), source.get('TEMP', blank_text_temp))
+            pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
+                                  source.get('EnergySource', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
+                                  source.get('TEMP', blank_text_temp))
         case 'Other':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), blank_text)
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), blank_text)
 
-
-
-
-
     return h_line2
 
-    
+
 # Adds all sources
 def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     # Sets default parameters for a clean slate
@@ -759,16 +762,17 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
 
         source = sources[source_num]
 
-        device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(source.get('Description', ''), line_length, description_line_limit)
+        device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(
+            source.get('Description', ''), line_length, description_line_limit)
         isolation_method_height = num_lines(source.get('IsolationMethod', ''), line_length, isolation_method_line_limit)
-        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length, verification_method_line_limit)
+        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length,
+                                               verification_method_line_limit)
 
         minHeight = 110
         height = (max(device_height, isolation_method_height, verification_method_height) * 11) + 16
 
         if height < minHeight:
             height = minHeight
-
 
         if source_num == 0:
             if import_bottom - DEFAULT_ROW_SPACING - SOURCE_TITLE_BLOCK_HEIGHT - height <= PAGE_MARGIN:
@@ -780,8 +784,6 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
                 bottom = new_page_title()
 
         bottom = add_source(source, bottom, height)
-            
-
 
 
 bottom = first_page()
