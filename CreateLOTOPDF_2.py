@@ -742,6 +742,88 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), blank_text)
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), blank_text)
 
+
+    # Add Device
+    pdf.setFont(body_font, body_font_size)
+    
+    device = []
+
+    if 'Device' in source:
+        device_lines = split_text(source.get('Device', blank_text), line_length, device_line_limit)
+        for line in range(len(device_lines)):
+            device.append(device_lines[line])
+    else:
+        device.append(blank_text)    
+
+    if "Tag" in source:
+        device.append("")
+        device.append("Tag: #" + source.get("Tag", blank_text_tag))
+        device.append("")
+    else:
+        device.append("")
+        device.append("Tag: #______")
+        device.append("")
+
+    if "Description" in source:
+        description_lines = split_text(
+            source.get("Description", blank_text),
+            line_length,
+            description_line_limit,
+        )
+        for line in range(len(description_lines)):
+            device.append(description_lines[line])
+    else:
+        device.append(blank_text)
+
+    if len(device) % 2 == 1:
+        for line in range(len(device)):
+            pdf.drawCentredString(column2_text, text_block_middle_width + (math.floor(len(device) / 2) * device_line_spacing) - (device_line_spacing * line), device[line])
+    else:
+        for line in range(len(device)):
+            pdf.drawCentredString(column2_text, text_block_middle_width + (((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line), device[line])
+
+
+    # Isolation Method    
+    pdf.setFont(body_font, body_font_size)
+
+    if "IsolationMethod" in source:
+        isolation_method_num_lines = num_lines(source.get("IsolationMethod", ""), line_length, isolation_method_line_limit)
+        isolation_method_lines = split_text(source.get("IsolationMethod", ""), line_length,isolation_method_line_limit)
+        if isolation_method_num_lines % 2 == 1:
+            for line in range(isolation_method_num_lines):
+                pdf.drawCentredString(column4_text, text_block_middle_width + (math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (isolation_method_line_spacing * line), isolation_method_lines[line])
+        else:
+            for line in range(isolation_method_num_lines):
+                pdf.drawCentredString(column4_text, text_block_middle_width + (((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (isolation_method_line_spacing * line), isolation_method_lines[line])
+    else:
+        pdf.drawCentredString(column4_text, text_block_middle_width, blank_text)
+
+
+    # Verification Method
+    pdf.setFont(body_font, body_font_size)
+
+    if "VerificationMethod" in source:
+        verification_method_num_lines = num_lines(source.get("VerificationMethod", ""), line_length, verification_method_line_limit)
+        verification_method_lines = split_text(source.get("VerificationMethod", ""), line_length, verification_method_line_limit)
+        if verification_method_num_lines % 2 == 1:
+            for line in range(verification_method_num_lines):
+                pdf.drawCentredString(column5_text, text_block_middle_width + (math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (verification_method_line_spacing * line), verification_method_lines[line])
+        else:
+            for line in range(verification_method_num_lines):
+                pdf.drawCentredString(column5_text, text_block_middle_width + (((math.floor(verification_method_num_lines / 2) - 1) * verification_method_line_spacing) + 5) - (verification_method_line_spacing * line), verification_method_lines[line],)
+    else:
+        pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
+
+
+    # Isolation Point
+    isolation_point_height, isolation_point_width = resize_image(source.get("IsolationPoint", default_image), isolation_point_max_height, isolation_point_max_width)
+    pdf.drawImage(source.get("IsolationPoint", default_image), column3_image - (isolation_point_width / 2), image_block_middle_width - (isolation_point_height / 2), isolation_point_width, isolation_point_height)
+
+    # Verification Device
+    verification_device_height, verification_device_width = resize_image(source.get("VerificationDevice", default_image), verification_device_max_height, verification_device_max_width)
+    pdf.drawImage(source.get("VerificationDevice", default_image), column6_image - (verification_device_width / 2), image_block_middle_width - (verification_device_height / 2), verification_device_width, verification_device_height)
+
+
     return h_line2
 
 
@@ -765,8 +847,7 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
         device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(
             source.get('Description', ''), line_length, description_line_limit)
         isolation_method_height = num_lines(source.get('IsolationMethod', ''), line_length, isolation_method_line_limit)
-        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length,
-                                               verification_method_line_limit)
+        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length, verification_method_line_limit)
 
         minHeight = 110
         height = (max(device_height, isolation_method_height, verification_method_height) * 11) + 16
