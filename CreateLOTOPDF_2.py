@@ -8,6 +8,7 @@ from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import stringWidth
 import math
 from icecream import ic
 
@@ -151,6 +152,7 @@ pdf.setTitle(file_name)  # Sets document title. Appears only in document propert
 pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
 pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
+pdfmetrics.registerFont(TTFont('Signature', 'Pacifico.ttf'))
 
 
 # Adds First Page
@@ -964,6 +966,13 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     company_line_length = 23
     company_line_limit = 4
 
+    signature_font = 'Signature'
+    signature_font_size_max = 20
+    signature_font_size_min = 10
+    signature_color = [0, 0, 0]
+    signature_opacity = 1.0
+    signature_line_length = 15
+
     bold_line_weight = 0.75
 
     description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get('ApprovedBy', '') + '.'
@@ -978,7 +987,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     approved_by_lines = split_text(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
     company_height = (max(approved_by_num_lines, prepared_by_num_lines) * body_line_spacing) + 2
 
-    total_height = description_height + company_height + (6.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2) 
+    total_height = description_height + company_height + (5.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2) 
 
     # New Page Logic
     if import_bottom - total_height <= PAGE_MARGIN:
@@ -990,7 +999,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     row1_text = import_bottom - DEFAULT_ROW_SPACING - (title_font_size / 2)
     row2_text = row1_text - DEFAULT_ROW_SPACING
-    row3_text = row2_text - description_height - (DEFAULT_ROW_SPACING * 2)
+    row3_text = row2_text - description_height - DEFAULT_ROW_SPACING 
     row4_text = row3_text - DEFAULT_ROW_SPACING * 1.25
     row5_text = row4_text - DEFAULT_ROW_SPACING * 1.25
 
@@ -1036,11 +1045,11 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Adding Printed Names
     pdf.setFont(body_font, body_font_size)
-    if len(data.get('PreparedBy', '')) >= 23:
+    if len(data.get('PreparedBy', '')) > 30:
         raise Exception('Prepared By name is too long')
     else:
         pdf.drawString(column2_text, row4_text, data.get('PreparedBy', ''))
-    if len(data.get('ApprovedBy', '')) >= 23:
+    if len(data.get('ApprovedBy', '')) > 30:
         raise Exception('Approved By name is too long')
     else:
         pdf.drawString(column4_text, row4_text, data.get('ApprovedBy', ''))
@@ -1053,6 +1062,34 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     for line in range(approved_by_num_lines):
         pdf.drawString(column4_text, row5_text - (line * body_line_spacing), approved_by_lines[line])
 
+
+    # Prepared By Signature
+    signature_max_text_width = v_line2 - v_line1
+    signature_font_size = signature_font_size_max
+    while signature_font_size >= signature_font_size_min:
+        text_width = stringWidth(data.get('PreparedBy', ''), signature_font, signature_font_size)
+        if text_width <= signature_max_text_width:
+            break
+        signature_font_size -= 0.5
+
+    pdf.setFont(signature_font, signature_font_size)
+    pdf.setFillColorRGB(signature_color[0], signature_color[1], signature_color[2])
+    pdf.setFillAlpha(signature_opacity)
+    pdf.drawString(column2_text, row3_text, data.get('PreparedBy', ''))
+
+    # Approved By Signature
+    signature_max_text_width = v_line2 - v_line1
+    signature_font_size = signature_font_size_max
+    while signature_font_size >= signature_font_size_min:
+        text_width = stringWidth(data.get('ApprovedBy', ''), signature_font, signature_font_size)
+        if text_width <= signature_max_text_width:
+            break
+        signature_font_size -= 0.5
+
+    pdf.setFont(signature_font, signature_font_size)
+    pdf.setFillColorRGB(signature_color[0], signature_color[1], signature_color[2])
+    pdf.setFillAlpha(signature_opacity)
+    pdf.drawString(column4_text, row3_text, data.get('ApprovedBy', '')) 
 
 
 
