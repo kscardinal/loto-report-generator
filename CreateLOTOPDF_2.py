@@ -938,12 +938,130 @@ def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
         pdf.drawCentredString(column1_text, row2_text - (line * body_line_spacing), body_lines[line])
 
 
-
     ic('Adding Restart Sequence')
-    return
+    return h_line3
+
+
+# Add Signutures on Bottom
+def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
+    # Sets default parameters for a clean slate
+    set_default()
+
+    title_font = 'DM Serif Display'
+    title_font_size = 10
+    title_font_spacing = 12
+
+    sub_title_font = 'Times'
+    sub_title_font_size = 10
+    sub_title_spacing = 12
+
+    body_font = 'Inter'
+    body_font_size = 10
+    body_line_spacing = 12
+    body_line_length = 108
+    body_line_limit = 5
+
+    company_line_length = 23
+    company_line_limit = 4
+
+    bold_line_weight = 0.75
+
+    description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get('ApprovedBy', '') + '.'
+    description_num_lines = num_lines(description, body_line_length, body_line_limit)
+    description_lines = split_text(description, body_line_length, body_line_limit)
+    description_height = (description_num_lines * body_line_spacing) + 2
+
+    prepared_by_company = 'Cardinal Compliance Consultants, LLC'
+    prepared_by_num_lines = num_lines(prepared_by_company, company_line_length, company_line_limit)
+    prepared_by_lines = split_text(prepared_by_company, company_line_length, company_line_limit)
+    approved_by_num_lines = num_lines(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
+    approved_by_lines = split_text(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
+    company_height = (max(approved_by_num_lines, prepared_by_num_lines) * body_line_spacing) + 2
+
+    total_height = description_height + company_height + (6.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2) 
+
+    # New Page Logic
+    if import_bottom - total_height <= PAGE_MARGIN:
+        import_bottom = new_page() 
+
+    column1_text = PAGE_LEFT_MARGIN
+    column3_text = PAGE_LEFT_MARGIN + (USABLE_WIDTH * (2 / 5))
+    column5_text = PAGE_LEFT_MARGIN + (USABLE_WIDTH * (4 / 5))
+
+    row1_text = import_bottom - DEFAULT_ROW_SPACING - (title_font_size / 2)
+    row2_text = row1_text - DEFAULT_ROW_SPACING
+    row3_text = row2_text - description_height - (DEFAULT_ROW_SPACING * 2)
+    row4_text = row3_text - DEFAULT_ROW_SPACING * 1.25
+    row5_text = row4_text - DEFAULT_ROW_SPACING * 1.25
+
+    v_line1 = column1_text + 58
+    v_line2 = column3_text - 10
+    v_line3 = column3_text + 58
+    v_line4 = column5_text - 10
+
+    h_line1 = row3_text - 1.5
+    h_line2 = row5_text - company_height
+
+    column2_text = v_line1
+    column4_text = v_line3
+
+    # Adding Title
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawString(column1_text, row1_text, 'Lockout Procedure Approval Data')
+
+    # Adding Description
+    pdf.setFont(body_font, body_font_size)
+    for line in range(description_num_lines):
+        pdf.drawString(column1_text, row2_text - (line * body_line_spacing), description_lines[line])
+
+    # Adding Prepared By Title
+    pdf.setFont(sub_title_font, sub_title_font_size)
+    pdf.drawString(column1_text, row3_text, 'Prepared by: ')
+    
+    # Adding Approved By Title
+    pdf.setFont(sub_title_font, sub_title_font_size)
+    pdf.drawString(column3_text, row3_text, 'Approved by: ') 
+
+    # Adding Date
+    pdf.setFont(sub_title_font, sub_title_font_size)
+    pdf.drawString(column5_text, row3_text, 'Date: ')
+
+    pdf.setFont(body_font, body_font_size)
+    pdf.drawString(column5_text + 30, row3_text, data.get('CompletedDate', ''))
+
+    # Adding Signature Lines
+    pdf.setLineWidth(bold_line_weight)
+    pdf.line(v_line1, h_line1, v_line2, h_line1)
+    pdf.line(v_line3, h_line1, v_line4, h_line1)
+
+    # Adding Printed Names
+    pdf.setFont(body_font, body_font_size)
+    if len(data.get('PreparedBy', '')) >= 23:
+        raise Exception('Prepared By name is too long')
+    else:
+        pdf.drawString(column2_text, row4_text, data.get('PreparedBy', ''))
+    if len(data.get('ApprovedBy', '')) >= 23:
+        raise Exception('Approved By name is too long')
+    else:
+        pdf.drawString(column4_text, row4_text, data.get('ApprovedBy', ''))
+
+
+    # Adding Company Information
+    pdf.setFont(body_font, body_font_size)
+    for line in range(prepared_by_num_lines):
+        pdf.drawString(column2_text, row5_text - (line * body_line_spacing), prepared_by_lines[line])
+    for line in range(approved_by_num_lines):
+        pdf.drawString(column4_text, row5_text - (line * body_line_spacing), approved_by_lines[line])
+
+
+
+
+    ic('Adding Signatures')
+    return 
 
 bottom = first_page()
 bottom = add_sources(bottom)
 bottom = add_restart_sequence(bottom)
+bottom = add_signatures(bottom)
 
 pdf.save()
