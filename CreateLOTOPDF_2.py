@@ -164,7 +164,7 @@ def first_page() -> float:
     return bottom
 
 
-# Adds new Page (Inclduing Source Titles)
+# Adds new Page (Including Source Titles)
 def new_page_title() -> float:
     pdf.showPage()
     bottom = add_header()
@@ -404,7 +404,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         isolation_points_font_size = 20
         isolation_points = isolation_points[:3]
 
-    # Lock Tag Foratting Options
+    # Lock Tag Formatting Options
     lock_image_file = 'LockTag.png'
     lock_image_height = 40
     lock_image_width = lock_image_height
@@ -671,11 +671,11 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     column1_text = v_line1 + (text_block_width / 2)
     column2_text = v_line2 + (text_block_width / 2)
     column3_image = v_line3 + (
-                image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+            image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
     column4_text = v_line4 + (text_block_width / 2)
     column5_text = v_line5 + (text_block_width / 2)
     column6_image = v_line6 + (
-                image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+            image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
 
     text_block_middle_width = h_line1 - (import_height / 2)
     image_block_middle_width = h_line1 - (import_height / 2)
@@ -719,7 +719,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
                                   source.get('EnergySource', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
                                   source.get('VOLTS', blank_text_v))
-        case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Regrigerant':
+        case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Refrigerant':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
                                   source.get('EnergySource', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
@@ -744,10 +744,9 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), blank_text)
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), blank_text)
 
-
     # Add Device
     pdf.setFont(body_font, body_font_size)
-    
+
     device = []
 
     if 'Device' in source:
@@ -755,7 +754,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         for line in range(len(device_lines)):
             device.append(device_lines[line])
     else:
-        device.append(blank_text)    
+        device.append(blank_text)
 
     if "Tag" in source:
         device.append("")
@@ -779,51 +778,71 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     if len(device) % 2 == 1:
         for line in range(len(device)):
-            pdf.drawCentredString(column2_text, text_block_middle_width + (math.floor(len(device) / 2) * device_line_spacing) - (device_line_spacing * line), device[line])
+            pdf.drawCentredString(column2_text,
+                                  text_block_middle_width + (math.floor(len(device) / 2) * device_line_spacing) - (
+                                              device_line_spacing * line), device[line])
     else:
         for line in range(len(device)):
-            pdf.drawCentredString(column2_text, text_block_middle_width + (((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line), device[line])
+            pdf.drawCentredString(column2_text, text_block_middle_width + (
+                        ((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line),
+                                  device[line])
 
-
-    # Isolation Method    
+    # Isolation Method
     pdf.setFont(body_font, body_font_size)
 
     if "IsolationMethod" in source:
-        isolation_method_num_lines = num_lines(source.get("IsolationMethod", ""), line_length, isolation_method_line_limit)
-        isolation_method_lines = split_text(source.get("IsolationMethod", ""), line_length,isolation_method_line_limit)
+        isolation_method_num_lines = num_lines(source.get("IsolationMethod", ""), line_length,
+                                               isolation_method_line_limit)
+        isolation_method_lines = split_text(source.get("IsolationMethod", ""), line_length, isolation_method_line_limit)
         if isolation_method_num_lines % 2 == 1:
             for line in range(isolation_method_num_lines):
-                pdf.drawCentredString(column4_text, text_block_middle_width + (math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (isolation_method_line_spacing * line), isolation_method_lines[line])
+                pdf.drawCentredString(column4_text, text_block_middle_width + (
+                            math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (
+                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
         else:
             for line in range(isolation_method_num_lines):
-                pdf.drawCentredString(column4_text, text_block_middle_width + (((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (isolation_method_line_spacing * line), isolation_method_lines[line])
+                pdf.drawCentredString(column4_text, text_block_middle_width + (
+                            ((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (
+                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
     else:
         pdf.drawCentredString(column4_text, text_block_middle_width, blank_text)
-
 
     # Verification Method
     pdf.setFont(body_font, body_font_size)
 
     if "VerificationMethod" in source:
-        verification_method_num_lines = num_lines(source.get("VerificationMethod", ""), line_length, verification_method_line_limit)
-        verification_method_lines = split_text(source.get("VerificationMethod", ""), line_length, verification_method_line_limit)
+        verification_method_num_lines = num_lines(source.get("VerificationMethod", ""), line_length,
+                                                  verification_method_line_limit)
+        verification_method_lines = split_text(source.get("VerificationMethod", ""), line_length,
+                                               verification_method_line_limit)
         if verification_method_num_lines % 2 == 1:
             for line in range(verification_method_num_lines):
-                pdf.drawCentredString(column5_text, text_block_middle_width + (math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (verification_method_line_spacing * line), verification_method_lines[line])
+                pdf.drawCentredString(column5_text, text_block_middle_width + (
+                            math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (
+                                                  verification_method_line_spacing * line),
+                                      verification_method_lines[line])
         else:
             for line in range(verification_method_num_lines):
-                pdf.drawCentredString(column5_text, text_block_middle_width + (((math.floor(verification_method_num_lines / 2) - 1) * verification_method_line_spacing) + 5) - (verification_method_line_spacing * line), verification_method_lines[line],)
+                pdf.drawCentredString(column5_text, text_block_middle_width + (((math.floor(
+                    verification_method_num_lines / 2) - 1) * verification_method_line_spacing) + 5) - (
+                                                  verification_method_line_spacing * line),
+                                      verification_method_lines[line], )
     else:
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
-
     # Isolation Point
-    isolation_point_height, isolation_point_width = resize_image(source.get("IsolationPoint", default_image), isolation_point_max_height, isolation_point_max_width)
-    pdf.drawImage(source.get("IsolationPoint", default_image), column3_image - (isolation_point_width / 2), image_block_middle_width - (isolation_point_height / 2), isolation_point_width, isolation_point_height)
+    isolation_point_height, isolation_point_width = resize_image(source.get("IsolationPoint", default_image),
+                                                                 isolation_point_max_height, isolation_point_max_width)
+    pdf.drawImage(source.get("IsolationPoint", default_image), column3_image - (isolation_point_width / 2),
+                  image_block_middle_width - (isolation_point_height / 2), isolation_point_width,
+                  isolation_point_height)
 
     # Verification Device
-    verification_device_height, verification_device_width = resize_image(source.get("VerificationDevice", default_image), verification_device_max_height, verification_device_max_width)
-    pdf.drawImage(source.get("VerificationDevice", default_image), column6_image - (verification_device_width / 2), image_block_middle_width - (verification_device_height / 2), verification_device_width, verification_device_height)
+    verification_device_height, verification_device_width = resize_image(
+        source.get("VerificationDevice", default_image), verification_device_max_height, verification_device_max_width)
+    pdf.drawImage(source.get("VerificationDevice", default_image), column6_image - (verification_device_width / 2),
+                  image_block_middle_width - (verification_device_height / 2), verification_device_width,
+                  verification_device_height)
 
     ic('Adding Source: ' + source.get('EnergySource', '') + ' : ' + source.get('Tag', ''))
     return h_line2
@@ -849,7 +868,8 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
         device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(
             source.get('Description', ''), line_length, description_line_limit)
         isolation_method_height = num_lines(source.get('IsolationMethod', ''), line_length, isolation_method_line_limit)
-        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length, verification_method_line_limit)
+        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length,
+                                               verification_method_line_limit)
 
         minHeight = 110
         height = (max(device_height, isolation_method_height, verification_method_height) * 11) + 16
@@ -871,12 +891,10 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     return bottom
 
 
-
-# Add Restrart Sequence
+# Add Restart Sequence
 def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
-
     # Sets default parameters for a clean slate
-    set_default() 
+    set_default()
 
     title_font = 'DM Serif Display'
     title_font_size = 10
@@ -939,12 +957,11 @@ def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     for line in range(body_num_lines):
         pdf.drawCentredString(column1_text, row2_text - (line * body_line_spacing), body_lines[line])
 
-
     ic('Adding Restart Sequence')
     return h_line3
 
 
-# Add Signutures on Bottom
+# Add Signatures on Bottom
 def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     # Sets default parameters for a clean slate
     set_default()
@@ -975,7 +992,8 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     bold_line_weight = 0.75
 
-    description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get('ApprovedBy', '') + '.'
+    description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get(
+        'ApprovedBy', '') + '.'
     description_num_lines = num_lines(description, body_line_length, body_line_limit)
     description_lines = split_text(description, body_line_length, body_line_limit)
     description_height = (description_num_lines * body_line_spacing) + 2
@@ -987,11 +1005,11 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     approved_by_lines = split_text(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
     company_height = (max(approved_by_num_lines, prepared_by_num_lines) * body_line_spacing) + 2
 
-    total_height = description_height + company_height + (5.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2) 
+    total_height = description_height + company_height + (5.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2)
 
     # New Page Logic
     if import_bottom - total_height <= PAGE_MARGIN:
-        import_bottom = new_page() 
+        import_bottom = new_page()
 
     column1_text = PAGE_LEFT_MARGIN
     column3_text = PAGE_LEFT_MARGIN + (USABLE_WIDTH * (2 / 5))
@@ -999,7 +1017,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     row1_text = import_bottom - DEFAULT_ROW_SPACING - (title_font_size / 2)
     row2_text = row1_text - DEFAULT_ROW_SPACING
-    row3_text = row2_text - description_height - DEFAULT_ROW_SPACING 
+    row3_text = row2_text - description_height - DEFAULT_ROW_SPACING
     row4_text = row3_text - DEFAULT_ROW_SPACING * 1.25
     row5_text = row4_text - DEFAULT_ROW_SPACING * 1.25
 
@@ -1026,10 +1044,10 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     # Adding Prepared By Title
     pdf.setFont(sub_title_font, sub_title_font_size)
     pdf.drawString(column1_text, row3_text, 'Prepared by: ')
-    
+
     # Adding Approved By Title
     pdf.setFont(sub_title_font, sub_title_font_size)
-    pdf.drawString(column3_text, row3_text, 'Approved by: ') 
+    pdf.drawString(column3_text, row3_text, 'Approved by: ')
 
     # Adding Date
     pdf.setFont(sub_title_font, sub_title_font_size)
@@ -1054,14 +1072,12 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     else:
         pdf.drawString(column4_text, row4_text, data.get('ApprovedBy', ''))
 
-
     # Adding Company Information
     pdf.setFont(body_font, body_font_size)
     for line in range(prepared_by_num_lines):
         pdf.drawString(column2_text, row5_text - (line * body_line_spacing), prepared_by_lines[line])
     for line in range(approved_by_num_lines):
         pdf.drawString(column4_text, row5_text - (line * body_line_spacing), approved_by_lines[line])
-
 
     # Prepared By Signature
     signature_max_text_width = v_line2 - v_line1
@@ -1089,12 +1105,11 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.setFont(signature_font, signature_font_size)
     pdf.setFillColorRGB(signature_color[0], signature_color[1], signature_color[2])
     pdf.setFillAlpha(signature_opacity)
-    pdf.drawString(column4_text, row3_text, data.get('ApprovedBy', '')) 
-
-
+    pdf.drawString(column4_text, row3_text, data.get('ApprovedBy', ''))
 
     ic('Adding Signatures')
-    return 
+    return h_line2
+
 
 bottom = first_page()
 bottom = add_sources(bottom)
