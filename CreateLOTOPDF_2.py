@@ -866,8 +866,84 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
 
         bottom = add_source(source, bottom, height)
 
+    return bottom
+
+
+
+# Add Restrart Sequence
+def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
+
+    # Sets default parameters for a clean slate
+    set_default() 
+
+    title_font = 'DM Serif Display'
+    title_font_size = 10
+    title_line_spacing = 14
+    title_font_color = [255, 255, 255]
+
+    row_spacing = 14
+
+    body_font = 'Inter'
+    body_font_size = 8
+    body_line_spacing = 10
+    body_line_length = 135
+    body_line_limit = 5
+    body_background = 'Green.png'
+
+    restart_sequence = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and reenergize machine. 5. Notify affected employees that servicing is complete."
+
+    body_num_lines = num_lines(restart_sequence, body_line_length, body_line_limit)
+    body_lines = split_text(restart_sequence, body_line_length, body_line_limit)
+
+    total_height = title_line_spacing + body_num_lines * (body_line_spacing + 2)
+
+    # Checking if new page is needed
+    if import_bottom - total_height - DEFAULT_ROW_SPACING <= PAGE_MARGIN:
+        import_bottom = new_page()
+
+    h_line1 = import_bottom - DEFAULT_ROW_SPACING
+    h_line2 = h_line1 - title_line_spacing
+    h_line3 = h_line2 - body_num_lines * (body_line_spacing + 2)
+
+    v_line1 = PAGE_LEFT_MARGIN
+    v_line2 = PAGE_RIGHT_MARGIN
+
+    # Horizontal Lines
+    pdf.line(v_line1, h_line1, v_line2, h_line1)
+    pdf.line(v_line1, h_line2, v_line2, h_line2)
+    pdf.line(v_line1, h_line3, v_line2, h_line3)
+
+    # Vertical Lines
+    pdf.line(v_line1, h_line1, v_line1, h_line3)
+    pdf.line(v_line2, h_line1, v_line2, h_line3)
+
+    # Background color
+    pdf.drawImage(body_background, v_line1, h_line2, USABLE_WIDTH, title_line_spacing)
+
+    # Text
+    column1_text = PAGE_WIDTH_MIDDLE
+
+    row1_text = h_line1 - title_font_size
+    row2_text = h_line2 - body_font_size
+
+    # Title Text
+    pdf.setFillColorRGB(title_font_color[0], title_font_color[1], title_font_color[2])
+    pdf.setFont(title_font, title_font_size)
+    pdf.drawCentredString(column1_text, row1_text, 'RESTART SEQUENCE')
+
+    # Body Text
+    pdf.setFillColorRGB(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2])
+    pdf.setFont(body_font, body_font_size)
+    for line in range(body_num_lines):
+        pdf.drawCentredString(column1_text, row2_text - (line * body_line_spacing), body_lines[line])
+
+
+
+    ic('Adding Restart Sequence')
+    return
 
 bottom = first_page()
 bottom = add_sources(bottom)
+bottom = add_restart_sequence(bottom)
 
 pdf.save()
