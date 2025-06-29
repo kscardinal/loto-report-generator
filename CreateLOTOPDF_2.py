@@ -823,7 +823,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     verification_device_height, verification_device_width = resize_image(source.get("VerificationDevice", default_image), verification_device_max_height, verification_device_max_width)
     pdf.drawImage(source.get("VerificationDevice", default_image), column6_image - (verification_device_width / 2), image_block_middle_width - (verification_device_height / 2), verification_device_width, verification_device_height)
 
-
+    ic('Adding Source: ' + source.get('EnergySource', '') + ' : ' + source.get('Tag', ''))
     return h_line2
 
 
