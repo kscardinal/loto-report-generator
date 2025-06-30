@@ -26,8 +26,8 @@ async def generate_pdf_endpoint(
 
     # Load and patch JSON
     try:
-        contents = await P1+r4631=1B5B32337E\json_file.read()
-        data = json.loads(contents)
+        contents = await json_file.read()
+        json_data = json.loads(contents)
     except Exception as e:
         return {"error": f"Invalid JSON: {str(e)}"}
 
