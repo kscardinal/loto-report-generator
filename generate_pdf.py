@@ -780,11 +780,11 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         for line in range(len(device)):
             pdf.drawCentredString(column2_text,
                                   text_block_middle_width + (math.floor(len(device) / 2) * device_line_spacing) - (
-                                              device_line_spacing * line), device[line])
+                                          device_line_spacing * line), device[line])
     else:
         for line in range(len(device)):
             pdf.drawCentredString(column2_text, text_block_middle_width + (
-                        ((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line),
+                    ((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line),
                                   device[line])
 
     # Isolation Method
@@ -797,13 +797,13 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         if isolation_method_num_lines % 2 == 1:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
-                            math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (
-                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
+                        math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (
+                                              isolation_method_line_spacing * line), isolation_method_lines[line])
         else:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
-                            ((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (
-                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
+                        ((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (
+                                              isolation_method_line_spacing * line), isolation_method_lines[line])
     else:
         pdf.drawCentredString(column4_text, text_block_middle_width, blank_text)
 
@@ -818,14 +818,14 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         if verification_method_num_lines % 2 == 1:
             for line in range(verification_method_num_lines):
                 pdf.drawCentredString(column5_text, text_block_middle_width + (
-                            math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (
-                                                  verification_method_line_spacing * line),
+                        math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (
+                                              verification_method_line_spacing * line),
                                       verification_method_lines[line])
         else:
             for line in range(verification_method_num_lines):
                 pdf.drawCentredString(column5_text, text_block_middle_width + (((math.floor(
                     verification_method_num_lines / 2) - 1) * verification_method_line_spacing) + 5) - (
-                                                  verification_method_line_spacing * line),
+                                              verification_method_line_spacing * line),
                                       verification_method_lines[line], )
     else:
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
@@ -1111,9 +1111,14 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     return h_line2
 
 
-bottom = first_page()
-bottom = add_sources(bottom)
-bottom = add_restart_sequence(bottom)
-bottom = add_signatures(bottom)
+# Generate the PDF
+def generate_pdf():
+    bottom = first_page()
+    bottom = add_sources(bottom)
+    bottom = add_restart_sequence(bottom)
+    bottom = add_signatures(bottom)
 
-pdf.save()
+    pdf.save()
+
+
+generate_pdf()
