@@ -139,20 +139,20 @@ DEFAULT_FONT_SIZE = 10
 DEFAULT_ROW_SPACING = 14
 
 # Data
-data_file = 'data_4.json'
+data_file = 'test_data.json'
 data = load_data(data_file)
 
 # Creating PDF and setting document title
 file_name = data_file[:-5]  # Gets data file name and strips the '.json' so we have the name of the machine
-pdf = canvas.Canvas(file_name + "_WIP_2.pdf",
+pdf = canvas.Canvas(file_name + ".pdf",
                     PAGE_SIZE)  # Makes the PDF with the filename from the line above and adds extension '.pdf'
 pdf.setTitle(file_name)  # Sets document title. Appears only in document properties
 
 # Registering Fonts
-pdfmetrics.registerFont(TTFont('DM Serif Display', 'DMSerifDisplay_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Inter', 'Inter_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Times', 'times.ttf'))
-pdfmetrics.registerFont(TTFont('Signature', 'Pacifico.ttf'))
+pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
+pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
+pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
+pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
 
 
 # Adds First Page
@@ -193,7 +193,7 @@ def add_header() -> float:
     page_title_y = PAGE_HEIGHT - 54  # 0.75in
 
     # Header Image
-    image_name = 'CardinalLogo.png'
+    image_name = 'includes/CardinalLogo.png'
     image_width = 144  # 2in
     image_height = 72
     image_height, image_width = resize_image(image_name, image_height, image_width)
@@ -305,7 +305,7 @@ def add_header() -> float:
     pdf.setFont(page_title_font, page_title_font_size)
     pdf.drawCentredString(PAGE_WIDTH_MIDDLE, page_title_y, "LOCKOUT-TAGOUT")
     pdf.drawCentredString(PAGE_WIDTH_MIDDLE, page_title_y - page_title_line_spacing, "PROCEDURE")
-    pdf.drawImage('CardinalLogo.png', image_x, image_y, image_width, image_height)
+    pdf.drawImage(image_name, image_x, image_y, image_width, image_height)
 
     # Creating Header Field Outlines
     pdf.setLineWidth(DEFAULT_LINE_WIDTH)
@@ -405,7 +405,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         isolation_points = isolation_points[:3]
 
     # Lock Tag Formatting Options
-    lock_image_file = 'LockTag.png'
+    lock_image_file = 'includes/LockTag.png'
     lock_image_height = 40
     lock_image_width = lock_image_height
     lock_image_height, lock_image_width = resize_image(lock_image_file, lock_image_height, lock_image_width)
@@ -422,7 +422,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         row1_height = (row_spacing * 3)
 
     # Machine Image Formatting Options
-    machine_image_file = 'test_1.jpg'
+    machine_image_file = data.get('MachineImage', '')
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -525,7 +525,7 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_spacing = 10
     body_line_length = 135
     body_line_limit = 5
-    body_background = 'Red.png'
+    body_background = 'includes/Red.png'
 
     shutdown_sequence = "1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-energization of all sources."
 
@@ -652,7 +652,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     device_line_spacing = 11
     isolation_method_line_spacing = 11
     verification_method_line_spacing = 11
-    default_image = "ImageNotFound.jpg"
+    default_image = "includes/ImageNotFound.jpg"
 
     text_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (2 / 14)
     image_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (3 / 14)
@@ -908,7 +908,7 @@ def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_spacing = 10
     body_line_length = 135
     body_line_limit = 5
-    body_background = 'Green.png'
+    body_background = 'includes/Green.png'
 
     restart_sequence = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and reenergize machine. 5. Notify affected employees that servicing is complete."
 

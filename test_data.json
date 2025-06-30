@@ -6,7 +6,7 @@
     "Revision": "0",
     "Date": "01/02/2025",
     "Origin": "01",
-    "MachineImage": "test_2.jpg",
+    "MachineImage": "includes/test_2.jpg",
     "IsolationPoints": "2",
     "Notes": "Notes go here.",
     "ApprovedBy": "Kyle Schang",
@@ -24,10 +24,10 @@
             "Device": "Disconnect",
             "Tag": "0001",
             "Description": "Description",
-            "IsolationPoint": "test_2.jpg",
+            "IsolationPoint": "includes/test_2.jpg",
             "IsolationMethod": "Lock out disconnect",
             "VerificationMethod": "Power Button",
-            "VerificationDevice": "test_2.jpg"
+            "VerificationDevice": "includes/test_2.jpg"
         },
         {
             "EnergySource": "Electric",
@@ -39,10 +39,10 @@
             "Device": "Lower component to full down position",
             "Tag": "1234",
             "Description": "Description Description Description",
-            "IsolationPoint": "test_2.jpg",
+            "IsolationPoint": "includes/test_2.jpg",
             "IsolationMethod": "Isolation Method",
             "VerificationMethod": "Verification Method",
-            "VerificationDevice": "test_1.jpg"
+            "VerificationDevice": "includes/test_1.jpg"
         },
         {
             "EnergySource": "Thermal",
@@ -54,10 +54,10 @@
             "Device": "Lower component to full down position",
             "Tag": "1234",
             "Description": "Description Description Description. This is where I am going to put some stuff to make it longer so it goes on the next page",
-            "IsolationPoint": "test_1.jpg",
+            "IsolationPoint": "includes/test_1.jpg",
             "IsolationMethod": "Isolation Method",
             "VerificationMethod": "Verification Method",
-            "VerificationDevice": "test_2.jpg"
+            "VerificationDevice": "includes/test_2.jpg"
         },
         {
             "EnergySource": "Gravity",
@@ -69,10 +69,10 @@
             "Device": "Lower component to full down position",
             "Tag": "1234",
             "Description": "Description Description Description Description Description Description Description",
-            "IsolationPoint": "test_2.jpg",
+            "IsolationPoint": "includes/test_2.jpg",
             "IsolationMethod": "Isolation Method",
             "VerificationMethod": "Verification Method",
-            "VerificationDevice": "test_2.jpg"
+            "VerificationDevice": "includes/test_2.jpg"
         }
     ]
 }
