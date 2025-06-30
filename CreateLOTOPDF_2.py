@@ -2,9 +2,6 @@
 # pillow, reportlab, icecream
 
 # Import Functions
-from PIL import Image
-import json
-from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
@@ -12,101 +9,7 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 import math
 from icecream import ic
 
-
-# Resize image based on max height and/or width
-def resize_image(filename: str, max_height: float = None, max_width: float = None):
-    original_width, original_height = Image.open(filename).size
-
-    if max_height and max_width:
-        width_ratio = original_width / max_width
-        height_ratio = original_height / max_height
-
-        limiting_ratio = max(width_ratio, height_ratio)
-
-    elif max_height:
-        limiting_ratio = original_height / max_height
-
-    elif max_width:
-        limiting_ratio = original_width / max_width
-
-    else:
-        return original_height, original_width
-
-    new_width = original_width / limiting_ratio
-    new_height = original_height / limiting_ratio
-
-    return new_height, new_width
-
-
-# Error message
-def print_error(error_message: str):
-    red_color = "\033[91m"
-    white_color = "\033[0m"
-    print(f"{red_color}{error_message}{white_color}")
-
-
-# Success message
-def print_success(success_message: str):
-    green_color = "\033[92m"
-    white_color = "\033[0m"
-    print(f"{green_color}{success_message}{white_color}")
-
-
-# Load json/data
-def load_data(data_file_name: str):
-    try:
-        with open(data_file_name, "r") as file:
-            return json.load(file)
-    except Exception as e:
-        print_error(f"Could not load json file: {e}")
-
-
-# Get number of pages
-def page_count(pdf_path):
-    try:
-        reader = PdfReader(pdf_path)
-        return len(reader.pages)
-    except Exception as e:
-        print_error(f"Error reading PDF file: {e}")
-        return 0
-
-
-# Processes text for placement on PDF
-def process_text(input_text: str, line_length: int, max_lines: int, return_lines: bool = False):
-    words = input_text.split()
-    lines = []
-    current_line = []
-
-    for word in words:
-        if len(' '.join(current_line + [word])) <= line_length:
-            current_line.append(word)
-        else:
-            lines.append(' '.join(current_line).strip())
-            current_line = [word]
-            if len(lines) == max_lines:
-                break  # Stop if max_lines is reached
-
-    if current_line and len(lines) < max_lines:
-        lines.append(' '.join(current_line).strip())
-
-    return lines if return_lines else len(lines)
-
-
-# Splits text into lines
-def split_text(input_text: str, line_length: int, max_lines: int):
-    return process_text(input_text, line_length, max_lines, return_lines=True)
-
-
-# Returns number of lines
-def num_lines(input_text: str, line_length: int, max_lines: int):
-    return process_text(input_text, line_length, max_lines, return_lines=False)
-
-
-# Checks the length of a string and truncates it
-def check_length(text: str, max_length: int, add_ellipsis: bool = False):
-    if len(text) > max_length:
-        return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
-    return text
+from helper_functions import resize_image, load_data, split_text, num_lines, check_length
 
 
 # Set Default
@@ -780,11 +683,11 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         for line in range(len(device)):
             pdf.drawCentredString(column2_text,
                                   text_block_middle_width + (math.floor(len(device) / 2) * device_line_spacing) - (
-                                              device_line_spacing * line), device[line])
+                                          device_line_spacing * line), device[line])
     else:
         for line in range(len(device)):
             pdf.drawCentredString(column2_text, text_block_middle_width + (
-                        ((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line),
+                    ((math.floor(len(device) / 2) - 1) * device_line_spacing) + 5) - (device_line_spacing * line),
                                   device[line])
 
     # Isolation Method
@@ -797,13 +700,13 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         if isolation_method_num_lines % 2 == 1:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
-                            math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (
-                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
+                        math.floor(isolation_method_num_lines / 2) * isolation_method_line_spacing) - (
+                                              isolation_method_line_spacing * line), isolation_method_lines[line])
         else:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
-                            ((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (
-                                                  isolation_method_line_spacing * line), isolation_method_lines[line])
+                        ((math.floor(isolation_method_num_lines / 2) - 1) * isolation_method_line_spacing) + 5) - (
+                                              isolation_method_line_spacing * line), isolation_method_lines[line])
     else:
         pdf.drawCentredString(column4_text, text_block_middle_width, blank_text)
 
@@ -818,14 +721,14 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         if verification_method_num_lines % 2 == 1:
             for line in range(verification_method_num_lines):
                 pdf.drawCentredString(column5_text, text_block_middle_width + (
-                            math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (
-                                                  verification_method_line_spacing * line),
+                        math.floor(verification_method_num_lines / 2) * verification_method_line_spacing) - (
+                                              verification_method_line_spacing * line),
                                       verification_method_lines[line])
         else:
             for line in range(verification_method_num_lines):
                 pdf.drawCentredString(column5_text, text_block_middle_width + (((math.floor(
                     verification_method_num_lines / 2) - 1) * verification_method_line_spacing) + 5) - (
-                                                  verification_method_line_spacing * line),
+                                              verification_method_line_spacing * line),
                                       verification_method_lines[line], )
     else:
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
