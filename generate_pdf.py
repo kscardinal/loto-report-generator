@@ -10,6 +10,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
 import math
+import sys
+import os
 from icecream import ic
 
 
@@ -57,8 +59,15 @@ def load_data(data_file_name: str):
     try:
         with open(data_file_name, "r") as file:
             return json.load(file)
+    except FileNotFoundError:
+        print_error(f"Error: File '{data_file_name}' not found.")
+        return None
+    except json.JSONDecodeError:
+        print_error(f"Error: Invalid JSON format in '{data_file_name}'.")
+        return None
     except Exception as e:
         print_error(f"Could not load json file: {e}")
+        return None
 
 
 # Get number of pages
@@ -138,15 +147,52 @@ DEFAULT_FONT = 'Inter'
 DEFAULT_FONT_SIZE = 10
 DEFAULT_ROW_SPACING = 14
 
-# Data
-data_file = 'test_data.json'
-data = load_data(data_file)
 
-# Creating PDF and setting document title
-file_name = data_file[:-5]  # Gets data file name and strips the '.json' so we have the name of the machine
-pdf = canvas.Canvas(file_name + ".pdf",
-                    PAGE_SIZE)  # Makes the PDF with the filename from the line above and adds extension '.pdf'
-pdf.setTitle(file_name)  # Sets document title. Appears only in document properties
+def get_json_filename():
+    """Get JSON filename from command line arguments or user input"""
+    if len(sys.argv) > 1:
+        # Use command line argument
+        json_filename = sys.argv[1]
+    else:
+        # Ask user for input
+        json_filename = input("Enter the JSON filename (without .json extension): ").strip()
+        if not json_filename.endswith('.json'):
+            json_filename += '.json'
+
+    # Validate file exists
+    if not os.path.exists(json_filename):
+        print_error(f"File '{json_filename}' does not exist.")
+        return None
+
+    return json_filename
+
+
+def initialize_pdf_generator(data_file):
+    """Initialize the PDF generator with the given data file"""
+    global data, pdf, file_name
+
+    # Load data
+    data = load_data(data_file)
+    if data is None:
+        return False
+
+    # Creating PDF and setting document title
+    file_name = os.path.splitext(data_file)[0]  # Remove .json extension
+    pdf = canvas.Canvas(file_name + ".pdf", PAGE_SIZE)
+    pdf.setTitle(file_name)
+
+    # Registering Fonts
+    try:
+        pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
+        pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
+        pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
+        pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
+    except Exception as e:
+        print_error(f"Error loading fonts: {e}")
+        return False
+
+    return True
+
 
 # Registering Fonts
 pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
@@ -1121,4 +1167,16 @@ def generate_pdf():
     pdf.save()
 
 
-generate_pdf()
+def main():
+    json_filename = get_json_filename()
+    if not json_filename:
+        sys.exit(1)
+
+    if not initialize_pdf_generator(json_filename):
+        sys.exit(1)
+
+    generate_pdf()
+
+
+if __name__ == "__main__":
+    main()
