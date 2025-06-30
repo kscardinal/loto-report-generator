@@ -194,13 +194,6 @@ def initialize_pdf_generator(data_file):
     return True
 
 
-# Registering Fonts
-pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
-pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
-
-
 # Adds First Page
 def first_page() -> float:
     bottom = add_header()
