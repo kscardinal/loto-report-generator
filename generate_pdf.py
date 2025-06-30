@@ -1160,6 +1160,25 @@ def generate_pdf():
     pdf.save()
 
 
+# Generate PDF from JSON data
+def generate_pdf_from_json(json_data: dict, output_path: str) -> bool:
+    global data, pdf, file_name
+    data = json_data
+    file_name = os.path.splitext(output_path)[0]
+    pdf = canvas.Canvas(output_path, PAGE_SIZE)
+    pdf.setTitle(file_name)
+
+    # Register fonts
+    pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
+    pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
+    pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
+    pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
+
+    generate_pdf()
+    return True
+
+
+# Main function to run the PDF generation
 def main():
     json_filename = get_json_filename()
     if not json_filename:
