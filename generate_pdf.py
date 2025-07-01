@@ -125,6 +125,39 @@ def set_default():
     pdf.setFillColorRGB(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2])
 
 
+# Check asset files exists
+def check_assets():
+    asset_files = [
+        'includes/CardinalLogo.png',
+        'includes/LockTag.png',
+        'includes/Red.png',
+        'includes/ImageNotFound.jpg',
+        'includes/DMSerifDisplay_Regular.ttf',
+        'includes/Inter_Regular.ttf',
+        'includes/times.ttf',
+        'includes/Pacifico.ttf'
+    ]
+
+    for file in asset_files:
+        if not os.path.exists(file):
+            print_error(f"Image file '{file}' does not exist.")
+            return False
+    return True
+
+
+# Check JSON image paths aren't empty
+def check_json_images(data):
+    if 'MachineImage' in data and not data['MachineImage']:
+        print_error("MachineImage path is empty in JSON data.")
+        return False
+    if 'LockTagImage' in data and not data['LockTagImage']:
+        print_error("LockTagImage path is empty in JSON data.")
+        return False
+    for source in data.get('Sources', []):
+        if 'Image' in source and not source['Image']:
+            print_error("One or more Source Image paths are empty in JSON data.")
+            return False
+
 # Global variables for page setup and defaults
 
 # Page dimensions (in points, 1 pt = 1/72 inch)
@@ -146,6 +179,8 @@ DEFAULT_COLOR = [0, 0, 0]  # Black
 DEFAULT_FONT = 'Inter'
 DEFAULT_FONT_SIZE = 10
 DEFAULT_ROW_SPACING = 14
+DEFAULT_IMAGE = "includes/ImageNotFound.jpg"
+
 
 
 def get_json_filename():
@@ -461,7 +496,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         row1_height = (row_spacing * 3)
 
     # Machine Image Formatting Options
-    machine_image_file = data.get('MachineImage', '')
+    machine_image_file = data.get('MachineImage', DEFAULT_IMAGE)
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -796,17 +831,17 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         device.append(blank_text)
 
     if "Tag" in source:
-        device.append("")
-        device.append("Tag: #" + source.get("Tag", blank_text_tag))
-        device.append("")
+        device.append('')
+        device.append('Tag: #' + source.get('Tag', blank_text_tag))
+        device.append('')
     else:
-        device.append("")
-        device.append("Tag: #______")
-        device.append("")
+        device.append('')
+        device.append('Tag: #______')
+        device.append('')
 
     if "Description" in source:
         description_lines = split_text(
-            source.get("Description", blank_text),
+            source.get('Description', blank_text),
             line_length,
             description_line_limit,
         )
@@ -1187,7 +1222,7 @@ def main():
     if not initialize_pdf_generator(json_filename):
         sys.exit(1)
 
-    generate_pdf()
+    generate_pdf_from_json(load_data(json_filename), json_filename.replace('.json', '.pdf'))
 
 
 if __name__ == "__main__":
