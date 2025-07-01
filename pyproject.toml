@@ -12,6 +12,7 @@ dependencies = [
     "pillow>=11.2.1",
     "pypdf2>=3.0.1",
     "reportlab>=4.4.2",
+    "requests>=2.32.4",
 ]
 
 [build-system]
