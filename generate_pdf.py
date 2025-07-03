@@ -145,19 +145,6 @@ def check_assets():
     return True
 
 
-# Check JSON image paths aren't empty
-def check_json_images(data):
-    if 'MachineImage' in data and not data['MachineImage']:
-        print_error("MachineImage path is empty in JSON data.")
-        return False
-    if 'LockTagImage' in data and not data['LockTagImage']:
-        print_error("LockTagImage path is empty in JSON data.")
-        return False
-    for source in data.get('Sources', []):
-        if 'Image' in source and not source['Image']:
-            print_error("One or more Source Image paths are empty in JSON data.")
-            return False
-
 # Global variables for page setup and defaults
 
 # Page dimensions (in points, 1 pt = 1/72 inch)
@@ -292,7 +279,7 @@ def add_header() -> float:
     # Header Description
     description_line_length = 78
     description_line_limit = 5
-    description_height = num_lines(data['Description'], description_line_length,
+    description_height = num_lines(data.get('description', ''), description_line_length,
                                    description_line_limit)
 
     # Header Procedure Number
@@ -301,13 +288,13 @@ def add_header() -> float:
     # Header Facility
     facility_line_length = 26
     facility_line_limit = 5
-    facility_height = num_lines(data['Facility'], facility_line_length,
+    facility_height = num_lines(data.get('facility', ''), facility_line_length,
                                 facility_line_limit)
 
     # Header Location
     location_line_length = 26
     location_line_limit = 5
-    location_height = num_lines(data['Location'], location_line_length,
+    location_height = num_lines(data.get('location', ''), location_line_length,
                                 location_line_limit)
 
     # Header Revision
@@ -414,22 +401,22 @@ def add_header() -> float:
     pdf.setFont(body_font, body_font_size)
     for line in range(description_height):
         pdf.drawString(description_x, row2_text - (line * body_line_spacing),
-                       split_text(data['Description'], description_line_length,
+                       split_text(data.get('description', ''), description_line_length,
                                   description_line_limit)[line])
     pdf.drawString(procedure_number_x, row2_text,
-                   check_length(data['ProcedureNumber'], procedure_number_line_length, False))
+                   check_length(data.get('procedure_number', ''), procedure_number_line_length, False))
     for line in range(facility_height):
         pdf.drawString(facility_x, row3_text - (line * body_line_spacing),
-                       split_text(data['Facility'], facility_line_length, facility_line_limit)[
+                       split_text(data.get('facility', ''), facility_line_length, facility_line_limit)[
                            line])
     for line in range(location_height):
         pdf.drawString(location_x, row3_text - (line * body_line_spacing),
-                       split_text(data['Location'], location_line_length, location_line_limit)[
+                       split_text(data.get('location', ''), location_line_length, location_line_limit)[
                            line])
-    pdf.drawString(revision_x, row3_text, data['Revision'][0:revision_line_length])
+    pdf.drawString(revision_x, row3_text, data.get('revision', '')[0:revision_line_length])
     pdf.setFont("Inter", 9)
-    pdf.drawString(date_x, row3_text, data['Date'])
-    pdf.drawString(origin_x, row3_text, data['Origin'])
+    pdf.drawString(date_x, row3_text, data.get('date', ''))
+    pdf.drawString(origin_x, row3_text, data.get('origin', ''))
 
     # Creating the Address Block
     pdf.setFont(address_font, address_font_size)
@@ -469,7 +456,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     isolation_point_title_font_size = 16
     isolation_points_font = 'Inter'
 
-    isolation_points = data.get('IsolationPoints', '0')
+    isolation_points = data.get('isolation_points', '0')
     if len(isolation_points) == 1:
         isolation_points_font_size = 36
     elif len(isolation_points) == 2:
@@ -487,7 +474,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     # Notes Formatting Options
     notes_line_length = 60
     notes_line_limit = 5
-    notes_height = num_lines(data.get('Notes', ''), notes_line_length, notes_line_limit)
+    notes_height = num_lines(data.get('notes', ''), notes_line_length, notes_line_limit)
 
     # Notes Block Height
     if (notes_height * body_line_spacing + 2) > (row_spacing * 3):
@@ -496,7 +483,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         row1_height = (row_spacing * 3)
 
     # Machine Image Formatting Options
-    machine_image_file = data.get('MachineImage', DEFAULT_IMAGE)
+    machine_image_file = data.get('machine_image', DEFAULT_IMAGE)
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -565,7 +552,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Notes Text
     pdf.setFont(body_font, body_font_size)
-    notes = split_text(data.get('Notes', ''), notes_line_length, notes_line_limit)
+    notes = split_text(data.get('notes', ''), notes_line_length, notes_line_limit)
     for line in range(len(notes)):
         pdf.drawString(column2_text, row6_text - (line * body_line_spacing), notes[line])
 
@@ -787,33 +774,33 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     # Add Energy Source
     pdf.setFont(body_font, body_font_size)
-    match source.get('EnergySource', 'Other'):
+    match source.get('energy_source', 'Other'):
         case 'Electric':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
-                                  source.get('EnergySource', blank_text))
+                                  source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
-                                  source.get('VOLTS', blank_text_v))
+                                  source.get('volt', blank_text_v))
         case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Refrigerant':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
-                                  source.get('EnergySource', blank_text))
+                                  source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
-                                  source.get('PSI', blank_text_psi))
+                                  source.get('psi', blank_text_psi))
         case 'Chemical':
             pdf.drawCentredString(column1_text, text_block_middle_width + energy_source_line_spacing,
-                                  source.get('EnergySource', blank_text))
-            pdf.drawCentredString(column1_text, text_block_middle_width, source.get('ChemicalName', blank_text))
+                                  source.get('energy_source', blank_text))
+            pdf.drawCentredString(column1_text, text_block_middle_width, source.get('chemical_name', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - energy_source_line_spacing,
-                                  source.get('PSI', blank_text_psi))
+                                  source.get('psi', blank_text_psi))
         case 'Gravity':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
-                                  source.get('EnergySource', blank_text))
+                                  source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
-                                  source.get('LBS', blank_text_lbs))
+                                  source.get('lbs', blank_text_lbs))
         case 'Thermal':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
-                                  source.get('EnergySource', blank_text))
+                                  source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
-                                  source.get('TEMP', blank_text_temp))
+                                  source.get('temp', blank_text_temp))
         case 'Other':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2), blank_text)
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2), blank_text)
@@ -823,25 +810,25 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     device = []
 
-    if 'Device' in source:
-        device_lines = split_text(source.get('Device', blank_text), line_length, device_line_limit)
+    if 'device' in source:
+        device_lines = split_text(source.get('device', blank_text), line_length, device_line_limit)
         for line in range(len(device_lines)):
             device.append(device_lines[line])
     else:
         device.append(blank_text)
 
-    if "Tag" in source:
+    if "tag" in source:
         device.append('')
-        device.append('Tag: #' + source.get('Tag', blank_text_tag))
+        device.append('Tag: #' + source.get('tag', blank_text_tag))
         device.append('')
     else:
         device.append('')
         device.append('Tag: #______')
         device.append('')
 
-    if "Description" in source:
+    if "source_description" in source:
         description_lines = split_text(
-            source.get('Description', blank_text),
+            source.get('source_description', blank_text),
             line_length,
             description_line_limit,
         )
@@ -864,10 +851,10 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     # Isolation Method
     pdf.setFont(body_font, body_font_size)
 
-    if "IsolationMethod" in source:
-        isolation_method_num_lines = num_lines(source.get("IsolationMethod", ""), line_length,
+    if "isolation_method" in source:
+        isolation_method_num_lines = num_lines(source.get("isolation_method", ""), line_length,
                                                isolation_method_line_limit)
-        isolation_method_lines = split_text(source.get("IsolationMethod", ""), line_length, isolation_method_line_limit)
+        isolation_method_lines = split_text(source.get("isolation_method", ""), line_length, isolation_method_line_limit)
         if isolation_method_num_lines % 2 == 1:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
@@ -884,10 +871,10 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     # Verification Method
     pdf.setFont(body_font, body_font_size)
 
-    if "VerificationMethod" in source:
-        verification_method_num_lines = num_lines(source.get("VerificationMethod", ""), line_length,
+    if "verification_method" in source:
+        verification_method_num_lines = num_lines(source.get("verification_method", ""), line_length,
                                                   verification_method_line_limit)
-        verification_method_lines = split_text(source.get("VerificationMethod", ""), line_length,
+        verification_method_lines = split_text(source.get("verification_method", ""), line_length,
                                                verification_method_line_limit)
         if verification_method_num_lines % 2 == 1:
             for line in range(verification_method_num_lines):
@@ -905,20 +892,20 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
     # Isolation Point
-    isolation_point_height, isolation_point_width = resize_image(source.get("IsolationPoint", default_image),
+    isolation_point_height, isolation_point_width = resize_image(source.get("isolation_point", DEFAULT_IMAGE),
                                                                  isolation_point_max_height, isolation_point_max_width)
-    pdf.drawImage(source.get("IsolationPoint", default_image), column3_image - (isolation_point_width / 2),
+    pdf.drawImage(source.get("isolation_point", default_image), column3_image - (isolation_point_width / 2),
                   image_block_middle_width - (isolation_point_height / 2), isolation_point_width,
                   isolation_point_height)
 
     # Verification Device
     verification_device_height, verification_device_width = resize_image(
-        source.get("VerificationDevice", default_image), verification_device_max_height, verification_device_max_width)
-    pdf.drawImage(source.get("VerificationDevice", default_image), column6_image - (verification_device_width / 2),
+        source.get("verification_device", DEFAULT_IMAGE), verification_device_max_height, verification_device_max_width)
+    pdf.drawImage(source.get("verification_device", default_image), column6_image - (verification_device_width / 2),
                   image_block_middle_width - (verification_device_height / 2), verification_device_width,
                   verification_device_height)
 
-    ic('Adding Source: ' + source.get('EnergySource', '') + ' : ' + source.get('Tag', ''))
+    ic('Adding Source: ' + source.get('energy_source', '') + ' : ' + source.get('tag', ''))
     return h_line2
 
 
@@ -933,16 +920,16 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     isolation_method_line_limit = 10
     verification_method_line_limit = 10
 
-    sources = data['Sources']
+    sources = data['sources']
 
     for source_num in range(len(sources)):
 
         source = sources[source_num]
 
-        device_height = num_lines(source.get('Device', ''), line_length, device_line_limit) + 3 + num_lines(
-            source.get('Description', ''), line_length, description_line_limit)
-        isolation_method_height = num_lines(source.get('IsolationMethod', ''), line_length, isolation_method_line_limit)
-        verification_method_height = num_lines(source.get('VerificationMethod', ''), line_length,
+        device_height = num_lines(source.get('device', ''), line_length, device_line_limit) + 3 + num_lines(
+            source.get('source_description', ''), line_length, description_line_limit)
+        isolation_method_height = num_lines(source.get('isolation_method', ''), line_length, isolation_method_line_limit)
+        verification_method_height = num_lines(source.get('verification_method', ''), line_length,
                                                verification_method_line_limit)
 
         minHeight = 110
@@ -1067,7 +1054,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     bold_line_weight = 0.75
 
     description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get(
-        'ApprovedBy', '') + '.'
+        'approved_by', '') + '.'
     description_num_lines = num_lines(description, body_line_length, body_line_limit)
     description_lines = split_text(description, body_line_length, body_line_limit)
     description_height = (description_num_lines * body_line_spacing) + 2
@@ -1075,8 +1062,8 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     prepared_by_company = 'Cardinal Compliance Consultants, LLC'
     prepared_by_num_lines = num_lines(prepared_by_company, company_line_length, company_line_limit)
     prepared_by_lines = split_text(prepared_by_company, company_line_length, company_line_limit)
-    approved_by_num_lines = num_lines(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
-    approved_by_lines = split_text(data.get('ApprovedByCompany', ''), company_line_length, company_line_limit)
+    approved_by_num_lines = num_lines(data.get('approved_by_company', ''), company_line_length, company_line_limit)
+    approved_by_lines = split_text(data.get('approved_by_company', ''), company_line_length, company_line_limit)
     company_height = (max(approved_by_num_lines, prepared_by_num_lines) * body_line_spacing) + 2
 
     total_height = description_height + company_height + (5.5 * DEFAULT_ROW_SPACING) + (title_font_size / 2)
@@ -1128,7 +1115,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.drawString(column5_text, row3_text, 'Date: ')
 
     pdf.setFont(body_font, body_font_size)
-    pdf.drawString(column5_text + 30, row3_text, data.get('CompletedDate', ''))
+    pdf.drawString(column5_text + 30, row3_text, data.get('completed_date', ''))
 
     # Adding Signature Lines
     pdf.setLineWidth(bold_line_weight)
@@ -1137,14 +1124,14 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Adding Printed Names
     pdf.setFont(body_font, body_font_size)
-    if len(data.get('PreparedBy', '')) > 30:
+    if len(data.get('prepared_by', '')) > 30:
         raise Exception('Prepared By name is too long')
     else:
-        pdf.drawString(column2_text, row4_text, data.get('PreparedBy', ''))
-    if len(data.get('ApprovedBy', '')) > 30:
+        pdf.drawString(column2_text, row4_text, data.get('prepared_by', ''))
+    if len(data.get('approved_by', '')) > 30:
         raise Exception('Approved By name is too long')
     else:
-        pdf.drawString(column4_text, row4_text, data.get('ApprovedBy', ''))
+        pdf.drawString(column4_text, row4_text, data.get('approved_by', ''))
 
     # Adding Company Information
     pdf.setFont(body_font, body_font_size)
@@ -1157,7 +1144,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     signature_max_text_width = v_line2 - v_line1
     signature_font_size = signature_font_size_max
     while signature_font_size >= signature_font_size_min:
-        text_width = stringWidth(data.get('PreparedBy', ''), signature_font, signature_font_size)
+        text_width = stringWidth(data.get('prepared_by', ''), signature_font, signature_font_size)
         if text_width <= signature_max_text_width:
             break
         signature_font_size -= 0.5
@@ -1165,13 +1152,13 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.setFont(signature_font, signature_font_size)
     pdf.setFillColorRGB(signature_color[0], signature_color[1], signature_color[2])
     pdf.setFillAlpha(signature_opacity)
-    pdf.drawString(column2_text, row3_text, data.get('PreparedBy', ''))
+    pdf.drawString(column2_text, row3_text, data.get('prepared_by', ''))
 
     # Approved By Signature
     signature_max_text_width = v_line2 - v_line1
     signature_font_size = signature_font_size_max
     while signature_font_size >= signature_font_size_min:
-        text_width = stringWidth(data.get('ApprovedBy', ''), signature_font, signature_font_size)
+        text_width = stringWidth(data.get('approved_by', ''), signature_font, signature_font_size)
         if text_width <= signature_max_text_width:
             break
         signature_font_size -= 0.5
@@ -1179,7 +1166,7 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
     pdf.setFont(signature_font, signature_font_size)
     pdf.setFillColorRGB(signature_color[0], signature_color[1], signature_color[2])
     pdf.setFillAlpha(signature_opacity)
-    pdf.drawString(column4_text, row3_text, data.get('ApprovedBy', ''))
+    pdf.drawString(column4_text, row3_text, data.get('approved_by', ''))
 
     ic('Adding Signatures')
     return h_line2
