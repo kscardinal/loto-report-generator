@@ -484,6 +484,8 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Machine Image Formatting Options
     machine_image_file = data.get('machine_image', DEFAULT_IMAGE)
+    if not os.path.isfile(machine_image_file):
+        machine_image_file = DEFAULT_IMAGE
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -891,17 +893,27 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     else:
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
+    # Isolation Point File
+    isolation_point_file = data.get('isolation_point', DEFAULT_IMAGE)
+    if not os.path.isfile(isolation_point_file):
+        isolation_point_file = DEFAULT_IMAGE
+
     # Isolation Point
-    isolation_point_height, isolation_point_width = resize_image(source.get("isolation_point", DEFAULT_IMAGE),
+    isolation_point_height, isolation_point_width = resize_image(isolation_point_file,
                                                                  isolation_point_max_height, isolation_point_max_width)
-    pdf.drawImage(source.get("isolation_point", default_image), column3_image - (isolation_point_width / 2),
+    pdf.drawImage(isolation_point_file, column3_image - (isolation_point_width / 2),
                   image_block_middle_width - (isolation_point_height / 2), isolation_point_width,
                   isolation_point_height)
 
+    # Verification Device File
+    verification_device_file = data.get('verification_device', DEFAULT_IMAGE)
+    if not os.path.isfile(verification_device_file):
+        verification_device_file = DEFAULT_IMAGE
+
     # Verification Device
     verification_device_height, verification_device_width = resize_image(
-        source.get("verification_device", DEFAULT_IMAGE), verification_device_max_height, verification_device_max_width)
-    pdf.drawImage(source.get("verification_device", default_image), column6_image - (verification_device_width / 2),
+        verification_device_file, verification_device_max_height, verification_device_max_width)
+    pdf.drawImage(verification_device_file, column6_image - (verification_device_width / 2),
                   image_block_middle_width - (verification_device_height / 2), verification_device_width,
                   verification_device_height)
 
