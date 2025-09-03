@@ -67,8 +67,8 @@
 	Download and install [uv](https://github.com/astral-sh/uv) from the official repository or use:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
- uv self update
- uv python install 3.13
+uv self update
+uv python install 3.13
 ```
 
 2. **Create a virtual environment**
