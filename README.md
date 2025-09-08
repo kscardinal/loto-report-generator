@@ -5,8 +5,7 @@
 ![GitHub Release](https://img.shields.io/github/v/release/kscardinal/loto-report-generator)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator)
 ![GitHub last commit](https://img.shields.io/github/last-commit/kscardinal/loto-report-generator)
-
-
+![GitHub contributors](https://img.shields.io/github/contributors/kscardinal/loto-report-generator)
 
 ---
 
