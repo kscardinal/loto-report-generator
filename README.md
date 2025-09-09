@@ -39,23 +39,22 @@
 
 ## Tech Stack  
 
-- **Frontend**: HTML  
+- **Frontend**: N/A  
 - **Backend**: Python, FastAPI  
 - **Database**: N/A  
-- **Other Tools**: ReportLab, UV  
+- **Other Tools**: ReportLab, 
 
 ---
 
 ## Project Structure  
 
 - loto-report-generator/
-- ├── `includes/`                # Photos and fonts
-- ├── `src/`                         # Python files
-- ├── [`automate_pdf.py`](automate_pdf.py)     # Generates PDF report on server
-- ├── [`generate_pdf.py`](generate_pdf.py)     # Generate PDF on device
-- ├── [`main.py`](main.py)                    # Entry point for running the application
-- ├── [`main.html`](main.html)                # Web input for data
-- └── [`test_data.json`](test_data.json)       # Test JSON data for report generation
+- ├── includes/               # Photos and fonts
+- ├── tests/	# Tests folder
+- ├    ├── [`test_data.json`](test_data.json) # Test JSON data
+- ├── src/loto-report-generator                         # Python files
+- ├    ├── [`generate_pdf.py`](generate_pdf.py)     # Generate PDF on device
+- └    └── [`__init__.py`](__init__.py)       # Python Package
 
 
 ---
