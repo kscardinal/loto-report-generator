@@ -42,7 +42,7 @@
 - **Frontend**: N/A  
 - **Backend**: Python, FastAPI  
 - **Database**: N/A  
-- **Other Tools**: ReportLab, 
+- **Other Tools**: ReportLab
 
 ---
 
