@@ -53,7 +53,6 @@ def print_success(success_message: str):
     white_color = "\033[0m"
     print(f"{green_color}{success_message}{white_color}")
 
-
 # Load json/data
 def load_data(data_file_name: str):
     try:
