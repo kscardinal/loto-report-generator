@@ -123,18 +123,20 @@ def set_default():
     pdf.setLineWidth(DEFAULT_LINE_WIDTH)
     pdf.setFillColorRGB(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2])
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+INCLUDES_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '../../includes'))
 
 # Check asset files exists
 def check_assets():
     asset_files = [
-        'includes/CardinalLogo.png',
-        'includes/LockTag.png',
-        'includes/Red.png',
-        'includes/ImageNotFound.jpg',
-        'includes/DMSerifDisplay_Regular.ttf',
-        'includes/Inter_Regular.ttf',
-        'includes/times.ttf',
-        'includes/Pacifico.ttf'
+        os.path.join(INCLUDES_DIR, 'CardinalLogo.png'),
+        os.path.join(INCLUDES_DIR, 'LockTag.png'),
+        os.path.join(INCLUDES_DIR, 'Red.png'),
+        os.path.join(INCLUDES_DIR, 'ImageNotFound.jpg'),
+        os.path.join(INCLUDES_DIR, 'DMSerifDisplay_Regular.ttf'),
+        os.path.join(INCLUDES_DIR, 'Inter_Regular.ttf'),
+        os.path.join(INCLUDES_DIR, 'times.ttf'),
+        os.path.join(INCLUDES_DIR, 'Pacifico.ttf')
     ]
 
     for file in asset_files:
@@ -165,7 +167,7 @@ DEFAULT_COLOR = [0, 0, 0]  # Black
 DEFAULT_FONT = 'Inter'
 DEFAULT_FONT_SIZE = 10
 DEFAULT_ROW_SPACING = 14
-DEFAULT_IMAGE = "includes/ImageNotFound.jpg"
+DEFAULT_IMAGE = os.path.join(INCLUDES_DIR, 'ImageNotFound.jpg')
 
 
 
@@ -204,10 +206,10 @@ def initialize_pdf_generator(data_file):
 
     # Registering Fonts
     try:
-        pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
-        pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
-        pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
-        pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
+        pdfmetrics.registerFont(TTFont('DM Serif Display', os.path.join(INCLUDES_DIR, 'DMSerifDisplay_Regular.ttf')))
+        pdfmetrics.registerFont(TTFont('Inter', os.path.join(INCLUDES_DIR, 'Inter_Regular.ttf')))
+        pdfmetrics.registerFont(TTFont('Times', os.path.join(INCLUDES_DIR, 'times.ttf')))
+        pdfmetrics.registerFont(TTFont('Signature', os.path.join(INCLUDES_DIR, 'Pacifico.ttf')))
     except Exception as e:
         print_error(f"Error loading fonts: {e}")
         return False
@@ -253,7 +255,7 @@ def add_header() -> float:
     page_title_y = PAGE_HEIGHT - 54  # 0.75in
 
     # Header Image
-    image_name = 'includes/CardinalLogo.png'
+    image_name = os.path.join(INCLUDES_DIR, 'CardinalLogo.png')
     image_width = 144  # 2in
     image_height = 72
     image_height, image_width = resize_image(image_name, image_height, image_width)
@@ -465,7 +467,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         isolation_points = isolation_points[:3]
 
     # Lock Tag Formatting Options
-    lock_image_file = 'includes/LockTag.png'
+    lock_image_file = os.path.join(INCLUDES_DIR, 'LockTag.png')
     lock_image_height = 40
     lock_image_width = lock_image_height
     lock_image_height, lock_image_width = resize_image(lock_image_file, lock_image_height, lock_image_width)
@@ -587,7 +589,7 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_spacing = 10
     body_line_length = 135
     body_line_limit = 5
-    body_background = 'includes/Red.png'
+    body_background = os.path.join(INCLUDES_DIR, 'Red.png')
 
     shutdown_sequence = "1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-energization of all sources."
 
@@ -714,7 +716,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     device_line_spacing = 11
     isolation_method_line_spacing = 11
     verification_method_line_spacing = 11
-    default_image = "includes/ImageNotFound.jpg"
+    default_image = os.path.join(INCLUDES_DIR, 'ImageNotFound.jpg')
 
     text_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (2 / 14)
     image_block_width = (PAGE_RIGHT_MARGIN - PAGE_LEFT_MARGIN) * (3 / 14)
@@ -980,7 +982,7 @@ def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_spacing = 10
     body_line_length = 135
     body_line_limit = 5
-    body_background = 'includes/Green.png'
+    body_background = os.path.join(INCLUDES_DIR, 'Green.png')
 
     restart_sequence = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and reenergize machine. 5. Notify affected employees that servicing is complete."
 
@@ -1202,10 +1204,10 @@ def generate_pdf_from_json(json_data: dict, output_path: str) -> bool:
     pdf.setTitle(file_name)
 
     # Register fonts
-    pdfmetrics.registerFont(TTFont('DM Serif Display', 'includes/DMSerifDisplay_Regular.ttf'))
-    pdfmetrics.registerFont(TTFont('Inter', 'includes/Inter_Regular.ttf'))
-    pdfmetrics.registerFont(TTFont('Times', 'includes/times.ttf'))
-    pdfmetrics.registerFont(TTFont('Signature', 'includes/Pacifico.ttf'))
+    pdfmetrics.registerFont(TTFont('DM Serif Display', os.path.join(INCLUDES_DIR, 'DMSerifDisplay_Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('Inter', os.path.join(INCLUDES_DIR, 'Inter_Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('Times', os.path.join(INCLUDES_DIR, 'times.ttf')))
+    pdfmetrics.registerFont(TTFont('Signature', os.path.join(INCLUDES_DIR, 'Pacifico.ttf')))
 
     generate_pdf()
     return True
