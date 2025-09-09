@@ -30,10 +30,10 @@
 
 ## Features  
 
-1. **Automated PDF Generation**: Instantly creates professional LOTO reports using custom templates, images, and fonts for a polished look.
-2. **Environment Configuration via .env**: Easily adapts to different server setups and deployment scenarios with simple environment variable management.
-3. **Extensible Data Input**: Supports dynamic data sources (like JSON) for flexible report customization and integration with other systems.
-4. **Modular Design**: Separates logic for PDF creation, automation, and templating, making it easy to extend or modify for future enhancements.
+- **Automated PDF Generation**: Instantly creates professional LOTO reports using custom templates, images, and fonts for a polished look.
+- **Environment Configuration via .env**: Easily adapts to different server setups and deployment scenarios with simple environment variable management.
+- **Extensible Data Input**: Supports dynamic data sources (like JSON) for flexible report customization and integration with other systems.
+- **Modular Design**: Separates logic for PDF creation, automation, and templating, making it easy to extend or modify for future enhancements.
 
 ---
 
