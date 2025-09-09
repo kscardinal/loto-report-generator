@@ -1214,7 +1214,7 @@ def generate_pdf_from_json(json_data: dict, output_path: str) -> bool:
 
 
 # Main function to run the PDF generation
-def main():
+def generate():
     json_filename = get_json_filename()
     if not json_filename:
         sys.exit(1)
@@ -1226,4 +1226,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    generate()

@@ -1,1 +1,1 @@
-from .generate_pdf import generate_pdf_report, generate_pdf_from_json
+from .generate_pdf import generate_pdf_report, generate_pdf_from_json, generate
