@@ -86,6 +86,7 @@ uv pip install -e .
 ```bash
 SERVER_IP = your.server.ip.address
 ```
+- Should start with  http:// (ex. SERVER_IP=http://127.0.0.1:8000 )
 
 ---
 
