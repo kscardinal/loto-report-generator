@@ -58,8 +58,7 @@ async def generate_pdf(request: GenerateRequest):
 
     try:
         result = subprocess.run(
-            ["uv", "run", "python3", "generate_pdf.py", f"../temp/{json_filename}"],
-            cwd="app",
+            ["python", "generate_pdf.py", str(JSON_DIR / json_filename)],
             capture_output=True,
             text=True,
             check=True
