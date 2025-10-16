@@ -2,19 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Generator</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    input, button { margin: 10px 0; display: block; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    input, button {
+      display: block;
+      margin: 10px 0;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>Generate PDF from JSON</h1>
 
-  <label>Select JSON file:</label>
+  <label for="jsonFile">Select JSON file:</label>
   <input type="file" id="jsonFile" accept=".json" />
 
-  <label>Select included images (optional):</label>
+  <label for="imageFiles">Select included images (optional):</label>
   <input type="file" id="imageFiles" multiple accept="image/*" />
 
   <button id="generateBtn">Generate PDF</button>
@@ -22,7 +35,7 @@
   <div id="status"></div>
 
   <script>
-    const SERVER_URL = "http://127.0.0.1:8000"; // Update if deployed
+    const SERVER = "http://127.0.0.1:8000"; // Your FastAPI server
 
     document.getElementById("generateBtn").addEventListener("click", async () => {
       const status = document.getElementById("status");
@@ -36,34 +49,62 @@
         return;
       }
 
-      const formData = new FormData();
-      formData.append("files", jsonFile);
-
-      for (let i = 0; i < imageFiles.length; i++) {
-        formData.append("files", imageFiles[i]);
-      }
-
       try {
-        const res = await fetch(`${SERVER_URL}/generate-pdf/`, {
-            method: "POST",
-            body: formData
-            });
+        // -----------------------------
+        // Step 1: Upload JSON + images
+        // -----------------------------
+        const uploadForm = new FormData();
+        uploadForm.append("files", jsonFile);
+        for (let i = 0; i < imageFiles.length; i++) {
+          uploadForm.append("files", imageFiles[i]);
+        }
 
-            if (!res.ok) {
-            const err = await res.json();
-            status.textContent = "Error: " + (err.error || res.statusText);
+        const uploadRes = await fetch(`${SERVER}/upload/`, {
+          method: "POST",
+          body: uploadForm
+        });
+
+        const uploadedData = await uploadRes.json();
+        console.log("Upload response:", uploadedData);
+
+        // -----------------------------
+        // Step 2: Generate PDF
+        // -----------------------------
+        status.textContent = "Generating PDF...";
+        const generateRes = await fetch(`${SERVER}/generate/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ json_filename: jsonFile.name })
+        });
+        const generateData = await generateRes.json();
+        console.log("Generate response:", generateData);
+
+        if (generateData.pdf_filename) {
+          // -----------------------------
+          // Step 3: Download PDF
+          // -----------------------------
+          status.textContent = "Downloading PDF...";
+          const pdfRes = await fetch(`${SERVER}/transfer/${generateData.pdf_filename}`);
+          if (!pdfRes.ok) {
+            status.textContent = "Failed to download PDF";
             return;
-            }
+          }
+          const blob = await pdfRes.blob();
+          const url = URL.createObjectURL(blob);
+          window.open(url);
 
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
+          status.textContent = "PDF ready!";
+        }
 
-            // Open PDF in new tab
-            window.open(url);
-            status.textContent = "PDF generated successfully!";
+        // -----------------------------
+        // Step 4: Clear temp files
+        // -----------------------------
+        await fetch(`${SERVER}/clear/`, { method: "POST" });
+        console.log("Temp cleared.");
 
-      } catch (e) {
-        status.textContent = "Request failed: " + e;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Error: " + err;
       }
     });
   </script>
