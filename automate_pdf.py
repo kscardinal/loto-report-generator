@@ -12,7 +12,7 @@ load_dotenv()
 # CONFIGURATION
 # -------------------------
 SERVER = os.getenv("SERVER_IP")
-
+print(f"Using server: {SERVER}")
 
 # -------------------------
 # Load JSON and gather image filenames
