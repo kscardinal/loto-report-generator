@@ -1191,7 +1191,9 @@ def generate_pdf():
     bottom = add_restart_sequence(bottom)
     bottom = add_signatures(bottom)
 
+    ic('Saving PDF')
     pdf.save()
+    ic('PDF Saved: ' + file_name + '.pdf')
 
 
 # Generate PDF from JSON data

@@ -109,3 +109,30 @@ async def clear_temp_folders():
             if file.is_file():
                 file.unlink()
     return {"message": "All temp data cleared."}
+
+# -------------------------
+# All in one
+# -------------------------
+BASE_DIR = Path("temp")
+BASE_DIR.mkdir(exist_ok=True)
+
+@app.post("/generate-pdf/")
+async def generate_pdf_endpoint(files: list[UploadFile] = File(...)):
+    saved_files = []
+    for file in files:
+        dest = BASE_DIR / file.filename
+        with open(dest, "wb") as f:
+            f.write(await file.read())
+        saved_files.append(dest)
+
+    # Assume first file is JSON
+    json_file = saved_files[0]
+
+    # Run your existing generate_pdf.py logic
+    subprocess.run(["python", "generate_pdf.py", str(json_file)], check=True)
+
+    pdf_file = json_file.with_suffix(".pdf")
+    if not pdf_file.exists():
+        return {"error": "PDF generation failed"}
+
+    return FileResponse(pdf_file, media_type="application/pdf", filename=pdf_file.name)
