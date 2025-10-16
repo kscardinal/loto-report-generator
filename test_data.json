@@ -53,7 +53,7 @@
             "temp": "3,000",
             "device": "Lower component to full down position",
             "tag": "1234",
-            "source_description": "Description Description Description. This is where I am going to put some stuff to make it longer so it goes on the next page",
+            "source_description": "Description Description Description.",
             "isolation_point": "test_1.jpg",
             "isolation_method": "Isolation Method",
             "verification_method": "Verification Method",
