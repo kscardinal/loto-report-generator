@@ -106,3 +106,8 @@ cython_debug/
 
 # macOS system files
 .DS_Store
+
+# Temp Flies
+test_1.jpg
+test_2.jpg
+test_data.pdf
