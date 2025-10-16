@@ -24,7 +24,7 @@
             "device": "Disconnect",
             "tag": "0001",
             "source_description": "Description",
-            "isolation_point": "test_2.jpg",
+            "isolation_point": "test_1.jpg",
             "isolation_method": "Lock out disconnect",
             "verification_method": "Power Button",
             "verification_device": "test_2.jpg"

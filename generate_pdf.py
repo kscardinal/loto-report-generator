@@ -894,7 +894,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
     # Isolation Point File
-    isolation_point_file = data.get('isolation_point', DEFAULT_IMAGE)
+    isolation_point_file = source.get('isolation_point', DEFAULT_IMAGE)
     if not os.path.isfile(isolation_point_file):
         isolation_point_file = DEFAULT_IMAGE
 
@@ -906,7 +906,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
                   isolation_point_height)
 
     # Verification Device File
-    verification_device_file = data.get('verification_device', DEFAULT_IMAGE)
+    verification_device_file = source.get('verification_device', DEFAULT_IMAGE)
     if not os.path.isfile(verification_device_file):
         verification_device_file = DEFAULT_IMAGE
 
