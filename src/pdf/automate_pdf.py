@@ -15,6 +15,7 @@ SERVER = os.getenv("SERVER_IP")
 BASE_DIR = Path(__file__).parent.parent.parent  # Adjust if generate_pdf.py is inside src/pdf/
 INCLUDES_DIR = BASE_DIR / "includes"
 JSON_DIR = BASE_DIR / "src" / "tests"
+TEMP_DIR = BASE_DIR / "temp"
 
 # -------------------------
 # Load JSON and gather image filenames
@@ -73,7 +74,7 @@ def download_pdf(pdf_filename: str):
     res = requests.get(f"{SERVER}/transfer/{pdf_filename}")
     if res.status_code == 200:
         # Write directly into JSON_DIR
-        output_path = JSON_DIR / pdf_filename
+        output_path = BASE_DIR / pdf_filename
         with open(output_path, "wb") as f:
             f.write(res.content)
         print(f"Downloaded: {output_path}")
@@ -100,7 +101,7 @@ if __name__ == "__main__":
         if not json_filename.endswith('.json'):
             json_filename += '.json'
     
-    json_path = JSON_DIR / json_filename
+    json_path = TEMP_DIR / json_filename
 
     if not json_path.exists():
         print(f"JSON file not found: {json_path}")

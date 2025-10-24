@@ -203,7 +203,7 @@ def get_json_filename():
         if not json_filename.endswith('.json'):
             json_filename += '.json'
 
-    json_path = JSON_DIR / json_filename
+    json_path = TEMP_DIR / json_filename
 
     # Validate file exists
     if not os.path.exists(json_path):
