@@ -167,6 +167,7 @@ DEFAULT_FONT = 'Inter'
 DEFAULT_FONT_SIZE = 10
 DEFAULT_ROW_SPACING = 14
 DEFAULT_IMAGE = "includes/ImageNotFound.jpg"
+MIN_LINES = 1  # minimum lines to prevent collapse
 
 
 
@@ -303,9 +304,8 @@ def add_header() -> float:
 
     # Row Offset for Dynamic Data Entry
     row1_height = (len(address) * address_line_spacing + 2)  # Address Block
-    row2_height = (description_height * body_line_spacing) + 2  # Description Row
-    row3_height = max(facility_height,
-                      location_height) * body_line_spacing + 2  # Facility Row
+    row2_height = (max(MIN_LINES, description_height) * body_line_spacing) + 2  # Description Row
+    row3_height = (max(MIN_LINES, facility_height, location_height) * body_line_spacing) + 2  # Facility Row
 
     # Horizontal Lines (1 = top, 5 = bottom)
     h_line1 = page_title_y + page_title_line_spacing
@@ -932,7 +932,11 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     isolation_method_line_limit = 10
     verification_method_line_limit = 10
 
-    sources = data['sources']
+    sources = data.get('sources', [])
+
+    # Early return if there are no sources
+    if not sources:
+        return import_bottom  # just return the original bottom
 
     for source_num in range(len(sources)):
 
