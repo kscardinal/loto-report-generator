@@ -64,16 +64,16 @@ class GenerateRequest(BaseModel):
 @app.post("/generate/")
 async def generate_pdf(request: GenerateRequest):
     json_filename = Path(request.json_filename).name
-    json_path = JSON_DIR / json_filename
+    json_path = TEMP_DIR / json_filename
 
     if not json_path.exists():
         return JSONResponse(status_code=400, content={
-            "error": f"JSON file '{json_filename}' not found in {JSON_DIR}"
+            "error": f"JSON file '{json_filename}' not found in {TEMP_DIR}"
         })
 
     try:
         result = subprocess.run(
-            ["python", str(PROCESS_DIR / "generate_pdf.py"), str(JSON_DIR / json_filename)],
+            ["python", str(PROCESS_DIR / "generate_pdf.py"), str(TEMP_DIR / json_filename)],
             capture_output=True,
             text=True,
             check=True
@@ -100,7 +100,7 @@ async def generate_pdf(request: GenerateRequest):
 @app.get("/transfer/{pdf_filename}")
 async def transfer_pdf(pdf_filename: str):
     safe_name = Path(pdf_filename).name
-    file_path = JSON_DIR / safe_name
+    file_path = TEMP_DIR / safe_name
 
     if not file_path.exists() or file_path.stat().st_size == 0:
         return JSONResponse(status_code=404, content={
