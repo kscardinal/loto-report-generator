@@ -1,0 +1,22 @@
+{
+  "pdf_name": "test_data.pdf",
+  "date_added": "2025-10-24T15:30:00",
+  "last_generated": "2025-10-24T16:00:00",
+  "json_filename": "test_data.json",
+  "json_data": "<Binary JSON content>",
+  "photos": [
+    {
+      "photo_name": "test_1.jpg",
+      "photo_data": "<Binary image content>"
+    },
+    {
+      "photo_name": "test_2.jpg",
+      "photo_data": "<Binary image content>"
+    }
+  ],
+  "metadata": {
+    "uploaded_by": "user123",
+    "tags": ["lockout", "tagout", "safety"],
+    "notes": "Initial upload"
+  }
+}
