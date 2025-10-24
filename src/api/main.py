@@ -7,6 +7,9 @@ from pathlib import Path
 import subprocess
 import shutil
 import traceback
+from datetime import datetime
+from pymongo import MongoClient
+from bson.binary import Binary
 
 app = FastAPI()
 
@@ -21,6 +24,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# MongoDB connection (adjust as needed)
+MONGO_URI = "mongodb://localhost:27017/"
+client = MongoClient(MONGO_URI)
+db = client['loto_pdf']
+uploads = db['uploads']
+
 
 # Define base paths
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -40,18 +51,38 @@ for directory in [TEMP_DIR]:
 @app.post("/upload/")
 async def upload_files(files: List[UploadFile] = File(...)):
     saved_files = []
-
+    photos_data = []
+    json_data = None
+    json_file_name = None
+    
     for file in files:
-        if file.filename.lower().endswith(".json"):
-            dest_dir = TEMP_DIR
-        else:
-            dest_dir = TEMP_DIR
-
-        file_location = dest_dir / file.filename
+        file_location = TEMP_DIR / file.filename
         contents = await file.read()
         with open(file_location, "wb") as f:
             f.write(contents)
         saved_files.append(str(file_location))
+        
+        if file.filename.lower().endswith(".json"):
+            json_data = Binary(contents)
+            json_file_name = file.filename
+        else:
+            photos_data.append({
+                "photo_name": file.filename,
+                "photo_data": Binary(contents)
+            })
+    
+    # Prepare document only if we have json_data, otherwise adjust as needed
+    if json_data:
+        doc = {
+            "pdf_name": json_file_name,  # or adjust as needed
+            "date_added": datetime.now(),
+            "last_generated": datetime.now(),
+            "json_filename": json_file_name,
+            "json_data": json_data,
+            "photos": photos_data,
+            "metadata": {"uploaded_via": "upload_route"}  # example metadata
+        }
+        uploads.insert_one(doc)
 
     return {"uploaded_files": saved_files}
 
