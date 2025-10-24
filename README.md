@@ -110,6 +110,7 @@ uv venv
 
 3. **Install dependencies**
 ```bash
+uv sync
 uv pip install -e .
 ```
 
