@@ -507,6 +507,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Machine Image Formatting Options
     machine_image_file = resolve_image_file(data.get('machine_image', DEFAULT_IMAGE))
+    ic(f"Maching_image_file: f{machine_image_file}")
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -915,6 +916,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     # Isolation Point File
     isolation_point_file =  resolve_image_file(source.get('isolation_point', DEFAULT_IMAGE))
+    ic(f"Isolation_point_file: f{isolation_point_file}")
 
     # Isolation Point
     isolation_point_height, isolation_point_width = resize_image(isolation_point_file,
@@ -925,6 +927,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     # Verification Device File
     verification_device_file = resolve_image_file(source.get('verification_device', DEFAULT_IMAGE))
+    ic(f"Verification_device_file: f{verification_device_file}")
 
     # Verification Device
     verification_device_height, verification_device_width = resize_image(
