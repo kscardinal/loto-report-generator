@@ -12,6 +12,9 @@ load_dotenv()
 # CONFIGURATION
 # -------------------------
 SERVER = os.getenv("SERVER_IP")
+BASE_DIR = Path(__file__).parent.parent.parent  # Adjust if generate_pdf.py is inside src/pdf/
+INCLUDES_DIR = BASE_DIR / "includes"
+JSON_DIR = BASE_DIR / "src" / "tests"
 
 # -------------------------
 # Load JSON and gather image filenames
@@ -44,10 +47,12 @@ def extract_included_files(json_file_path: Path):
 def upload_files(json_file: str, include_files: list):
     files = [('files', open(json_file, 'rb'))]
     for name in include_files:
-        try:
-            files.append(('files', open(name, 'rb')))
-        except FileNotFoundError:
+        file_path = INCLUDES_DIR / name
+        if not file_path.exists():
             print(f"[Warning] Included file not found: {name}")
+            continue
+        # Tell the server the "filename" should just be the base name
+        files.append(('files', (name, open(file_path, 'rb'))))
     res = requests.post(f"{SERVER}/upload/", files=files)
     print("Upload response:", res.json())
 
@@ -67,9 +72,11 @@ def generate_pdf(json_file: str):
 def download_pdf(pdf_filename: str):
     res = requests.get(f"{SERVER}/transfer/{pdf_filename}")
     if res.status_code == 200:
-        with open(pdf_filename, "wb") as f:
+        # Write directly into JSON_DIR
+        output_path = JSON_DIR / pdf_filename
+        with open(output_path, "wb") as f:
             f.write(res.content)
-        print(f"Downloaded: {pdf_filename}")
+        print(f"Downloaded: {output_path}")
     else:
         print("Download failed:", res.text)
 
@@ -86,22 +93,25 @@ def clear_temp():
 # Run with argument or prompt
 # -------------------------
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        json_file = input("Enter the JSON filename: ").strip()
+    if len(sys.argv) > 1:
+        json_filename = sys.argv[1]
     else:
-        json_file = sys.argv[1]
+        json_filename = input("Enter the JSON filename (without .json extension): ").strip()
+        if not json_filename.endswith('.json'):
+            json_filename += '.json'
+    
+    json_path = JSON_DIR / json_filename
 
-    json_path = Path(json_file)
     if not json_path.exists():
-        print(f"JSON file not found: {json_file}")
+        print(f"JSON file not found: {json_path}")
         sys.exit(1)
-
+    
     included_files = extract_included_files(json_path)
     print("Included files:", included_files)  # Optional debug output
 
-    output_pdf = json_path.with_suffix(".pdf").name
+    output_pdf = json_path.with_suffix(".pdf").name  # Just the filename, not full path
 
-    upload_files(json_file, included_files)
+    upload_files(str(json_path), included_files)
     generate_pdf(json_path.name)
     download_pdf(output_pdf)
     clear_temp()
