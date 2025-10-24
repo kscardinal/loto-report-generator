@@ -936,7 +936,8 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Early return if there are no sources
     if not sources:
-        return import_bottom  # just return the original bottom
+        sources = [{}]
+        # return import_bottom  # just return the original bottom
 
     for source_num in range(len(sources)):
 
