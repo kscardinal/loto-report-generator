@@ -94,7 +94,7 @@ SERVER_IP = your.server.ip.address
 
 1. Start server
 ``` bash
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn src.api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 2. Add included photos to root folder
 3. Run the automate_pdf script:
