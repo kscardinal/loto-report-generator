@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>PDF Files</title></head>
+<body>
+<h1>Available PDF Files</h1>
+<ul>
+  {% for name in pdf_names %}
+  <li>{{ name }}</li>
+  {% else %}
+  <li>No PDFs found.</li>
+  {% endfor %}
+</ul>
+</body>
+</html>

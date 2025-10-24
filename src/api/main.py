@@ -1,5 +1,5 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, UploadFile, File, Request
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -10,6 +10,8 @@ import traceback
 from datetime import datetime
 from pymongo import MongoClient
 from bson.binary import Binary
+from fastapi.templating import Jinja2Templates
+
 
 app = FastAPI()
 
@@ -39,6 +41,8 @@ INCLUDES_DIR = BASE_DIR / "includes"
 JSON_DIR = BASE_DIR / "src" / "tests"
 TEMP_DIR = BASE_DIR / "temp"
 PROCESS_DIR = BASE_DIR / "src" / "pdf"
+
+templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
 
 
 # Create required directories
@@ -154,3 +158,12 @@ async def clear_temp_folders():
             if file.is_file():
                 file.unlink()
     return {"message": "All temp data cleared."}
+
+# -----------------------------
+# Gets all pdfs in the database
+# -----------------------------
+@app.get("/pdf_list", response_class=HTMLResponse)
+async def pdf_list(request: Request):
+    docs = uploads.find({}, {"_id": 0, "pdf_name": 1})
+    pdf_names = [doc['pdf_name'] for doc in docs if 'pdf_name' in doc]
+    return templates.TemplateResponse("pdf_list.html", {"request": request, "pdf_names": pdf_names})
