@@ -171,7 +171,7 @@ http://localhost:8000/pdf_list
 | `/generate`                | POST   | Trigger PDF generation from a specified JSON file |
 | `/transfer/{pdf_filename}` | GET    | Downloads a generated PDF by filename             |
 | `/clear`                   | POST   | Clears all temporary files from the server        |
-| `/pdf_list` | GET | Gets all PDFs in the DB and hosts a webpage with them in a list| 
+| `/pdf_list`  |  GET  |  Gets all PDFs in the DB and hosts a webpage with them in a list  | 
 
 
 ---
