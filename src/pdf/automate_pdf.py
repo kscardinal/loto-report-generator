@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from icecream import ic
 
 # Load .env file
 load_dotenv()
@@ -90,29 +91,57 @@ def clear_temp():
     print("Clear response:", res.json())
 
 
-# -------------------------
-# Run with argument or prompt
-# -------------------------
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        json_filename = sys.argv[1]
+def main(json_path: Path | str = None):
+    """
+    Automate the PDF generation process.
+    Can be called directly (for tests) or as a script (CLI).
+    """
+
+    # -------------------------
+    # Determine JSON path
+    # -------------------------
+    if json_path is None:
+        # Command-line or user input fallback
+        if len(sys.argv) > 1:
+            json_filename = sys.argv[1]
+        else:
+            json_filename = input("Enter the JSON filename (without .json extension): ").strip()
+            if not json_filename.endswith('.json'):
+                json_filename += '.json'
+
+        json_path = TEMP_DIR / json_filename
     else:
-        json_filename = input("Enter the JSON filename (without .json extension): ").strip()
-        if not json_filename.endswith('.json'):
-            json_filename += '.json'
-    
-    json_path = TEMP_DIR / json_filename
+        # Convert to Path if needed
+        json_path = Path(json_path)
 
+    # -------------------------
+    # Validate JSON file
+    # -------------------------
     if not json_path.exists():
-        print(f"JSON file not found: {json_path}")
+        ic(f"JSON file not found: {json_path}")
         sys.exit(1)
-    
+
     included_files = extract_included_files(json_path)
-    print("Included files:", included_files)  # Optional debug output
+    ic(f"Included files: {included_files}")
 
-    output_pdf = json_path.with_suffix(".pdf").name  # Just the filename, not full path
+    # -------------------------
+    # Build output filename
+    # -------------------------
+    output_pdf = json_path.with_suffix(".pdf").name  # just the name
 
+    # -------------------------
+    # Full automation sequence
+    # -------------------------
     upload_files(str(json_path), included_files)
     generate_pdf(json_path.name)
     download_pdf(output_pdf)
     clear_temp()
+
+    return TEMP_DIR / output_pdf  # ✅ return path for test verification
+
+
+# -------------------------
+# CLI Entry Point
+# -------------------------
+if __name__ == "__main__":
+    main()
