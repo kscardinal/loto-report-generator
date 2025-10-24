@@ -23,13 +23,15 @@ app.add_middleware(
 )
 
 # Define base paths
-BASE_UPLOAD_DIR = Path("temp")
-JSON_DIR = BASE_UPLOAD_DIR
-INCLUDES_DIR = BASE_UPLOAD_DIR
-PDF_DIR = BASE_UPLOAD_DIR
+BASE_DIR = Path(__file__).parent.parent.parent
+INCLUDES_DIR = BASE_DIR / "includes"
+JSON_DIR = BASE_DIR / "src" / "tests"
+TEMP_DIR = BASE_DIR / "temp"
+PROCESS_DIR = BASE_DIR / "src" / "pdf"
+
 
 # Create required directories
-for directory in [JSON_DIR, INCLUDES_DIR, PDF_DIR]:
+for directory in [TEMP_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 # -----------------------------
@@ -41,9 +43,9 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
     for file in files:
         if file.filename.lower().endswith(".json"):
-            dest_dir = JSON_DIR
+            dest_dir = TEMP_DIR
         else:
-            dest_dir = INCLUDES_DIR
+            dest_dir = TEMP_DIR
 
         file_location = dest_dir / file.filename
         contents = await file.read()
@@ -71,7 +73,7 @@ async def generate_pdf(request: GenerateRequest):
 
     try:
         result = subprocess.run(
-            ["python", "generate_pdf.py", str(JSON_DIR / json_filename)],
+            ["python", str(PROCESS_DIR / "generate_pdf.py"), str(JSON_DIR / json_filename)],
             capture_output=True,
             text=True,
             check=True
@@ -89,7 +91,6 @@ async def generate_pdf(request: GenerateRequest):
 
     # Optional: check if the file was created in temp/pdf instead
     pdf_filename = json_filename.rsplit(".", 1)[0] + ".pdf"
-    pdf_path = PDF_DIR / pdf_filename
 
     return {"message": "PDF generation triggered successfully.", "pdf_filename": pdf_filename}
 
@@ -99,7 +100,7 @@ async def generate_pdf(request: GenerateRequest):
 @app.get("/transfer/{pdf_filename}")
 async def transfer_pdf(pdf_filename: str):
     safe_name = Path(pdf_filename).name
-    file_path = PDF_DIR / safe_name
+    file_path = JSON_DIR / safe_name
 
     if not file_path.exists() or file_path.stat().st_size == 0:
         return JSONResponse(status_code=404, content={
@@ -117,7 +118,7 @@ async def transfer_pdf(pdf_filename: str):
 # -----------------------------
 @app.post("/clear/")
 async def clear_temp_folders():
-    for folder in [JSON_DIR, INCLUDES_DIR, PDF_DIR]:
+    for folder in [TEMP_DIR]:
         for file in folder.iterdir():
             if file.is_file():
                 file.unlink()

@@ -118,6 +118,22 @@ def check_length(text: str, max_length: int, add_ellipsis: bool = False):
         return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
     return text
 
+# Checks for images and retunrs default if not found
+def resolve_image_file(filename: str) -> str:
+    if filename == DEFAULT_IMAGE:
+        return DEFAULT_IMAGE
+
+    temp_file = TEMP_DIR / filename
+    include_file = INCLUDES_DIR / filename
+    
+    if temp_file.is_file():
+        return str(temp_file)
+    elif include_file.is_file():
+        return str(include_file)
+    else:
+        ic(f"[Warning] Image '{filename}' not found in TEMP_DIR or INCLUDES_DIR. Using default image.")
+        return DEFAULT_IMAGE
+
 
 # Set Default
 def set_default():
@@ -150,6 +166,7 @@ def check_assets():
 BASE_DIR = Path(__file__).parent.parent.parent  # Adjust if generate_pdf.py is inside src/pdf/
 INCLUDES_DIR = BASE_DIR / "includes"
 JSON_DIR = BASE_DIR / "src" / "tests"
+TEMP_DIR = BASE_DIR / "temp"
 
 # Page dimensions (in points, 1 pt = 1/72 inch)
 PAGE_HEIGHT = 792  # 11 inches
@@ -489,9 +506,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
         row1_height = (row_spacing * 3)
 
     # Machine Image Formatting Options
-    machine_image_file = data.get('machine_image', DEFAULT_IMAGE)
-    if not os.path.isfile(machine_image_file):
-        machine_image_file = DEFAULT_IMAGE
+    machine_image_file = resolve_image_file(data.get('machine_image', DEFAULT_IMAGE))
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -899,9 +914,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
     # Isolation Point File
-    isolation_point_file = source.get('isolation_point', DEFAULT_IMAGE)
-    if not os.path.isfile(isolation_point_file):
-        isolation_point_file = DEFAULT_IMAGE
+    isolation_point_file =  resolve_image_file(source.get('isolation_point', DEFAULT_IMAGE))
 
     # Isolation Point
     isolation_point_height, isolation_point_width = resize_image(isolation_point_file,
@@ -911,9 +924,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
                   isolation_point_height)
 
     # Verification Device File
-    verification_device_file = source.get('verification_device', DEFAULT_IMAGE)
-    if not os.path.isfile(verification_device_file):
-        verification_device_file = DEFAULT_IMAGE
+    verification_device_file = resolve_image_file(source.get('verification_device', DEFAULT_IMAGE))
 
     # Verification Device
     verification_device_height, verification_device_width = resize_image(
