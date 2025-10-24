@@ -71,19 +71,19 @@
 - `loto-report-generator/`
 - ├── `includes/` # Includes all the assets needed to make the LOTO pdf
 - ├── `src/`
-- ├───── `api/`
+- ├───── [`api/`](src/api/)
 - ├──────── [`main.py`](src/api/main.py) # Server component that recieves the requests and handles them
-- ├───── `database/`
+- ├───── [`database/`](src/database/)
 - ├──────── [`db.py`](src/database/db.py) # Creates the MongoDB database used to store all the files
 - ├──────── [`db_template.json`](src/database/db_template.json) # Template for a new entry into the database will all properties and descriptions
-- ├───── `pdf/`
+- ├───── [`pdf/`](src/pdf/)
 - ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the pdf file using the server component
 - ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the pdf with a given JSON file
-- ├───── `tests/`
+- ├───── [`tests/`](src/tests/)
 - ├──────── [`test_data.json`](src/tests/test_data.json) # Main testing data set
 - ├──────── `test_data_....json` # More test data sets to test edge cases of the PDF generation
-- ├───── `web/`
-- ├──────── `templates/`
+- ├───── [`web/`](src/web/)
+- ├──────── [`templates/`](src/web/templates/)
 - ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
 - ├── `temp/`
 - └── [`.env`](.env) # Where the secrets go
