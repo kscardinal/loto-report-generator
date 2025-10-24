@@ -1,11 +1,30 @@
-# 📌 loto-report-generator  
-`loto-report-generator` is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments. 
+<h1 align="center">📌 loto-report-generator  </h1>
+<p align="center"><code>loto-report-generator</code> is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments. </p>
 
-![GitHub License](https://img.shields.io/github/license/kscardinal/loto-report-generator)
-![GitHub Release](https://img.shields.io/github/v/release/kscardinal/loto-report-generator)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator)
-![GitHub last commit](https://img.shields.io/github/last-commit/kscardinal/loto-report-generator)
-![GitHub contributors](https://img.shields.io/github/contributors/kscardinal/loto-report-generator)
+---
+
+<p align="center">
+	<img src="https://img.shields.io/github/license/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub License">
+	<img src="https://img.shields.io/github/v/release/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Release">
+	<img src="https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Commit Activity">
+	<img src="https://img.shields.io/github/last-commit/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Last Commit">
+	<img src="https://img.shields.io/github/contributors/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Contributors">
+</p>
+<div align="center">
+	<img src="https://img.shields.io/badge/python-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge">
+	<img src="https://img.shields.io/badge/JavaScript-F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=white" alt="JavaScript Badge">
+	<img src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Badge">
+	<img src="https://img.shields.io/badge/FastAPI-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI Badge">
+	<img src="https://img.shields.io/badge/Jinja-7E0C1B.svg?style=for-the-badge&logo=jinja&logoColor=white" alt="Jinja Badge">
+	<img src="https://img.shields.io/badge/JSON-000000.svg?style=for-the-badge&logo=json&logoColor=white" alt="JSON Badge">
+	<img src="https://img.shields.io/badge/Markdown-000000.svg?style=for-the-badge&logo=markdown&logoColor=white" alt="Markdown Badge">
+	<img src="https://img.shields.io/badge/HTML-E34F26.svg?style=for-the-badge&logo=html5&logoColor=white" alt="HTML Badge">
+	<img src="https://img.shields.io/badge/CSS-663399.svg?style=for-the-badge&logo=css&logoColor=white" alt="CSS Badge">
+	<img src="https://img.shields.io/badge/MongoDB-47A248.svg?style=for-the-badge&logo=MongoDB&logoColor=white" alt="MongoDB Badge">
+	<img src="https://img.shields.io/badge/env-ECD53F.svg?style=for-the-badge&logo=.env&logoColor=white" alt=".ENV Badge">
+	<img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?style=for-the-badge&logo=Pytest&logoColor=white" alt="Pytest Badge">
+	<img src="https://img.shields.io/badge/UV-DE5FE9.svg?style=for-the-badge&logo=UV&logoColor=white" alt="UV Badge">
+</div>
 
 ---
 
@@ -39,23 +58,37 @@
 
 ## Tech Stack  
 
-- **Frontend**: HTML  
-- **Backend**: Python, FastAPI  
-- **Database**: N/A  
-- **Other Tools**: ReportLab, UV  
+- **Frontend**:  HTML, CSS, JavaScript, TypeScript, Markdown  
+- **Backend**:  Python, FastAPI, Jinja  
+- **Database**:  MongoDB  
+- **Other Tools**:  ReportLab, UV, Pytest
+
 
 ---
 
 ## Project Structure  
 
-- loto-report-generator/
-- ├── `includes/`                # Photos and fonts
-- ├── `src/`                         # Python files
-- ├── [`automate_pdf.py`](automate_pdf.py)     # Generates PDF report on server
-- ├── [`generate_pdf.py`](generate_pdf.py)     # Generate PDF on device
-- ├── [`main.py`](main.py)                    # Entry point for running the application
-- ├── [`main.html`](main.html)                # Web input for data
-- └── [`test_data.json`](test_data.json)       # Test JSON data for report generation
+- `loto-report-generator/`
+- ├── `includes/` # Includes all the assets needed to make the LOTO pdf
+- ├── `src/`
+- ├───── `api/`
+- ├──────── [`main.py`](src/api/main.py) # Server component that recieves the requests and handles them
+- ├───── `database/`
+- ├──────── [`db.py`](src/database/db.py) # Creates the MongoDB database used to store all the files
+- ├──────── [`db_template.json`](src/database/db_template.json) # Template for a new entry into the database will all properties and descriptions
+- ├───── `pdf/`
+- ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the pdf file using the server component
+- ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the pdf with a given JSON file
+- ├───── `tests/`
+- ├──────── [`test_data.json`](src/tests/test_data.json) # Main testing data set
+- ├──────── `test_data_....json` # More test data sets to test edge cases of the PDF generation
+- ├───── `web/`
+- ├──────── `templates/`
+- ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
+- ├── `temp/`
+- └── [`.env`](.env) # Where the secrets go
+
+
 
 
 ---
@@ -67,7 +100,7 @@
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv self update
-uv python install 3.13
+uv python install 3.13.2
 ```
 
 2. **Create a virtual environment**
@@ -90,13 +123,13 @@ SERVER_IP = your.server.ip.address
 
 ---
 
-## Usage
+## PDF Generation
 
 1. Start server
 ``` bash
 uvicorn src.api.main:app --reload --host 127.0.0.1 --port 8000
 ```
-2. Add included photos to root folder
+2. Add temp assets to the `temp/` folder for usage in the scripts
 3. Run the automate_pdf script:
 ```python
 python automate_pdf.py $JSON_FILE
@@ -104,6 +137,20 @@ python automate_pdf.py $JSON_FILE
 -- or --
 ```python
 python generate_pdf.py $JSON_FILE
+```
+
+---
+
+## Database Management
+
+1. Double check `mongod`
+``` bash
+mongod --version
+```
+
+2. Look at current database on web
+``` txt
+http://localhost:8000/pdf_list
 ```
 
 ---
@@ -124,6 +171,7 @@ python generate_pdf.py $JSON_FILE
 | `/generate`                | POST   | Trigger PDF generation from a specified JSON file |
 | `/transfer/{pdf_filename}` | GET    | Downloads a generated PDF by filename             |
 | `/clear`                   | POST   | Clears all temporary files from the server        |
+| `/pdf_list` | GET | Gets all PDFs in the DB and hosts a webpage with them in a list| 
 
 
 ---
