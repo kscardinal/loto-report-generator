@@ -118,14 +118,15 @@ def check_length(text: str, max_length: int, add_ellipsis: bool = False):
         return text[:max_length] + " ..." if add_ellipsis else text[:max_length]
     return text
 
-# Checks for images and retunrs default if not found
+
+# Checks for images and returns default if not found
 def resolve_image_file(filename: str) -> str:
     if filename == DEFAULT_IMAGE:
         return DEFAULT_IMAGE
 
     temp_file = TEMP_DIR / filename
     include_file = INCLUDES_DIR / filename
-    
+
     if temp_file.is_file():
         return str(temp_file)
     elif include_file.is_file():
@@ -163,7 +164,7 @@ def check_assets():
 
 
 # Global variables for page setup and defaults
-BASE_DIR = Path(__file__).parent.parent.parent  # Adjust if generate_pdf.py is inside src/pdf/
+BASE_DIR = Path(__file__).parent.parent.parent  # Adjusts if generate_pdf.py is inside src/pdf/
 INCLUDES_DIR = BASE_DIR / "includes"
 JSON_DIR = BASE_DIR / "src" / "tests"
 TEMP_DIR = BASE_DIR / "temp"
@@ -191,9 +192,15 @@ DEFAULT_IMAGE = str(INCLUDES_DIR / "ImageNotFound.jpg")
 MIN_LINES = 1  # minimum lines to prevent collapse
 
 
-
 def get_json_filename():
     """Get JSON filename from command line arguments or user input"""
+    # Ensure temp directory exists
+    if not TEMP_DIR.exists():
+        TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        print_error(f"temp folder does not exist.")
+        print("Creating temp folder")
+        return None
+
     if len(sys.argv) > 1:
         # Use command line argument
         json_filename = sys.argv[1]
@@ -232,7 +239,7 @@ def initialize_pdf_generator(data_file):
         pdfmetrics.registerFont(TTFont('DM Serif Display', str(INCLUDES_DIR / 'DMSerifDisplay_Regular.ttf')))
         pdfmetrics.registerFont(TTFont('Inter', str(INCLUDES_DIR / 'Inter_Regular.ttf')))
         pdfmetrics.registerFont(TTFont('Times', str(INCLUDES_DIR / 'times.ttf')))
-        pdfmetrics.registerFont(TTFont('Signature',str(INCLUDES_DIR / 'Pacifico.ttf')))
+        pdfmetrics.registerFont(TTFont('Signature', str(INCLUDES_DIR / 'Pacifico.ttf')))
     except Exception as e:
         print_error(f"Error loading fonts: {e}")
         return False
@@ -278,7 +285,7 @@ def add_header() -> float:
     page_title_y = PAGE_HEIGHT - 54  # 0.75in
 
     # Header Image
-    image_name =str(INCLUDES_DIR / 'CardinalLogo.png')
+    image_name = str(INCLUDES_DIR / 'CardinalLogo.png')
     image_width = 144  # 2in
     image_height = 72
     image_height, image_width = resize_image(image_name, image_height, image_width)
@@ -507,7 +514,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Machine Image Formatting Options
     machine_image_file = resolve_image_file(data.get('machine_image', DEFAULT_IMAGE))
-    ic(f"Maching_image_file: f{machine_image_file}")
+    ic(f"Machine_image_file: f{machine_image_file}")
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -523,7 +530,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     row1_text = h_line1 - title_font_size
     row2_text = (h_line1 - ((h_line1 - h_line3) / 2)) + (isolation_point_title_font_size / 2) - vertical_text_spacing
     row3_text = (h_line1 - ((h_line1 - h_line3) / 2)) - (isolation_points_font_size / 3)
-    row4_text = (h_line1 - ((h_line1 - h_line3) / 2)) - (isolation_point_title_font_size) + vertical_text_spacing
+    row4_text = (h_line1 - ((h_line1 - h_line3) / 2)) - isolation_point_title_font_size + vertical_text_spacing
     row5_text = h_line3 - title_font_size
     row6_text = h_line4 - title_font_size
 
@@ -612,7 +619,8 @@ def add_shutdown_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_limit = 5
     body_background = str(INCLUDES_DIR / 'Red.png')
 
-    shutdown_sequence = "1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. 4. Apply LOTO devices. 5. Verify total de-energization of all sources."
+    shutdown_sequence = ("1. Notify affected personnel. 2. Properly shut down machine. 3. Isolate all energy sources. "
+                         "4. Apply LOTO devices. 5. Verify total de-energization of all sources.")
 
     body_num_lines = num_lines(shutdown_sequence, body_line_length, body_line_limit)
     body_lines = split_text(shutdown_sequence, body_line_length, body_line_limit)
@@ -755,11 +763,11 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     column1_text = v_line1 + (text_block_width / 2)
     column2_text = v_line2 + (text_block_width / 2)
     column3_image = v_line3 + (
-            image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+            image_block_width / 2)  # Still need to subtract half the image width after resizing
     column4_text = v_line4 + (text_block_width / 2)
     column5_text = v_line5 + (text_block_width / 2)
     column6_image = v_line6 + (
-            image_block_width / 2)  # Still need to subtract half the image width but that needs to happen after resizing
+            image_block_width / 2)  # Still need to subtract half the image width after resizing
 
     text_block_middle_width = h_line1 - (import_height / 2)
     image_block_middle_width = h_line1 - (import_height / 2)
@@ -877,7 +885,8 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
     if "isolation_method" in source:
         isolation_method_num_lines = num_lines(source.get("isolation_method", ""), line_length,
                                                isolation_method_line_limit)
-        isolation_method_lines = split_text(source.get("isolation_method", ""), line_length, isolation_method_line_limit)
+        isolation_method_lines = split_text(source.get("isolation_method", ""), line_length,
+                                            isolation_method_line_limit)
         if isolation_method_num_lines % 2 == 1:
             for line in range(isolation_method_num_lines):
                 pdf.drawCentredString(column4_text, text_block_middle_width + (
@@ -915,7 +924,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
         pdf.drawCentredString(column5_text, text_block_middle_width, blank_text)
 
     # Isolation Point File
-    isolation_point_file =  resolve_image_file(source.get('isolation_point', DEFAULT_IMAGE))
+    isolation_point_file = resolve_image_file(source.get('isolation_point', DEFAULT_IMAGE))
     ic(f"Isolation_point_file: f{isolation_point_file}")
 
     # Isolation Point
@@ -956,7 +965,7 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
     # Early return if there are no sources
     if not sources:
         sources = [{}]
-        # return import_bottom  # just return the original bottom
+        # return import_bottom # return the original bottom
 
     for source_num in range(len(sources)):
 
@@ -964,7 +973,8 @@ def add_sources(import_bottom: float = PAGE_MARGIN) -> float:
 
         device_height = num_lines(source.get('device', ''), line_length, device_line_limit) + 3 + num_lines(
             source.get('source_description', ''), line_length, description_line_limit)
-        isolation_method_height = num_lines(source.get('isolation_method', ''), line_length, isolation_method_line_limit)
+        isolation_method_height = num_lines(source.get('isolation_method', ''), line_length,
+                                            isolation_method_line_limit)
         verification_method_height = num_lines(source.get('verification_method', ''), line_length,
                                                verification_method_line_limit)
 
@@ -1007,7 +1017,9 @@ def add_restart_sequence(import_bottom: float = PAGE_MARGIN) -> float:
     body_line_limit = 5
     body_background = str(INCLUDES_DIR / 'Green.png')
 
-    restart_sequence = "1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and reenergize machine. 5. Notify affected employees that servicing is complete."
+    restart_sequence = ("1. Ensure all tools and items have been removed. 2. Confirm that all employees are safely "
+                        "located. 3. Verify that controls are in neutral. 4. Remove LOTO devices and reenergize "
+                        "machine. 5. Notify affected employees that servicing is complete.")
 
     body_num_lines = num_lines(restart_sequence, body_line_length, body_line_limit)
     body_lines = split_text(restart_sequence, body_line_length, body_line_limit)
@@ -1089,7 +1101,8 @@ def add_signatures(import_bottom: float = PAGE_MARGIN) -> float:
 
     bold_line_weight = 0.75
 
-    description = 'The signatures below indicate that the lockout procedure covered on this sheet has been prepared by Cardinal Compliance and approved by ' + data.get(
+    description = ('The signatures below indicate that the lockout procedure covered on this sheet has been prepared '
+                   'by Cardinal Compliance and approved by ') + data.get(
         'approved_by', '') + '.'
     description_num_lines = num_lines(description, body_line_length, body_line_limit)
     description_lines = split_text(description, body_line_length, body_line_limit)
@@ -1213,7 +1226,7 @@ def generate_pdf():
     bottom = first_page()
     bottom = add_sources(bottom)
     bottom = add_restart_sequence(bottom)
-    bottom = add_signatures(bottom)
+    add_signatures(bottom)
 
     ic('Saving PDF')
     pdf.save()
@@ -1232,7 +1245,7 @@ def generate_pdf_from_json(json_data: dict, output_path: str) -> bool:
     pdfmetrics.registerFont(TTFont('DM Serif Display', str(INCLUDES_DIR / 'DMSerifDisplay_Regular.ttf')))
     pdfmetrics.registerFont(TTFont('Inter', str(INCLUDES_DIR / 'Inter_Regular.ttf')))
     pdfmetrics.registerFont(TTFont('Times', str(INCLUDES_DIR / 'times.ttf')))
-    pdfmetrics.registerFont(TTFont('Signature',str(INCLUDES_DIR / 'Pacifico.ttf')))
+    pdfmetrics.registerFont(TTFont('Signature', str(INCLUDES_DIR / 'Pacifico.ttf')))
 
     generate_pdf()
     return True
