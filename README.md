@@ -106,6 +106,7 @@ uv python install 3.13.2
 2. **Create a virtual environment**
 ```bash
 uv venv
+source .venv/bin/activate
 ```
 
 3. **Install dependencies**
