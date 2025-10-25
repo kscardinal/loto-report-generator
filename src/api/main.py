@@ -5,13 +5,12 @@ from pydantic import BaseModel
 from typing import List
 from pathlib import Path
 import subprocess
-import shutil
 import traceback
 from datetime import datetime
 from pymongo import MongoClient
 from bson.binary import Binary
 from fastapi.templating import Jinja2Templates
-
+import json
 
 app = FastAPI()
 
@@ -27,13 +26,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # MongoDB connection (adjust as needed)
 MONGO_URI = "mongodb://localhost:27017/"
 client = MongoClient(MONGO_URI)
 db = client['loto_pdf']
 uploads = db['uploads']
-
 
 # Define base paths
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -44,10 +41,10 @@ PROCESS_DIR = BASE_DIR / "src" / "pdf"
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
 
-
 # Create required directories
 for directory in [TEMP_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
+
 
 # -----------------------------
 # Upload route
@@ -58,43 +55,70 @@ async def upload_files(files: List[UploadFile] = File(...)):
     photos_data = []
     json_data = None
     json_file_name = None
-    
+
     for file in files:
         file_location = TEMP_DIR / file.filename
         contents = await file.read()
         with open(file_location, "wb") as f:
             f.write(contents)
         saved_files.append(str(file_location))
-        
+
         if file.filename.lower().endswith(".json"):
-            json_data = Binary(contents)
             json_file_name = file.filename
+            # attempt to load and update a 'last_modified' field in the JSON
+            try:
+                parsed = json.loads(contents.decode("utf-8"))
+                parsed["last_modified"] = datetime.now().isoformat()
+                updated_bytes = json.dumps(parsed, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                json_data = Binary(updated_bytes)
+            except Exception:
+                # if JSON parsing fails, store original bytes
+                json_data = Binary(contents)
         else:
             photos_data.append({
                 "photo_name": file.filename,
                 "photo_data": Binary(contents)
             })
-    
-    # Prepare document only if we have json_data, otherwise adjust as needed
+
+    # Prepare a document only if we have json_data, otherwise adjust as needed
     if json_data:
-        doc = {
-            "pdf_name": json_file_name,  # or adjust as needed
-            "date_added": datetime.now(),
-            "last_generated": datetime.now(),
-            "json_filename": json_file_name,
-            "json_data": json_data,
-            "photos": photos_data,
-            "metadata": {"uploaded_via": "upload_route"}  # example metadata
-        }
-        uploads.insert_one(doc)
+        now = datetime.now()
+        # Check if a document with this JSON already exists (by filename)
+        existing = uploads.find_one({"json_filename": json_file_name})
+        if existing:
+            # Update last_generated and (optionally) replace json_data with the updated content
+            uploads.update_one(
+                {"_id": existing["_id"]},
+                {"$set": {
+                    "last_generated": now,
+                    "json_data": json_data,
+                    "metadata.last_modified": now
+                }}
+            )
+        else:
+            doc = {
+                "pdf_name": json_file_name,  # or adjust as needed
+                "date_added": now,
+                "last_generated": now,
+                "json_filename": json_file_name,
+                "json_data": json_data,
+                "photos": photos_data,
+                "metadata": {
+                    "uploaded_via": "upload_route",
+                    "last_modified": now
+                }
+            }
+            uploads.insert_one(doc)
 
     return {"uploaded_files": saved_files}
+
 
 # -----------------------------
 # Generate PDF from JSON
 # -----------------------------
 class GenerateRequest(BaseModel):
     json_filename: str
+
 
 @app.post("/generate/")
 async def generate_pdf(request: GenerateRequest):
@@ -129,6 +153,7 @@ async def generate_pdf(request: GenerateRequest):
 
     return {"message": "PDF generation triggered successfully.", "pdf_filename": pdf_filename}
 
+
 # -----------------------------
 # Transfer route - download PDF
 # -----------------------------
@@ -148,6 +173,7 @@ async def transfer_pdf(pdf_filename: str):
         media_type="application/pdf"
     )
 
+
 # -----------------------------
 # Clear all temp files
 # -----------------------------
@@ -158,6 +184,7 @@ async def clear_temp_folders():
             if file.is_file():
                 file.unlink()
     return {"message": "All temp data cleared."}
+
 
 # -----------------------------
 # Gets all pdfs in the database
