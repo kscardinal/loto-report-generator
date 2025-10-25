@@ -1,16 +1,18 @@
-<h1 align="center">📌 loto-report-generator  </h1>
-<p align="center"><code>loto-report-generator</code> is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments. </p>
+<div style="text-align: center;">
+	<h1>📌 loto-report-generator</h1>
+	<p><code>loto-report-generator</code>is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments.</p>
+</div>
 
 ---
 
-<p align="center">
+<div style="text-align: center;">
 	<img src="https://img.shields.io/github/license/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub License">
 	<img src="https://img.shields.io/github/v/release/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Release">
 	<img src="https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Commit Activity">
 	<img src="https://img.shields.io/github/last-commit/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Last Commit">
 	<img src="https://img.shields.io/github/contributors/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Contributors">
-</p>
-<div align="center">
+</div>
+<div style="text-align: center; padding-top: 30px">
 	<img src="https://img.shields.io/badge/python-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge">
 	<img src="https://img.shields.io/badge/JavaScript-F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=white" alt="JavaScript Badge">
 	<img src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Badge">
@@ -28,16 +30,17 @@
 
 ---
 
-## Table of Contents  
-- [Overview](#Overview)
-- [Features](#Features)
-- [Tech Stack](#Tech-Stack)
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup](#setup)
-- [Usage](#Usage)
+- [PDF Generation](#pdf-generation)
+- [Database Management](#database-management)
 - [Customization](#customization)
-- [API Endpoints](#API-Endpoints)
-- [License](#License)
+- [API Endpoints](#api-endpoints)
+- [License](#license)
 
 ---
 
@@ -58,10 +61,10 @@
 
 ## Tech Stack  
 
-- **Frontend**:  HTML, CSS, JavaScript, TypeScript, Markdown  
+- **Frontend**: HTML, CSS, JavaScript, TypeScript, Markdown  
 - **Backend**:  Python, FastAPI, Jinja  
 - **Database**:  MongoDB  
-- **Other Tools**:  ReportLab, UV, Pytest
+- **Other Tools**: ReportLab, UV, Pytest
 
 
 ---
@@ -69,21 +72,21 @@
 ## Project Structure  
 
 - `loto-report-generator/`
-- ├── `includes/` # Includes all the assets needed to make the LOTO pdf
+- ├── `includes/` # Includes all the assets needed to make the LOTO PDF
 - ├── `src/`
-- ├───── [`api/`](src/api/)
-- ├──────── [`main.py`](src/api/main.py) # Server component that recieves the requests and handles them
-- ├───── [`database/`](src/database/)
+- ├───── [`api/`](src/api)
+- ├──────── [`main.py`](src/api/main.py) # Server component that receives the requests and handles them
+- ├───── [`database/`](src/database)
 - ├──────── [`db.py`](src/database/db.py) # Creates the MongoDB database used to store all the files
 - ├──────── [`db_template.json`](src/database/db_template.json) # Template for a new entry into the database will all properties and descriptions
-- ├───── [`pdf/`](src/pdf/)
-- ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the pdf file using the server component
-- ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the pdf with a given JSON file
-- ├───── [`tests/`](src/tests/)
+- ├───── [`pdf/`](src/pdf)
+- ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the PDF file using the server component
+- ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the PDF with a given JSON file
+- ├───── [`tests/`](src/tests)
 - ├──────── [`test_data.json`](src/tests/test_data.json) # Main testing data set
 - ├──────── `test_data_....json` # More test data sets to test edge cases of the PDF generation
-- ├───── [`web/`](src/web/)
-- ├──────── [`templates/`](src/web/templates/)
+- ├───── [`web/`](src/web)
+- ├──────── [`templates/`](src/web/templates)
 - ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
 - ├── `temp/`
 - └── [`.env`](.env) # Where the secrets go
@@ -117,7 +120,7 @@ uv pip install -e .
 ```bash
 SERVER_IP = your.server.ip.address
 ```
-- Should start with  http:// (ex. SERVER_IP=http://127.0.0.1:8000 )
+- Should start with http:// (ex. SERVER_IP=http://127.0.0.1:8000)
 
 ---
 
@@ -163,13 +166,13 @@ http://localhost:8000/pdf_list
 
 ## API Endpoints
 
-| Endpoint                   | Method | Description                                       |
-| -------------------------- | ------ | ------------------------------------------------- |
-| `/upload`                  | POST   | Uploads files (JSON and other types) to server    |
-| `/generate`                | POST   | Trigger PDF generation from a specified JSON file |
-| `/transfer/{pdf_filename}` | GET    | Downloads a generated PDF by filename             |
-| `/clear`                   | POST   | Clears all temporary files from the server        |
-| `/pdf_list`  |  GET  |  Gets all PDFs in the DB and hosts a webpage with them in a list  | 
+| Endpoint                   | Method | Description                                                     |
+|----------------------------|--------|-----------------------------------------------------------------|
+| `/upload`                  | POST   | Uploads files (JSON and other types) to server                  |
+| `/generate`                | POST   | Trigger PDF generation from a specified JSON file               |
+| `/transfer/{pdf_filename}` | GET    | Downloads a generated PDF by filename                           |
+| `/clear`                   | POST   | Clears all temporary files from the server                      |
+| `/pdf_list`                | GET    | Gets all PDFs in the DB and hosts a webpage with them in a list | 
 
 
 ---
