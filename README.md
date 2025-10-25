@@ -30,11 +30,11 @@
 
 ## Table of Contents  
 - [Overview](#Overview)
-- [Features](#features)
+- [Features](#Features)
 - [Tech Stack](#Tech-Stack)
 - [Project Structure](#project-structure)
 - [Setup](#setup)
-- [Usage](#usage)
+- [Usage](#Usage)
 - [Customization](#customization)
 - [API Endpoints](#API-Endpoints)
 - [License](#License)
@@ -43,7 +43,7 @@
 
 ## Overview  
 
-`loto-report-generator` is a Python-based tool designed to automate the creation of PDF reports for lockout/tagout (LOTO) procedures. It streamlines the reporting process by integrating custom templates, images, and fonts, allowing users to generate professional and consistent documentation. The application is configurable for different environments and can be easily customized to fit specific organizational needs, making it ideal for safety compliance and operational record-keeping.  
+`loto-report-generation` is a Python-based tool designed to automate the creation of PDF reports for lockout/tagout (LOTO) procedures. It streamlines the reporting process by integrating custom templates, images, and fonts, allowing users to generate professional and consistent documentation. The application is configurable for different environments and can be easily customized to fit specific organizational needs, making it ideal for safety compliance and operational record-keeping.  
 
 ---
 
@@ -87,9 +87,6 @@
 - ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
 - ├── `temp/`
 - └── [`.env`](.env) # Where the secrets go
-
-
-
 
 ---
 
@@ -149,7 +146,7 @@ python generate_pdf.py $JSON_FILE
 mongod --version
 ```
 
-2. Look at current database on web
+2. Look at the current database on the web
 ``` txt
 http://localhost:8000/pdf_list
 ```
