@@ -49,7 +49,7 @@ def extract_included_files(json_file_path: Path):
 def upload_files(json_file: str, include_files: list):
     files = [('files', open(json_file, 'rb'))]
     for name in include_files:
-        file_path = INCLUDES_DIR / name
+        file_path = TEMP_DIR / name
         if not file_path.exists():
             print(f"[Warning] Included file not found: {name}")
             continue

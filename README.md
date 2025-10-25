@@ -149,12 +149,25 @@ python generate_pdf.py $JSON_FILE
 
 ## Database Management
 
-1. Double check `mongod`
+1. Configure and start MongoDB (Mac example)
 ``` bash
-mongod --version
+# one-time
+brew tap mongodb/brew
+brew install mongodb-community@7.0
+
+# run on login (recommended)
+brew services start mongodb-community@7.0
+
+# verify it’s listening
+lsof -nP -iTCP:27017 -sTCP:LISTEN
 ```
 
-2. Look at the current database on the web
+2. Double check mongosh
+```bash
+mongosh "mongodb://127.0.0.1:27017/?directConnection=true" --eval "db.adminCommand({ ping: 1 })"
+```
+
+3Look at the current database on the web
 ``` txt
 http://localhost:8000/pdf_list
 ```
