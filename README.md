@@ -168,7 +168,7 @@ lsof -nP -iTCP:27017 -sTCP:LISTEN
 mongosh "mongodb://127.0.0.1:27017/?directConnection=true" --eval "db.adminCommand({ ping: 1 })"
 ```
 
-3Look at the current database on the web
+3. Look at the current database on the web
 ``` txt
 http://localhost:8000/pdf_list
 ```
@@ -205,7 +205,7 @@ pdftoppm -v
 ``` bash
 pytest -v -s --no-summary src/tests/test_pdf_generation.py
 ```
-- `-q` is optional to reduce more of thet un-necessary text in the test
+- `-q` is optional to reduce more of the unnecessary text in the test
 
 4. Check the results
 <pre style="color:green;">

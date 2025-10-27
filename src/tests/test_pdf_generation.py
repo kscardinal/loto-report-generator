@@ -8,10 +8,8 @@ import contextlib
 from pdf2image import convert_from_path
 from PIL import ImageChops
 
-
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
-
 
 # === Directories ===
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -20,9 +18,10 @@ AUTOMATE_PDF_SCRIPT = Path(__file__).resolve().parents[2] / "src" / "pdf" / "aut
 INCLUDES_DIR = BASE_DIR / "includes"
 TEST_DIR = BASE_DIR / "src" / "tests"
 TEMP_DIR = BASE_DIR / "temp"
-REFERENCE_DIR  = TEST_DIR / "comparison"
+REFERENCE_DIR = TEST_DIR / "comparison"
 
-# === Create TEMP_DIR if it doesn't arleady exist ===
+
+# === Create TEMP_DIR if it doesn't already exist ===
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -112,7 +111,7 @@ def test_generate_pdfs(setup_test_files):
             result = subprocess.run(
                 ["python", str(GENERATE_PDF_SCRIPT), str(json_file)],
                 stdout=subprocess.DEVNULL,  # hide all stdout (icecream prints)
-                stderr=subprocess.PIPE,      # still capture errors
+                stderr=subprocess.PIPE,  # still capture errors
                 text=True
             )
 
@@ -130,7 +129,7 @@ def test_generate_pdfs(setup_test_files):
 def pdfs_layout_equal(pdf1, pdf2, dpi=200, verbose=False):
     images1 = convert_from_path(str(pdf1), dpi=dpi)
     images2 = convert_from_path(str(pdf2), dpi=dpi)
-    
+
     if len(images1) != len(images2):
         if verbose:
             print(f"❌ Page count mismatch: {len(images1)} vs {len(images2)}")
@@ -141,10 +140,10 @@ def pdfs_layout_equal(pdf1, pdf2, dpi=200, verbose=False):
         bbox = diff.getbbox()
         if bbox is not None:
             if verbose:
-                print(f"❌ Difference on page {i+1}")
+                print(f"❌ Difference on page {i + 1}")
             return False
         elif verbose:
-            print(f"✅ Page {i+1} matches")
+            print(f"✅ Page {i + 1} matches")
 
     return True
 
@@ -168,7 +167,8 @@ def test_pdf_layouts():
         print(f"\n🔍 Comparing: {pdf_file.name}")
         try:
             # pdfs_layout_equal should be your function comparing the PDFs
-            equal = pdfs_layout_equal(pdf_file, reference_pdf, verbose=True)  # you can modify your function to accept a verbose flag
+            equal = pdfs_layout_equal(pdf_file, reference_pdf,
+                                      verbose=True)  # you can modify your function to accept a verbose flag
             if equal:
                 print(f"✅ Layout matches reference.")
             else:
@@ -196,10 +196,22 @@ def cleanup_root_pdfs():
         pdf_file.unlink()
 
 
+# === Utility: Move all PDF files in TEMP_DIR to RESULTS_DIR in TEST_DIR ===
+def move_pdfs_to_results(folderName: str = "generated_results", input_dir: Path = TEMP_DIR):
+    RESULTS_DIR = TEST_DIR / folderName
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    for pdf_file in TEMP_DIR.glob("*.pdf"):
+        dest = RESULTS_DIR / pdf_file.name
+        shutil.move(str(pdf_file), str(dest))
+        print(f"\n\n📁 Moved {pdf_file.name} to results/")
+
+
 # === Test: Loop over all JSON files and run automate_pdf.py ===
 def test_automate_pdfs():
     """Run generate_pdf.py for every JSON file in TEMP_DIR."""
 
+    move_pdfs_to_results(folderName="generated_results", input_dir=TEMP_DIR)
     cleanup_root_pdfs()
     print("\n\n🗑️  Removed all PDFs from the root directory")
     copy_without_clear()
@@ -217,7 +229,7 @@ def test_automate_pdfs():
             result = subprocess.run(
                 ["python", str(AUTOMATE_PDF_SCRIPT), str(json_file)],
                 stdout=subprocess.DEVNULL,  # hide all stdout (icecream prints)
-                stderr=subprocess.PIPE,      # still capture errors
+                stderr=subprocess.PIPE,  # still capture errors
                 text=True
             )
 
