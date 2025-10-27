@@ -109,3 +109,5 @@ cython_debug/
 
 # Temp Flies
 temp
+generated_results/
+automated_results/
