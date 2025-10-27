@@ -189,13 +189,14 @@ def test_pdf_layouts():
         print("\n✅ All PDFs match their references!")
 
 
-
-
+# === Utility: Cleans out all PDFs from BASE_DIR ===
 def cleanup_root_pdfs():
     """Remove all PDFs in the root directory before running tests."""
     for pdf_file in BASE_DIR.glob("*.pdf"):
         pdf_file.unlink()
 
+
+# === Test: Loop over all JSON files and run automate_pdf.py ===
 def test_automate_pdfs():
     """Run generate_pdf.py for every JSON file in TEMP_DIR."""
 
