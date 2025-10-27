@@ -48,7 +48,7 @@ def copy_files_from(source: Path, pattern: str):
             continue
         shutil.copy(file, dest)
         copied.append(file.name)
-        print(f"📁 Copied {file.name}")
+        print(f"✅ Copied {file.name}")
     return copied
 
 
@@ -67,7 +67,7 @@ def cleanup_temp_keep_pdfs():
 @pytest.fixture(scope="session")
 def setup_test_files():
     clear_temp_dir()
-    print("\nCopying test files...")
+    print("\n📁 Copying test files...")
     copied_json = copy_files_from(TEST_DIR, "*.json")
     copied_images = copy_files_from(INCLUDES_DIR, "test_*.jpg")
     print(f"\n✅ Copied {len(copied_json)} JSON files and {len(copied_images)} images.\n")
@@ -76,7 +76,7 @@ def setup_test_files():
 
 # === Utility: Copies JSON without clearing TEMP_DIR ===
 def copy_without_clear():
-    print("\nCopying test files...")
+    print("\n📁 Copying test files...")
     copied_json = copy_files_from(TEST_DIR, "*.json")
     copied_images = copy_files_from(INCLUDES_DIR, "test_*.jpg")
     print(f"\n✅ Copied {len(copied_json)} JSON files and {len(copied_images)} images.\n")
@@ -200,16 +200,15 @@ def test_automate_pdfs():
     """Run generate_pdf.py for every JSON file in TEMP_DIR."""
 
     cleanup_root_pdfs()
-    print("\n\n🗑️  Removed all PDFs from the root directory\n")
+    print("\n\n🗑️  Removed all PDFs from the root directory")
     copy_without_clear()
-    print(f"📁 Copied files to TEMP_DIR")
 
     json_files = list(TEMP_DIR.glob("*.json"))
 
     for json_file in json_files:
         output_pdf = BASE_DIR / f"{json_file.stem}.pdf"
 
-        print(f"🤖 Automating {json_file.name}")
+        print(f"\n🤖 Automating {json_file.name}")
         copy_without_clear()
 
         # Suppress stdout for generate_pdf.py only
