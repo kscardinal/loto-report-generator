@@ -42,6 +42,7 @@
 - [Setup](#setup)
 - [PDF Generation](#pdf-generation)
 - [Database Management](#database-management)
+- [PyTest](#pytest)
 - [Customization](#customization)
 - [API Endpoints](#api-endpoints)
 - [License](#license)
@@ -173,6 +174,21 @@ http://localhost:8000/pdf_list
 ```
 
 ---
+
+### PyTest
+
+1.  Run the tests
+``` bash
+pytest -v -s src/tests/test_pdf_generation.py
+```
+
+2. Check the results
+``` txt
+============= ___ passed in ___s =============
+```
+- You are looking out for all of them to say `PASSED`
+
+--- 
 
 ## Customization
 
