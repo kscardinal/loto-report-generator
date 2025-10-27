@@ -201,7 +201,6 @@ pdfinfo -v
 pdftoppm -v
 ```
 
-
 3.  Run the tests
 ``` bash
 pytest -v -s src/tests/test_pdf_generation.py
