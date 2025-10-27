@@ -33,7 +33,8 @@ def clear_temp_dir():
             item.unlink()
         elif item.is_dir():
             shutil.rmtree(item)
-    print(f"Cleared TEMP_DIR: {TEMP_DIR}")
+    print("\n")
+    print(f"Cleared TEMP_DIR")
 
 
 # === Utility: Copy matching files ===
@@ -42,12 +43,23 @@ def copy_files_from(source: Path, pattern: str):
     for file in source.glob(pattern):
         dest = TEMP_DIR / file.name
         if dest.exists():
-            print(f"Skipped (already exists): {file.name}")
+            print(f"⚠️ Skipped (already exists): {file.name}")
             continue
         shutil.copy(file, dest)
         copied.append(file.name)
-        print(f"Copied {file.name}")
+        print(f"✅ Copied {file.name}")
     return copied
+
+
+# === Utility: Removes all files at the end except for the PDFs ===
+def cleanup_temp_keep_pdfs():
+    """Remove everything in TEMP_DIR except PDF files."""
+    for item in TEMP_DIR.iterdir():
+        if item.is_file() and item.suffix.lower() != ".pdf":
+            item.unlink()
+        elif item.is_dir():
+            shutil.rmtree(item)
+    print(f"\n\nCleaned TEMP_DIR but kept PDFs\n")
 
 
 # === Fixture: Copy everything needed for tests ===
@@ -57,7 +69,7 @@ def setup_test_files():
     print("\nCopying test files...")
     copied_json = copy_files_from(TEST_DIR, "*.json")
     copied_images = copy_files_from(INCLUDES_DIR, "test_*.jpg")
-    print(f"Copied {len(copied_json)} JSON files and {len(copied_images)} images.")
+    print(f"✅ Copied {len(copied_json)} JSON files and {len(copied_images)} images.\n")
     return {"json": copied_json, "images": copied_images}
 
 
@@ -78,8 +90,12 @@ def test_generate_pdfs(setup_test_files):
     """Run generate_pdf.py for every JSON file in TEMP_DIR."""
     json_files = list(TEMP_DIR.glob("*.json"))
 
+    print("\n")
+
     for json_file in json_files:
         output_pdf = TEMP_DIR / f"{json_file.stem}.pdf"
+
+        print(f"Generating {json_file.name}")
 
         # Suppress stdout for generate_pdf.py only
         with open(os.devnull, "w") as fnull, contextlib.redirect_stdout(fnull):
@@ -91,14 +107,14 @@ def test_generate_pdfs(setup_test_files):
             )
 
         # Print your helper/diagnostic statements as usual
-        print(f"Processed {json_file.name}")
-        if result.stderr:
-            print("Errors from script:")
-            print(result.stderr)
+        print(f"✅ Processed {json_file.name}\n")
+        #if result.stderr:
+        #    print(result.stderr)
 
         # Assertions
         assert result.returncode == 0, f"PDF generation failed for {json_file.name}"
         assert output_pdf.exists(), f"PDF not created for {json_file.name}"
+
 
 # === Utility: Compare PDFs===
 def pdfs_layout_equal(pdf1, pdf2, dpi=200, verbose=False):
@@ -125,6 +141,7 @@ def pdfs_layout_equal(pdf1, pdf2, dpi=200, verbose=False):
 
 # === Test: Compare PDF layouts verbosely and continue on errors ===
 def test_pdf_layouts():
+    cleanup_temp_keep_pdfs()
     pdf_files = list(TEMP_DIR.glob("*.pdf"))
     assert pdf_files, "No PDFs found in TEMP_DIR to test."
 
@@ -134,7 +151,7 @@ def test_pdf_layouts():
         reference_pdf = REFERENCE_DIR / pdf_file.name
 
         if not reference_pdf.exists():
-            print(f"[WARNING] Reference PDF missing: {reference_pdf}")
+            print(f"⚠️  Reference PDF missing: {reference_pdf}")
             failed_pdfs.append(pdf_file.name)
             continue
 
@@ -156,5 +173,7 @@ def test_pdf_layouts():
         print("\nSummary of PDFs with layout differences or errors:")
         for f in failed_pdfs:
             print(f" - {f}")
+        # Fail the test if any PDFs didn't match
+        pytest.fail(f"❌ {len(failed_pdfs)} PDF(s) failed visual inspection: {', '.join(failed_pdfs)}", pytrace=False)
     else:
         print("\nAll PDFs match their references!")
