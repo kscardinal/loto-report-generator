@@ -177,12 +177,37 @@ http://localhost:8000/pdf_list
 
 ### PyTest
 
-1.  Run the tests
+1. Install `poppler`
+``` bash
+# Windows
+https://github.com/oschwartz10612/poppler-windows/releases/
+```
+- Download latest ZIP release on GitHub
+- Extract the zip somewhere, e.g. `C:\tools\poppler-23.12.0\`
+	- or latest release number
+	- if folder doesn't exist, add it
+- Add the `bin` folder to your`PATH` environment variable:
+	- `C:\tools\poppler-23.12.0\Library\bin`
+	- System variables
+
+``` bash
+# MacOS
+brew install poppler
+```
+
+2. Check `poppler` installation
+``` bash
+pdfinfo -v
+pdftoppm -v
+```
+
+
+3.  Run the tests
 ``` bash
 pytest -v -s src/tests/test_pdf_generation.py
 ```
 
-2. Check the results
+4. Check the results
 <pre style="color:green;">
 ============= ___ passed in ___s =============
 </pre>
