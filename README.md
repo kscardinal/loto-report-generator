@@ -203,8 +203,9 @@ pdftoppm -v
 
 3.  Run the tests
 ``` bash
-pytest -v -s src/tests/test_pdf_generation.py
+pytest -v -s --no-summary src/tests/test_pdf_generation.py
 ```
+- `-q` is optional to reduce more of thet un-necessary text in the test
 
 4. Check the results
 <pre style="color:green;">
