@@ -108,6 +108,4 @@ cython_debug/
 .DS_Store
 
 # Temp Flies
-*.jpg
-*.pdf
 temp
