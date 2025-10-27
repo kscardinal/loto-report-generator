@@ -183,9 +183,9 @@ pytest -v -s src/tests/test_pdf_generation.py
 ```
 
 2. Check the results
-``` txt
+<pre style="color:green;">
 ============= ___ passed in ___s =============
-```
+</pre>
 - You are looking out for all of them to say `PASSED`
 
 --- 
