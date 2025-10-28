@@ -248,6 +248,7 @@ def _assert_pdf_batch_matches(actual_dir: Path, reference_dir: Path, *, verbose:
     Fails with a helpful summary if any are missing or mismatched.
     """
     actual_pdfs = sorted(actual_dir.glob("*.pdf"))
+    print(f"\n📁 Comparing PDFs from: {actual_dir.name} →  Reference: {reference_dir.name}")
     assert actual_pdfs, f"❌ No PDFs found to compare in {actual_dir}"
 
     failed: list[str] = []
