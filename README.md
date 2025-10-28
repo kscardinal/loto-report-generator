@@ -113,10 +113,22 @@ uv python install 3.13.2
 ```bash
 uv venv
 source .venv/bin/activate
+# --- OR ---
+source .venv/Scripts/activate
+```
+
+3. **Confirm virtual environment**
+```bash
+# --- MacOS ---
+where python
+# --- Windows ---
+which python
 ```
 
 3. **Install dependencies**
 ```bash
+# --- Might need to clear cache if it is an issue ---
+uv cache clean  # Optional
 uv sync
 uv pip install -e .
 ```
@@ -204,6 +216,7 @@ pdftoppm -v
 
 3. Double check `pre-commit` and `pre-push` hooks are updated
 ``` bash
+uv add pre-commit # if not already added
 pre-commit install --hook-type pre-commit --hook-type pre-push
 pre-commit autoupdate
 pre-commit run --all-files
