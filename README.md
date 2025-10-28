@@ -250,8 +250,23 @@ npx tsc --init
 
 2. Compile TypeScipt to JavaScript
 ```bash
-npx tsc src/web/scripts/input_form_2.ts --outDir src/web/scripts
+npx tsc src/web/scripts/input_form_3.ts --outDir src/web/scripts
 ```
+
+---
+
+### SSS
+
+1. Start agent
+``` bash
+eval "$(ssh-agent -s)"
+```
+
+2. Add key to agent
+```bash
+ssh-add ~/.ssh/id_ed25519
+```
+- Enter passpharse and it should stop bugging you
 
 --- 
 
