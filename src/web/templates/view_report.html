@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Report: {{ report.report_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .metadata, .json-data, .photos {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .metadata p {
+            margin: 4px 0;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .photos img {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        a.download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background-color: #2d89ef;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        a.download-link:hover {
+            background-color: #1b5fa7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Report: {{ report.report_name }}</h1>
+
+    <div class="metadata">
+        <h2>Metadata</h2>
+        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+        <p><strong>Tags:</strong> {{ report.tags | join(', ') }}</p>
+        <p><strong>Notes:</strong> {{ report.notes }}</p>
+        <p><strong>Date Added:</strong> {{ report.date_added }}</p>
+        <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
+        <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
+    </div>
+
+    <div class="json-data">
+        <h2>JSON Data</h2>
+        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
+    </div>
+
+    <div class="photos">
+        <h2>Photos</h2>
+        {% for photo in report.photos %}
+            <div>
+                <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
+                <p>{{ photo.photo_name }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="download">
+        <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+    </div>
+</body>
+</html>
