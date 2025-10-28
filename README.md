@@ -238,6 +238,21 @@ pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 </pre>
 - You are looking out for all of them to say `PASSED`
 
+---
+
+## Web Interface
+
+1. Get TypeScipt running
+```bash
+npm install -D typescript
+npx tsc --init
+```
+
+2. Compile TypeScipt to JavaScript
+```bash
+npx tsc src/web/scripts/input_form.ts --outDir src/web/scripts
+```
+
 --- 
 
 ## Customization
