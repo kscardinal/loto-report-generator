@@ -95,3 +95,19 @@ button:hover {
     font-family: monospace;
     height: 250px;
 }
+
+.warning_label {
+    padding: 0px;
+    margin-top: -10px;
+    display: none;
+    font-size: 0.75rem;
+}
+
+.error {
+    border-color: red;
+    background-color: #ffecec;
+}
+
+.button-disabled, .button-disabled:hover {
+    background-color: #999;
+}
