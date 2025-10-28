@@ -354,9 +354,6 @@ def test_generate_pdfs_batch():
 
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
-        # If no server configured in CI, skip this comparison entirely
-        if not os.getenv("SERVER"):
-            pytest.skip("Skipping automated comparison: SERVER not configured in CI.")
         print("")
 
     _run_pdf_batch(
@@ -401,9 +398,6 @@ def test_generated_pdfs_match_reference():
     Compare PDFs created by generate_pdf.py (tests/generated_pdfs) against reference PDFs in tests/comparison (shared).
     """
     print("")
-    # If no server configured in CI, skip this comparison entirely
-    if not os.getenv("SERVER"):
-        pytest.skip("Skipping automated comparison: SERVER not configured in CI.")
     actual_dir = TEST_DIR / "generated_pdfs"
     reference_dir = REFERENCE_DIR
     _assert_pdf_batch_matches(actual_dir, reference_dir, verbose=True)
