@@ -242,6 +242,7 @@ def render_pdf_images_cached(pdf: Path, dpi: int):
     Returns a list of PIL Images.
     """
     _ensure_dir(PDF_CACHE_DIR)
+    print(f"\n👓 Checking cache for {pdf.name} ({pdf.parent.name}/, dpi={dpi})")
     key = _pdf_cache_key(pdf, dpi)
     cache_dir = PDF_CACHE_DIR / key
 
@@ -249,10 +250,12 @@ def render_pdf_images_cached(pdf: Path, dpi: int):
     if cache_dir.exists():
         pngs = sorted(cache_dir.glob("page-*.png"))
         if pngs:
+            print(f"🎯 Cache hit: {len(pngs)} pages loaded from {cache_dir}")
             return [Image.open(p).convert("RGB") for p in pngs]
 
     # Not cached — render and persist
     pages = convert_from_path(str(pdf), dpi=dpi)
+    print(f"🚧 Cache miss: rendering {pdf.name} ({len(pages)} pages) from {pdf.parent.name}/ and saving to {cache_dir.name}")
     _ensure_dir(cache_dir)
     for idx, img in enumerate(pages, start=1):
         out = cache_dir / f"page-{idx:03d}.png"
@@ -260,6 +263,7 @@ def render_pdf_images_cached(pdf: Path, dpi: int):
 
     # Reopen from disk for a uniform code path
     pngs = sorted(cache_dir.glob("page-*.png"))
+    print(f"💾 Cached {len(pngs)} pages for {pdf.name} ({pdf.parent.name}/)")
     return [Image.open(p).convert("RGB") for p in pngs]
 
 
@@ -267,6 +271,8 @@ def render_pdf_images_cached(pdf: Path, dpi: int):
 def pdfs_layout_equal(pdf1: Path, pdf2: Path, dpi: int = 200, verbose: bool = False) -> bool:
     images1 = render_pdf_images_cached(pdf1, dpi)
     images2 = render_pdf_images_cached(pdf2, dpi)
+
+    print("")
 
     if len(images1) != len(images2):
         if verbose:
