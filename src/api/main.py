@@ -14,6 +14,7 @@ import tempfile
 import json
 from io import BytesIO
 import sys
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -44,6 +45,9 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"
 
 # Ensure TEMP_DIR exists
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+# SVG for webpage
+app.mount("/static", StaticFiles(directory=BASE_DIR / "includes"), name="static")
 
 # -----------------------------
 # MongoDB Connection
