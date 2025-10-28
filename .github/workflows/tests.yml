@@ -1,36 +1,49 @@
-name: tests
+name: Python Tests
 
 on:
-  pull_request:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"] # adjust as needed
 
     steps:
+      # 1️⃣ Checkout code
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Install poppler (for pdf2image)
+      # 2️⃣ Install poppler (required for pdf2image)
+      - name: Install poppler-utils
         run: |
           sudo apt-get update
           sudo apt-get install -y poppler-utils
 
+      # 3️⃣ Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # 4️⃣ Set up uv
       - name: Set up uv
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-          python-version: "3.13"
 
-      # If you have a pyproject.toml with dependencies,
-      # uv will resolve & install them on first `uv run`.
-      # If you use a lock file, add a `uv sync` step here.
+      # 5️⃣ Install dependencies from lock file
+      - name: Sync dependencies
+        run: uv sync
 
-      - run: uv run pip install pytest-order
+      # 6️⃣ Install additional packages if needed
+      - name: Install pytest-order
+        run: uv run pip install pytest-order
 
-      # ✅ Add the cache step here
+      # 7️⃣ Cache PDF render outputs
       - name: Cache PDF render outputs
         uses: actions/cache@v4
         with:
@@ -39,10 +52,11 @@ jobs:
           restore-keys: |
             pdf-cache-
 
+      # 8️⃣ Run tests
       - name: Run pytest
         run: uv run pytest -q
 
-      # If tests fail, upload the PDFs your tests archived so you can inspect diffs
+      # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
