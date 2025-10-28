@@ -354,8 +354,6 @@ def test_generate_pdfs_batch():
 
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
-        if not os.getenv("SERVER"):
-            pytest.skip("Skipping automate_pdf batch: SERVER not configured in CI")
         print("")
 
     _run_pdf_batch(
@@ -376,8 +374,6 @@ def test_automate_pdfs_batch():
 
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
-        if not os.getenv("SERVER"):
-            pytest.skip("Skipping automate_pdf batch: SERVER not configured in CI")
         print("\n")
         clear_dir(TEMP_DIR)
         clear_dir(BASE_DIR, pattern="!*.pdf")

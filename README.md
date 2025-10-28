@@ -203,7 +203,7 @@ pdftoppm -v
 
 3.  Run the tests
 ``` bash
-pytest -v -s --no-summary src/tests/test_pdf_generation.py
+pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 ```
 - `-q` is optional to reduce more of the unnecessary text in the test
 
