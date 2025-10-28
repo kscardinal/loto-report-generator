@@ -1,7 +1,7 @@
-// src/web/scripts/input_form.js
+// input_form.js
 
-const MAX_SOURCES = 8;
 let sourceCount = 0;
+const MAX_SOURCES = 8;
 
 // Map form IDs to JSON keys
 const fieldMap = {
@@ -22,29 +22,33 @@ const fieldMap = {
     completedDate: "completed_date"
 };
 
-// Energy source options and field mapping
-const energyFields = {
-    Electric: ["volt"],
-    "Natural gas": ["psi"],
-    Steam: ["psi"],
-    Chemical: ["psi", "chemical_name"],
-    Hydraulic: ["psi"],
-    Gravity: ["lbs"],
-    Thermal: ["temp"],
-    Refrigerant: ["psi"],
-    Water: ["psi"],
-    Pneumatic: ["psi"]
-};
-
 // Utility to get input value by ID
 function getVal(id) {
     const el = document.getElementById(id);
-    return el ? el.value.trim() : "";
+    if (!el) return "";
+    let val = el.value.trim();
+
+    // Default dates to today if empty
+    if ((id === "date" || id === "completedDate") && val === "") {
+        val = formatDateToMDY(new Date());
+    }
+    return val;
 }
 
-// Helper to get file input name
+// Format date to MM/DD/YYYY
+function formatDateToMDY(date) {
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+}
+
+// Get just the filename from file input
 function getFileName(input) {
-    return input.files && input.files[0] ? input.files[0].name : "";
+    if (input.files && input.files.length > 0) {
+        return input.files[0].name;
+    }
+    return "";
 }
 
 // Add a new source
@@ -57,29 +61,14 @@ function addSource() {
     const container = document.getElementById("sources");
     const div = document.createElement("div");
     div.className = "source";
-
     div.innerHTML = `
         <div class="source-header">Source ${sourceCount + 1}</div>
-        <label>Energy Source: 
-            <select class="energy_source">
-                <option value="">Select</option>
-                <option value="Thermal">Thermal</option>
-                <option value="Natural gas">Natural gas</option>
-                <option value="Steam">Steam</option>
-                <option value="Chemical">Chemical</option>
-                <option value="Hydraulic">Hydraulic</option>
-                <option value="Gravity">Gravity</option>
-                <option value="Electric">Electric</option>
-                <option value="Refrigerant">Refrigerant</option>
-                <option value="Water">Water</option>
-                <option value="Pneumatic">Pneumatic</option>
-            </select>
-        </label>
+        <label>Energy Source: <input type="text" class="energy_source" /></label>
         <label>Chemical Name: <input type="text" class="chemical_name" /></label>
-        <label>Volt: <input type="number" class="volt" /></label>
-        <label>PSI: <input type="number" class="psi" /></label>
-        <label>LBS: <input type="number" class="lbs" /></label>
-        <label>Temp: <input type="number" class="temp" /></label>
+        <label>Volt: <input type="text" class="volt" /></label>
+        <label>PSI: <input type="text" class="psi" /></label>
+        <label>LBS: <input type="text" class="lbs" /></label>
+        <label>Temp: <input type="text" class="temp" /></label>
         <label>Device: <input type="text" class="device" /></label>
         <label>Tag: <input type="text" class="tag" /></label>
         <label>Description: <input type="text" class="source_description" /></label>
@@ -98,21 +87,24 @@ function removeLastSource() {
 
     const container = document.getElementById("sources");
     const lastSource = container.lastElementChild;
+
     if (!lastSource) return;
 
-    const inputs = lastSource.querySelectorAll("input, select");
+    // Check if any inputs have value
+    const inputs = lastSource.querySelectorAll("input");
     let hasText = false;
-
     inputs.forEach(input => {
         if (input.type === "file") {
-            if (input.files && input.files.length > 0) hasText = true;
+            if (getFileName(input) !== "") hasText = true;
         } else if (input.value.trim() !== "") {
             hasText = true;
         }
     });
 
-    if (hasText && !confirm("The last source contains data. Are you sure you want to remove it?")) {
-        return;
+    if (hasText) {
+        if (!confirm("The last source contains data. Are you sure you want to remove it?")) {
+            return;
+        }
     }
 
     lastSource.remove();
@@ -123,26 +115,16 @@ function removeLastSource() {
 function gatherData() {
     const obj = {};
 
-    const today = new Date().toISOString().split("T")[0];
-
     // Add general fields
     for (const id in fieldMap) {
         const key = fieldMap[id];
-        if (!key) continue;
-        let val = getVal(id);
-        if ((id === "date" || id === "completedDate") && val === "") {
-            val = today;
+        if (key) {
+            const val = getVal(id);
+            if (val !== "") {
+                obj[key] = val;
+            }
         }
-        if (val !== "") obj[key] = val;
     }
-
-    // Validate numeric fields
-    ["procedureNumber", "revision", "origin"].forEach(id => {
-        const val = getVal(id);
-        if (val && isNaN(Number(val))) {
-            alert(`${id} must be a number`);
-        }
-    });
 
     // Add sources if they have data
     const sourceDivs = document.querySelectorAll(".source");
@@ -150,38 +132,40 @@ function gatherData() {
 
     sourceDivs.forEach(div => {
         const s = {};
-        const inputs = div.querySelectorAll("input, select");
-        inputs.forEach(input => {
+        div.querySelectorAll("input").forEach(input => {
             let val = "";
-            if (input.tagName === "SELECT") {
-                val = input.value;
-            } else if (input.type === "file") {
+            if (input.type === "file") {
                 val = getFileName(input);
             } else {
                 val = input.value.trim();
             }
-            const cls = input.className;
-            if (cls && val !== "") s[cls] = val;
+            if (input.className && val !== "") {
+                s[input.className] = val;
+            }
         });
-        if (Object.keys(s).length > 0) sources.push(s);
+        if (Object.keys(s).length > 0) {
+            sources.push(s);
+        }
     });
 
-    if (sources.length > 0) obj.sources = sources;
+    if (sources.length > 0) {
+        obj.sources = sources;
+    }
 
     return obj;
 }
 
-// Generate JSON
+// Generate JSON and show in textarea
 function generateJSON() {
     const obj = gatherData();
     const output = document.getElementById("output");
     if (output) output.value = JSON.stringify(obj, null, 2);
 }
 
-// Download JSON
+// Download JSON file
 function downloadOutput() {
     const output = document.getElementById("output");
-    const content = output ? output.value : "";
+    const content = output?.value;
     if (!content) {
         alert("Generate the JSON first!");
         return;
@@ -197,13 +181,7 @@ function downloadOutput() {
     URL.revokeObjectURL(url);
 }
 
-// Attach functions to window for global access
-window.addSource = addSource;
-window.removeLastSource = removeLastSource;
-window.generateJSON = generateJSON;
-window.downloadOutput = downloadOutput;
-
-// Attach event listeners
+// Attach listeners after DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("addSourceBtn")?.addEventListener("click", addSource);
     document.getElementById("removeSourceBtn")?.addEventListener("click", removeLastSource);

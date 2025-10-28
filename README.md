@@ -250,7 +250,7 @@ npx tsc --init
 
 2. Compile TypeScipt to JavaScript
 ```bash
-npx tsc src/web/scripts/input_form.ts --outDir src/web/scripts
+npx tsc src/web/scripts/input_form_2.ts --outDir src/web/scripts
 ```
 
 --- 
