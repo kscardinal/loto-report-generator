@@ -129,8 +129,8 @@ def resolve_image_file(filename: str) -> str:
 
     if temp_file.is_file():
         return str(temp_file)
-    elif include_file.is_file():
-        return str(include_file)
+    #elif include_file.is_file():
+        #return str(include_file)
     else:
         ic(f"[Warning] Image '{filename}' not found in TEMP_DIR or INCLUDES_DIR. Using default image.")
         return DEFAULT_IMAGE

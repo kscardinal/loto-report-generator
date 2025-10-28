@@ -15,6 +15,8 @@ import json
 import gridfs
 import sys
 from bson.objectid import ObjectId
+import tempfile
+from io import BytesIO
 
 app = FastAPI()
 
@@ -61,106 +63,139 @@ for directory in [TEMP_DIR]:
 # Upload route
 # -----------------------------
 @app.post("/upload/")
-async def upload_files(files: List[UploadFile] = File(...)):
-    saved_files = []
-    photos_data = []
-    json_data = None
-    json_file_name = None
+async def upload_report(files: List[UploadFile] = File(...), uploaded_by: str = "anonymous", tags: List[str] = [], notes: str = ""):
+    json_file = None
+    include_files = []
 
+    # Save incoming files to temp and classify
     for file in files:
         file_location = TEMP_DIR / file.filename
         contents = await file.read()
         with open(file_location, "wb") as f:
             f.write(contents)
-        saved_files.append(str(file_location))
 
         if file.filename.lower().endswith(".json"):
-            json_file_name = file.filename
-            # attempt to load and update a 'last_modified' field in the JSON
-            try:
-                parsed = json.loads(contents.decode("utf-8"))
-                parsed["last_modified"] = datetime.now().isoformat()
-                updated_bytes = json.dumps(parsed, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-                json_data = Binary(updated_bytes)
-            except Exception:
-                # if JSON parsing fails, store original bytes
-                json_data = Binary(contents)
+            json_file = file_location
         else:
-            photos_data.append({
-                "photo_name": file.filename,
-                "photo_data": Binary(contents)
-            })
+            include_files.append(file_location)
 
-    # Prepare a document only if we have json_data, otherwise adjust as needed
-    if json_data:
-        now = datetime.now()
-        # Check if a document with this JSON already exists (by filename)
-        existing = uploads.find_one({"json_filename": json_file_name})
-        if existing:
-            # Update last_generated and (optionally) replace json_data with the updated content
-            uploads.update_one(
-                {"_id": existing["_id"]},
-                {"$set": {
-                    "last_generated": now,
-                    "json_data": json_data,
-                    "metadata.last_modified": now
-                }}
-            )
+    if not json_file:
+        return {"error": "No JSON file uploaded"}
+
+    # Read JSON
+    with open(json_file, "r", encoding="utf-8") as f:
+        json_data = json.load(f)
+
+    report_name = json_file.stem
+
+    # Check if report already exists
+    existing_report = uploads.find_one({"report_name": report_name})
+    now = datetime.now()
+
+    photos_data = []
+    for path in include_files:
+        # Check for duplicate photos in GridFS
+        file_bytes = path.read_bytes()
+        duplicate = None
+        for file in fs.find({"filename": path.name}):
+            if file.read() == file_bytes:
+                duplicate = file
+                break
+
+        if duplicate:
+            photo_id = duplicate._id
         else:
-            doc = {
-                "pdf_name": json_file_name,  # or adjust as needed
-                "date_added": now,
-                "last_generated": now,
-                "json_filename": json_file_name,
+            photo_id = fs.put(file_bytes, filename=path.name)
+
+        photos_data.append({"photo_name": path.name, "photo_id": photo_id})
+
+    if existing_report:
+        # Update report (keep date_added, update last_modified, last_generated, JSON, photos, metadata)
+        uploads.update_one(
+            {"_id": existing_report["_id"]},
+            {"$set": {
                 "json_data": json_data,
                 "photos": photos_data,
-                "metadata": {
-                    "uploaded_via": "upload_route",
-                    "last_modified": now
-                }
-            }
-            uploads.insert_one(doc)
+                "last_modified": now,
+                "last_generated": now,
+                "metadata.uploaded_by": uploaded_by,
+                "metadata.tags": tags,
+                "metadata.notes": notes
+            }}
+        )
+    else:
+        # Insert new report
+        doc = {
+            "report_name": report_name,
+            "json_data": json_data,
+            "photos": photos_data,
+            "uploaded_by": uploaded_by,
+            "tags": tags,
+            "notes": notes,
+            "date_added": now,
+            "last_modified": now,
+            "last_generated": now,
+            "version": 1
+        }
+        uploads.insert_one(doc)
 
-    return {"uploaded_files": saved_files}
+    return {"report_name": report_name, "photos": [p["photo_name"] for p in photos_data]}
 
 
 # -----------------------------
 # Generate PDF from JSON
 # -----------------------------
 class GenerateRequest(BaseModel):
-    json_filename: str
-
+    report_name: str  # Use report_name instead of json_filename
 
 @app.post("/generate/")
-async def generate_pdf(request: GenerateRequest):
-    json_filename = Path(request.json_filename).name
-    json_path = TEMP_DIR / json_filename
+async def generate_pdf_from_db(request: GenerateRequest):
+    report_name = request.report_name
 
-    if not json_path.exists():
-        return JSONResponse(status_code=400, content={
-            "error": f"JSON file '{json_filename}' not found in {TEMP_DIR}"
-        })
+    # Fetch report from DB
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
 
     try:
-        result = subprocess.run(
-            ["python", str(PROCESS_DIR / "generate_pdf.py"), str(TEMP_DIR / json_filename)],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        # Create a temporary folder to dump JSON and photos
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+
+            # Save JSON file
+            json_file_path = tmpdir_path / f"{report_name}.json"
+            with open(json_file_path, "w", encoding="utf-8") as f:
+                json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
+
+            # Save all photos locally
+            for photo in doc["photos"]:
+                photo_file_path = tmpdir_path / photo["photo_name"]
+                file_bytes = fs.get(photo["photo_id"]).read()
+                with open(photo_file_path, "wb") as f:
+                    f.write(file_bytes)
+
+            # Call the existing generate_pdf.py with the JSON path
+            result = subprocess.run(
+                ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            # Optional: return the expected PDF filename
+            pdf_filename = f"{report_name}.pdf"
+
     except subprocess.CalledProcessError as e:
         return JSONResponse(status_code=500, content={
             "error": "PDF generation failed.",
             "details": e.stderr or e.stdout or str(e)
         })
     except Exception as e:
+        import traceback
         return JSONResponse(status_code=500, content={
             "error": "Unexpected error.",
             "details": traceback.format_exc()
         })
-
-    # Optional: check if the file was created in temp/pdf instead
-    pdf_filename = json_filename.rsplit(".", 1)[0] + ".pdf"
 
     return {"message": "PDF generation triggered successfully.", "pdf_filename": pdf_filename}
 
@@ -229,17 +264,49 @@ def get_photo(photo_id: str):
 
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(report_name: str):
+    # Fetch report from DB
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
-        return {"error": "Report not found"}
-    
-    # Assuming you have a binary PDF stored somewhere or generate it from JSON
-    pdf_data = doc.get("pdf_data")  # or generate_pdf(doc.json_data)
-    if not pdf_data:
-        return {"error": "PDF not available for this report"}
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
 
-    return StreamingResponse(
-        pdf_data,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={report_name}.pdf"}
-    )
+    try:
+        # Create temporary files for generate_pdf.py
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+
+            # Save JSON
+            json_file_path = tmpdir_path / f"{report_name}.json"
+            with open(json_file_path, "w", encoding="utf-8") as f:
+                json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
+
+            # Save photos
+            for photo in doc["photos"]:
+                photo_file_path = tmpdir_path / photo["photo_name"]
+                file_bytes = fs.get(photo["photo_id"]).read()
+                with open(photo_file_path, "wb") as f:
+                    f.write(file_bytes)
+
+            # Generate PDF using subprocess
+            pdf_file_path = tmpdir_path / f"{report_name}.pdf"
+            subprocess.run(
+                ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
+                check=True
+            )
+
+            # Read PDF bytes into memory
+            with open(pdf_file_path, "rb") as f:
+                pdf_bytes = f.read()
+
+            # Stream PDF back to client
+            pdf_stream = BytesIO(pdf_bytes)
+            return StreamingResponse(
+                pdf_stream,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename={report_name}.pdf"}
+            )
+
+    except subprocess.CalledProcessError as e:
+        return JSONResponse(status_code=500, content={"error": "PDF generation failed.", "details": e.stderr})
+    except Exception as e:
+        import traceback
+        return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
