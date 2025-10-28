@@ -6,6 +6,8 @@ import contextlib
 from pathlib import Path
 from typing import Dict, Optional, Callable, Literal, List
 import pytest
+from pdf2image import convert_from_path
+from PIL import ImageChops
 
 # === Resolve project paths ===
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -17,6 +19,7 @@ AUTOMATE_PDF_SCRIPT = PROJECT_ROOT / "src" / "pdf" / "automate_pdf.py"
 INCLUDES_DIR = PROJECT_ROOT / "includes"
 TEST_DIR = PROJECT_ROOT / "src" / "tests"
 TEMP_DIR = PROJECT_ROOT / "temp"
+REFERENCE_DIR = TEST_DIR / "comparison"
 
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -66,7 +69,7 @@ def clear_dir(
             shutil.rmtree(item)
 
     desc = f"{'excluding' if invert_pattern else 'matching'} {pattern}" if pattern else "everything"
-    print(f"🗑️  Cleared {directory} ({desc})\n")
+    print(f"🗑️  Cleared {directory} ({desc})")
 
 
 def _infer_ext_from_pattern(pattern: str) -> Optional[str]:
@@ -96,6 +99,7 @@ def transfer_files(
     Returns { extension_without_dot: count_transferred }.
     Always prints a summary line for implied extension even if zero matched.
     """
+    print("")
     summary: Dict[str, int] = {}
     dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -130,7 +134,7 @@ def transfer_files(
 
     for ext in sorted(all_exts):
         print(f"   • {ext}: {summary.get(ext, 0)}")
-    print("")
+
     return summary
 
 
@@ -154,6 +158,7 @@ def reseed_assets() -> None:
     copy_files(TEST_DIR, TEMP_DIR, pattern="*.json")
     # adjust pattern as needed for your image assets
     copy_files(INCLUDES_DIR, TEMP_DIR, pattern="test_*.jpg")
+
 
 def archive_pdfs(src_dir: Path, dest_subdir_name: str) -> None:
     """
@@ -186,7 +191,7 @@ def _run_pdf_batch(
         pre_all()
 
     json_files = list(TEMP_DIR.glob(json_glob))
-    print("\n")
+    print("")
 
     for json_file in json_files:
         output_pdf = output_dir / f"{json_file.stem}.pdf"
@@ -214,6 +219,75 @@ def _run_pdf_batch(
         archive_pdfs(output_dir, archive_subdir)
 
 
+# === PDF Layout Comparison Utilities ===
+def pdfs_layout_equal(pdf1: Path, pdf2: Path, dpi: int = 200, verbose: bool = False) -> bool:
+    images1 = convert_from_path(str(pdf1), dpi=dpi)
+    images2 = convert_from_path(str(pdf2), dpi=dpi)
+
+    if len(images1) != len(images2):
+        if verbose:
+            print(f"❌ Page count mismatch: {len(images1)} vs {len(images2)}")
+        return False
+
+    for i, (img1, img2) in enumerate(zip(images1, images2)):
+        diff = ImageChops.difference(img1, img2)
+        bbox = diff.getbbox()
+        if bbox is not None:
+            if verbose:
+                print(f"❌ Difference on page {i + 1}")
+            return False
+        elif verbose:
+            print(f"✅ Page {i + 1} matches")
+
+    return True
+
+
+def _assert_pdf_batch_matches(actual_dir: Path, reference_dir: Path, *, verbose: bool = True) -> None:
+    """
+    Compare all PDFs in actual_dir to PDFs with the same filenames in reference_dir.
+    Fails with a helpful summary if any are missing or mismatched.
+    """
+    actual_pdfs = sorted(actual_dir.glob("*.pdf"))
+    assert actual_pdfs, f"❌ No PDFs found to compare in {actual_dir}"
+
+    failed: list[str] = []
+    missing: list[str] = []
+
+    for pdf in actual_pdfs:
+        ref = reference_dir / pdf.name
+        if not ref.exists():
+            print(f"⚠️  Reference PDF missing: {ref}")
+            missing.append(pdf.name)
+            continue
+
+        print(f"\n🔍 Comparing: {pdf.name}")
+        try:
+            equal = pdfs_layout_equal(pdf, ref, verbose=verbose)
+            if equal:
+                print("✅ Layout matches reference.")
+            else:
+                print("❌ Layout differs!")
+                failed.append(pdf.name)
+        except Exception as e:
+            print(f"❌ Error comparing PDFs: {e}")
+            failed.append(pdf.name)
+
+    if missing or failed:
+        if missing:
+            print("\nMissing reference PDFs:")
+            for name in missing:
+                print(f" - {name}")
+        if failed:
+            print("\nPDFs with layout differences or errors:")
+            for name in failed:
+                print(f" - {name}")
+        total = len(missing) + len(failed)
+        names = ", ".join(missing + failed)
+        pytest.fail(f"❌ {total} PDF(s) failed comparison: {names}", pytrace=False)
+    else:
+        print("\n✅ All PDFs match their references!")
+
+
 # === Tests ===
 @pytest.mark.order(1)
 def test_transfer_first_run_copy_json_and_images():
@@ -222,8 +296,11 @@ def test_transfer_first_run_copy_json_and_images():
     """
     print("\n")
     clear_dir(TEMP_DIR)
+    clear_dir(directory=TEST_DIR / "generated_pdfs")
+    clear_dir(directory=TEST_DIR / "automated_pdfs")
 
-    # Count expectations
+
+# Count expectations
     expected_json = len(list(TEST_DIR.glob("*.json")))
     expected_jpg = len(list(INCLUDES_DIR.glob("test_*.jpg")))
     assert (expected_json + expected_jpg) > 0, "Need at least one JSON or JPG asset to test."
@@ -244,18 +321,22 @@ def test_transfer_first_run_copy_json_and_images():
     assert len(_names_in(TEMP_DIR, "*.json")) == expected_json, "❌ Missing JSON files in temp/"
     assert len(_names_in(TEMP_DIR, "test_*.jpg")) == expected_jpg, "❌ Missing JPG files in temp/"
 
+    print("")
+
 
 @pytest.mark.order(2)
 def test_transfer_second_run_is_idempotent_for_copy():
     """
     Second copy run should copy nothing new because files already exist in TEMP_DIR.
     """
-    print("\n")
+    print("")
     json_summary = copy_files(TEST_DIR, TEMP_DIR, pattern="*.json")
     jpg_summary = copy_files(INCLUDES_DIR, TEMP_DIR, pattern="test_*.jpg")
 
     assert sum(json_summary.values()) == 0, f"❌ Expected 0 JSON copied on second run, got {json_summary}."
     assert sum(jpg_summary.values()) == 0, f"❌ Expected 0 JPG copied on second run, got {jpg_summary}."
+
+    print("")
 
 
 @pytest.mark.order(3)
@@ -263,10 +344,16 @@ def test_generate_pdfs_batch():
     """
     Run generate_pdf.py for each JSON in TEMP_DIR. PDFs are expected in TEMP_DIR.
     """
+
+    def _pre_all():
+        # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
+        print("")
+
     _run_pdf_batch(
         script_path=GENERATE_PDF_SCRIPT,
         output_dir=TEMP_DIR,
         label="Generating",
+        pre_all=_pre_all,
         archive_subdir="generated_pdfs",
     )
 
@@ -277,6 +364,7 @@ def test_automate_pdfs_batch():
     Run automate_pdf.py for each JSON in TEMP_DIR. PDFs are expected in BASE_DIR.
     Mirrors your original pre-steps.
     """
+
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
         print("\n")
@@ -292,3 +380,25 @@ def test_automate_pdfs_batch():
         pre_each=reseed_assets,
         archive_subdir="automated_pdfs",
     )
+
+
+@pytest.mark.order(5)
+def test_generated_pdfs_match_reference():
+    """
+    Compare PDFs created by generate_pdf.py (tests/generated_pdfs) against reference PDFs in tests/comparison (shared).
+    """
+    print("")
+    actual_dir = TEST_DIR / "generated_pdfs"
+    reference_dir = REFERENCE_DIR
+    _assert_pdf_batch_matches(actual_dir, reference_dir, verbose=True)
+
+
+@pytest.mark.order(6)
+def test_automated_pdfs_match_reference():
+    """
+    Compare PDFs created by automate_pdf.py (tests/automated_pdfs) against reference PDFs in tests/comparison (shared).
+    """
+    print("")
+    actual_dir = TEST_DIR / "automated_pdfs"
+    reference_dir = REFERENCE_DIR
+    _assert_pdf_batch_matches(actual_dir, reference_dir, verbose=True)
