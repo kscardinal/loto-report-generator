@@ -40,18 +40,44 @@ def extract_included_files(json_file_path: Path):
 # -------------------------
 # Upload JSON + images
 # -------------------------
-def upload_files(json_file: str, include_files: list):
-    files = [('files', open(json_file, 'rb'))]
+def upload_files(
+    json_file: str,
+    include_files: list,
+    uploaded_by: str = "automation",
+    tags: list | None = None,
+    notes: str = ""
+):
+    """
+    Upload a JSON report + optional images to the FastAPI server.
+    Sends uploaded_by, tags, and notes as form fields.
+    """
+    if tags is None:
+        tags = []
+
+    # Build files payload
+    files_payload = [('files', open(json_file, 'rb'))]
     for name in include_files:
         file_path = TEMP_DIR / name
         if not file_path.exists():
             print(f"[Warning] Included file not found: {name}")
             continue
-        files.append(('files', (name, open(file_path, 'rb'))))
+        files_payload.append(('files', (name, open(file_path, 'rb'))))
 
-    data = {"uploaded_by": "automation", "tags": [], "notes": ""}
-    res = requests.post(f"{SERVER}/upload/", files=files, data=data)
-    print("Upload response:", res.json())
+    # Build form fields as list of tuples
+    # Multiple 'tags' entries are required for FastAPI to parse them correctly
+    form_data = [("uploaded_by", uploaded_by), ("notes", notes)]
+    for t in tags:
+        form_data.append(("tags", t))
+
+    # Send POST request
+    import requests
+    res = requests.post(f"{SERVER}/upload/", files=files_payload, data=form_data)
+
+    try:
+        print("Upload response:", res.json())
+    except Exception:
+        print("Upload failed:", res.text)
+
 
 # -------------------------
 # Trigger PDF generation
@@ -107,7 +133,14 @@ def main(json_path: Path | str = None):
 
     report_name = json_path.stem
 
-    upload_files(str(json_path), included_files)
+# Example call
+    upload_files(
+        str(json_path),             # path to your JSON file
+        included_files,             # list of images to include
+        uploaded_by="Kyle",         # set author
+        tags=["lock", "tag"],      # any tags you want
+        notes="This is a test note" # sample note
+    )
     generate_pdf(report_name)
     output_pdf_path = download_pdf(report_name, BASE_DIR)
     clear_temp()

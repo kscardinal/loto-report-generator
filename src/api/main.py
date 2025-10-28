@@ -17,6 +17,7 @@ import sys
 from bson.objectid import ObjectId
 import tempfile
 from io import BytesIO
+from fastapi import Form
 
 app = FastAPI()
 
@@ -63,7 +64,14 @@ for directory in [TEMP_DIR]:
 # Upload route
 # -----------------------------
 @app.post("/upload/")
-async def upload_report(files: List[UploadFile] = File(...), uploaded_by: str = "anonymous", tags: List[str] = [], notes: str = ""):
+@app.post("/upload/")
+async def upload_report(
+    files: List[UploadFile] = File(...),
+    uploaded_by: str = Form("anonymous"),
+    tags: List[str] = Form([]),
+    notes: str = Form(""),
+):
+
     json_file = None
     include_files = []
 
@@ -118,9 +126,9 @@ async def upload_report(files: List[UploadFile] = File(...), uploaded_by: str = 
                 "photos": photos_data,
                 "last_modified": now,
                 "last_generated": now,
-                "metadata.uploaded_by": uploaded_by,
-                "metadata.tags": tags,
-                "metadata.notes": notes
+                "uploaded_by": uploaded_by,
+                "tags": tags,
+                "notes": notes
             }}
         )
     else:
