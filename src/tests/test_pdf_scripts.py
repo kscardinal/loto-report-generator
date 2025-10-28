@@ -375,7 +375,7 @@ def test_automate_pdfs_batch():
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
         # If no server configured in CI, skip this comparison entirely
-        if not os.getenv("SERVER"):
+        if not os.getenv("SERVER_IP"):
             pytest.skip("Skipping automated comparison: SERVER not configured in CI.")
         print("\n")
         clear_dir(TEMP_DIR)
@@ -410,7 +410,7 @@ def test_automated_pdfs_match_reference():
     """
     print("")
     # If no server configured in CI, skip this comparison entirely
-    if not os.getenv("SERVER"):
+    if not os.getenv("SERVER_IP"):
         pytest.skip("Skipping automated comparison: SERVER not configured in CI.")
     actual_dir = TEST_DIR / "automated_pdfs"
     reference_dir = REFERENCE_DIR
