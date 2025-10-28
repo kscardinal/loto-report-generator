@@ -78,21 +78,25 @@
 ## Project Structure  
 
 - `loto-report-generator/`
+- ├── `.github/workflows` # Includes all the tests run with GitHub Actions
+- ├───── [`tests.yml`](.github/workflows/tests.yml) # Test that runs during pushes and merges to make sure PDF generation works
 - ├── `includes/` # Includes all the assets needed to make the LOTO PDF
 - ├── `src/`
 - ├───── [`api/`](src/api)
 - ├──────── [`main.py`](src/api/main.py) # Server component that receives the requests and handles them
 - ├───── [`database/`](src/database)
-- ├──────── [`db.py`](src/database/db.py) # Creates the MongoDB database used to store all the files
+- ├──────── [`db_2.py`](src/database/db_2.py) # Creates the MongoDB database used to store all the files and contains some helper functions
 - ├──────── [`db_template.json`](src/database/db_template.json) # Template for a new entry into the database will all properties and descriptions
 - ├───── [`pdf/`](src/pdf)
 - ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the PDF file using the server component
 - ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the PDF with a given JSON file
 - ├───── [`tests/`](src/tests)
+- ├──────── [`test_pdf_scripts.py`](src/tests/test_pdf_scripts.py) # PyTest that checks everything is working before deploying the code
 - ├──────── [`test_data.json`](src/tests/test_data.json) # Main testing data set
 - ├──────── `test_data_....json` # More test data sets to test edge cases of the PDF generation
 - ├───── [`web/`](src/web)
 - ├──────── [`templates/`](src/web/templates)
+- ├─────────── [`view_report.html`](src/web/templates/view_report.html) # Template for webpage that shows a specific report including all the details
 - ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
 - ├── `temp/`
 - └── [`.env`](.env) # Where the secrets go
