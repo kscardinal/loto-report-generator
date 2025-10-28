@@ -244,7 +244,7 @@ async def pdf_list(request: Request):
     """
     Render HTML listing of all reports in the DB.
     """
-    docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("date_added", -1)
+    docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
     return templates.TemplateResponse("pdf_list.html", {"request": request, "report_names": report_names})
 

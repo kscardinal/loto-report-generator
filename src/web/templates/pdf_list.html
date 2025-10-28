@@ -1,21 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>PDF Reports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #C32026;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .report-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .report-list li {
+            background-color: white;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .report-list li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .report-list a {
+            display: block; /* Make the link fill the li */
+            width: 100%;
+            padding: 15px 20px; /* Same padding as li before */
+            text-decoration: none;
+            color: #C32026;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .report-list a:hover {
+            border-radius: 8px;
+        }
+
+        .no-reports {
+            text-align: center;
+            color: #666;
+            margin-top: 40px;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
-    <h1>Available Reports</h1>
+    <header>
+        <h1>Available PDF Reports</h1>
+    </header>
 
-    {% if report_names %}
-        <ul>
-        {% for name in report_names %}
-            <li>
-                <a href="{{ url_for('view_report', report_name=name) }}">{{ name }}</a>
-            </li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No reports found.</p>
-    {% endif %}
+    <main>
+        {% if report_names %}
+            <ul class="report-list">
+            {% for name in report_names %}
+                <li>
+                    <a href="{{ url_for('view_report', report_name=name) }}">{{ name }}</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-reports">No reports found.</p>
+        {% endif %}
+    </main>
 </body>
 </html>
