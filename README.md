@@ -44,6 +44,8 @@
 - [PDF Generation](#pdf-generation)
 - [Database Management](#database-management)
 - [PyTest](#pytest)
+- [Web Interface](#web-interface)
+- [SSH](#ssh)
 - [Customization](#customization)
 - [API Endpoints](#api-endpoints)
 - [License](#license)
@@ -255,7 +257,7 @@ npx tsc src/web/scripts/input_form_3.ts --outDir src/web/scripts
 
 ---
 
-### SSS
+### SSH
 
 1. Start agent
 ``` bash
