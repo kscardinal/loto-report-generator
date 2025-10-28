@@ -3,11 +3,12 @@ import sys
 import shutil
 import subprocess
 import contextlib
+import hashlib
 from pathlib import Path
 from typing import Dict, Optional, Callable, Literal, List
 import pytest
 from pdf2image import convert_from_path
-from PIL import ImageChops
+from PIL import Image, ImageChops
 
 # === Resolve project paths ===
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +21,7 @@ INCLUDES_DIR = PROJECT_ROOT / "includes"
 TEST_DIR = PROJECT_ROOT / "src" / "tests"
 TEMP_DIR = PROJECT_ROOT / "temp"
 REFERENCE_DIR = TEST_DIR / "comparison"
+PDF_CACHE_DIR = TEST_DIR / ".pdf_cache"
 
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -225,10 +227,46 @@ def _run_pdf_batch(
         archive_pdfs(output_dir, archive_subdir)
 
 
+# === PDF render cache Utilities ===
+def _pdf_cache_key(pdf: Path, dpi: int) -> str:
+    st = pdf.stat()
+    basis = f"{pdf.resolve()}::{int(st.st_mtime)}::{st.st_size}::dpi{dpi}"
+    return hashlib.sha1(basis.encode("utf-8")).hexdigest()
+
+def _ensure_dir(p: Path) -> None:
+    p.mkdir(parents=True, exist_ok=True)
+
+def render_pdf_images_cached(pdf: Path, dpi: int):
+    """
+    Render a PDF to images, using a persistent on-disk cache for speed.
+    Returns a list of PIL Images.
+    """
+    _ensure_dir(PDF_CACHE_DIR)
+    key = _pdf_cache_key(pdf, dpi)
+    cache_dir = PDF_CACHE_DIR / key
+
+    # If cached, load PNGs from disk
+    if cache_dir.exists():
+        pngs = sorted(cache_dir.glob("page-*.png"))
+        if pngs:
+            return [Image.open(p).convert("RGB") for p in pngs]
+
+    # Not cached — render and persist
+    pages = convert_from_path(str(pdf), dpi=dpi)
+    _ensure_dir(cache_dir)
+    for idx, img in enumerate(pages, start=1):
+        out = cache_dir / f"page-{idx:03d}.png"
+        img.save(out, format="PNG")
+
+    # Reopen from disk for a uniform code path
+    pngs = sorted(cache_dir.glob("page-*.png"))
+    return [Image.open(p).convert("RGB") for p in pngs]
+
+
 # === PDF Layout Comparison Utilities ===
 def pdfs_layout_equal(pdf1: Path, pdf2: Path, dpi: int = 200, verbose: bool = False) -> bool:
-    images1 = convert_from_path(str(pdf1), dpi=dpi)
-    images2 = convert_from_path(str(pdf2), dpi=dpi)
+    images1 = render_pdf_images_cached(pdf1, dpi)
+    images2 = render_pdf_images_cached(pdf2, dpi)
 
     if len(images1) != len(images2):
         if verbose:

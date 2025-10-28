@@ -111,3 +111,4 @@ cython_debug/
 temp
 generated_pdfs/
 automated_pdfs/
+.pdf_cache/
