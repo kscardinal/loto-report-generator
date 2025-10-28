@@ -28,6 +28,8 @@ jobs:
       # uv will resolve & install them on first `uv run`.
       # If you use a lock file, add a `uv sync` step here.
 
+      - run: uv run pip install pytest-order
+
       - name: Run pytest
         run: uv run pytest -q
 

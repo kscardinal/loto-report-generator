@@ -41,6 +41,12 @@ def clear_dir(
                 "*.pdf" → only delete PDFs
                 "!*.pdf" → delete everything except PDFs
     """
+
+    if not directory.exists():
+        directory.mkdir(parents=True, exist_ok=True)
+        print(f"🗂️ Created directory {directory} (nothing to clear)")
+        return
+
     excluded = {x.lower() for x in (excluded_files or [])}
     invert_pattern = False
 
@@ -348,6 +354,8 @@ def test_generate_pdfs_batch():
 
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
+        if not os.getenv("SERVER"):
+            pytest.skip("Skipping automate_pdf batch: SERVER not configured in CI")
         print("")
 
     _run_pdf_batch(
@@ -368,6 +376,8 @@ def test_automate_pdfs_batch():
 
     def _pre_all():
         # Before the automated batch, ensure TEMP_DIR starts empty, then seed initial assets
+        if not os.getenv("SERVER"):
+            pytest.skip("Skipping automate_pdf batch: SERVER not configured in CI")
         print("\n")
         clear_dir(TEMP_DIR)
         clear_dir(BASE_DIR, pattern="!*.pdf")
