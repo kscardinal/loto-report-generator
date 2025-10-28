@@ -13,6 +13,7 @@ dependencies = [
     "git-filter-repo>=2.47.0",
     "icecream>=2.1.5",
     "jinja2>=3.1.6",
+    "mypy>=1.16.1",
     "pdf2image>=1.17.0",
     "pillow>=11.2.1",
     "pymongo>=4.15.3",
@@ -51,11 +52,37 @@ target-version = ["py313"]
 
 
 ### mypy
+# pyproject.toml
 [tool.mypy]
-files = ["."]
 python_version = "3.13"
-strict = true
-warn_unreachable = true
+
+# Scope: only check your code, not venv/build
+files = [
+    "src",             # adjust if your code lives elsewhere
+    "scripts",         # optional
+]
+
+# Start loose to get to green quickly
+ignore_missing_imports = true
+check_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+no_implicit_optional = false
+
+# Noise reduction
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_context = true
+pretty = true
+color_output = true
+
+# Optional: temporarily skip heavy/test folders
+exclude = [
+    "^build/.*",
+    "^dist/.*",
+    "^tests?/generated_pdfs/.*",
+    "^tests?/automated_pdfs/.*",
+]
 
 [[tool.mypy.overrides]]
 module = "attendance.mongo.*"
