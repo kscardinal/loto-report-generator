@@ -30,6 +30,15 @@ jobs:
 
       - run: uv run pip install pytest-order
 
+      # ✅ Add the cache step here
+      - name: Cache PDF render outputs
+        uses: actions/cache@v4
+        with:
+          path: src/tests/.pdf_cache
+          key: pdf-cache-${{ hashFiles('src/tests/comparison/**/*.pdf') }}-dpi200
+          restore-keys: |
+            pdf-cache-
+
       - name: Run pytest
         run: uv run pytest -q
 
