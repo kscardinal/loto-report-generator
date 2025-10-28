@@ -17,6 +17,7 @@
             padding: 20px 0;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         header h1 {
@@ -120,10 +121,30 @@
         a.download-link:hover {
             background-color: #a50f14;
         }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95em;
+            background-color: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(0,0,0,0.35);
+        }
+
     </style>
 </head>
 <body>
     <header>
+        <a href="{{ url_for('pdf_list') }}" class="back-btn">&#8592; Back</a>
         <h1>Report: {{ report.report_name }}</h1>
     </header>
 
