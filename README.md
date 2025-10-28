@@ -202,13 +202,20 @@ pdfinfo -v
 pdftoppm -v
 ```
 
-3.  Run the tests
+3. Double check `pre-commit` and `pre-push` hooks are updated
+``` bash
+pre-commit install --hook-type pre-commit --hook-type pre-push
+pre-commit autoupdate
+pre-commit run --all-files
+```
+
+4Run the tests
 ``` bash
 pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 ```
 - `-q` is optional to reduce more of the unnecessary text in the test
 
-4. Check the results
+5Check the results
 <pre style="color:green;">
 ============= ___ passed in ___s =============
 </pre>
