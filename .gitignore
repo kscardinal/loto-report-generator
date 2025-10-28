@@ -112,3 +112,6 @@ temp
 generated_pdfs/
 automated_pdfs/
 .pdf_cache/
+
+# node
+node_modules
