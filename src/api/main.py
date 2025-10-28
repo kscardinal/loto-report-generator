@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request, Response
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List
 from pathlib import Path
@@ -11,6 +12,9 @@ from pymongo import MongoClient
 from bson.binary import Binary
 from fastapi.templating import Jinja2Templates
 import json
+import gridfs
+import sys
+from bson.objectid import ObjectId
 
 app = FastAPI()
 
@@ -26,11 +30,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# === Resolve project paths ===
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))  # if your scripts import local modules
+
+from src.database.db_2 import get_report_entry
+
 # MongoDB connection (adjust as needed)
 MONGO_URI = "mongodb://localhost:27017/"
 client = MongoClient(MONGO_URI)
 db = client['loto_pdf']
-uploads = db['uploads']
+uploads = db['reports']        # main collection for metadata and JSON
+fs = gridfs.GridFS(db)         # GridFS for large files (photos)
 
 # Define base paths
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -191,6 +202,44 @@ async def clear_temp_folders():
 # -----------------------------
 @app.get("/pdf_list", response_class=HTMLResponse)
 async def pdf_list(request: Request):
-    docs = uploads.find({}, {"_id": 0, "pdf_name": 1})
-    pdf_names = [doc['pdf_name'] for doc in docs if 'pdf_name' in doc]
-    return templates.TemplateResponse("pdf_list.html", {"request": request, "pdf_names": pdf_names})
+    # Fetch all reports, sorted by date_added descending (newest first)
+    docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("date_added", -1)
+    report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
+    print("Fetched report names:", report_names)  # Debug
+    return templates.TemplateResponse(
+        "pdf_list.html",
+        {"request": request, "report_names": report_names}
+    )
+
+
+@app.get("/view_report/{report_name}", response_class=HTMLResponse)
+async def view_report(request: Request, report_name: str):
+    doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
+    if not doc:
+        return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
+
+    # You can render a template with details, JSON, and images
+    return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
+
+@app.get("/photo/{photo_id}")
+def get_photo(photo_id: str):
+    photo = fs.get(ObjectId(photo_id))
+    return Response(photo.read(), media_type="image/jpeg")  # or detect type dynamically
+
+
+@app.get("/download_pdf/{report_name}", name="download_pdf")
+def download_pdf(report_name: str):
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        return {"error": "Report not found"}
+    
+    # Assuming you have a binary PDF stored somewhere or generate it from JSON
+    pdf_data = doc.get("pdf_data")  # or generate_pdf(doc.json_data)
+    if not pdf_data:
+        return {"error": "PDF not available for this report"}
+
+    return StreamingResponse(
+        pdf_data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={report_name}.pdf"}
+    )

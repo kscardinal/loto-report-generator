@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html>
-<head><title>PDF Files</title></head>
+<head>
+    <title>PDF Reports</title>
+</head>
 <body>
-<h1>Available PDF Files</h1>
-<ul>
-  {% for name in pdf_names %}
-  <li>{{ name }}</li>
-  {% else %}
-  <li>No PDFs found.</li>
-  {% endfor %}
-</ul>
+    <h1>Available Reports</h1>
+
+    {% if report_names %}
+        <ul>
+        {% for name in report_names %}
+            <li>
+                <a href="{{ url_for('view_report', report_name=name) }}">{{ name }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No reports found.</p>
+    {% endif %}
 </body>
 </html>
