@@ -209,7 +209,7 @@ pre-commit autoupdate
 pre-commit run --all-files
 ```
 
-4Run the tests
+4. Run the tests
 ``` bash
 pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 ```
