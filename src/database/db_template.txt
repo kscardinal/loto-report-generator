@@ -1,0 +1,23 @@
+{
+  "_id": ObjectId("..."),
+  "report_name": "test_data",        // no .pdf extension
+  "json_data": { /* your JSON object directly */ },
+  "photos": [
+    {
+      "photo_id": ObjectId("..."),   // reference to GridFS or separate collection
+      "photo_name": "test_1.jpg",
+      "caption": "Photo description (optional)"
+    },
+    {
+      "photo_id": ObjectId("..."),
+      "photo_name": "test_2.jpg"
+    }
+  ],
+  "uploaded_by": "user123",
+  "tags": ["lockout", "tagout", "safety"],
+  "notes": "Initial upload",
+  "date_added": "2025-10-24T15:30:00",
+  "last_modified": "2025-10-24T16:15:00",
+  "last_generated": "2025-10-24T16:00:00",
+  "version": 1
+}
