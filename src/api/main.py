@@ -255,14 +255,31 @@ async def pdf_list(request: Request):
 # -----------------------------
 # View single report (HTML)
 # -----------------------------
+def ordinal(n: int) -> str:
+    """Return ordinal string for a number, e.g., 1 -> 1st"""
+    if 10 <= n % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+def format_datetime_with_ordinal(dt: datetime) -> str:
+    """Format datetime with full weekday, month, day with ordinal, year, and 12-hour time"""
+    day_with_suffix = ordinal(dt.day)
+    # %I is hour (12-hour), %M minutes, %S seconds, %p AM/PM
+    return dt.strftime(f"%A, %B {day_with_suffix}, %Y at %I:%M:%S %p").lstrip("0").replace("AM","am").replace("PM","pm")
+
 @app.get("/view_report/{report_name}", response_class=HTMLResponse)
 async def view_report(request: Request, report_name: str):
-    """
-    Render a detailed HTML view of a single report, including images.
-    """
     doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
     if not doc:
         return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
+
+    # Format datetime fields
+    for key in ["date_added", "last_modified", "last_generated"]:
+        if key in doc and isinstance(doc[key], datetime):
+            doc[key] = format_datetime_with_ordinal(doc[key])
+
     return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
 
 # -----------------------------
@@ -275,3 +292,34 @@ def get_photo(photo_id: str):
     """
     photo = fs.get(ObjectId(photo_id))
     return Response(photo.read(), media_type="image/jpeg")
+
+# -----------------------------
+# Fetch metadata for a given report
+# -----------------------------
+@app.get("/metadata/{report_name}")
+async def get_metadata(report_name: str):
+    doc = uploads.find_one(
+        {"report_name": report_name},
+        {"_id": 0, "json_data": 0, "photos": 0}  # exclude JSON and photos
+    )
+    if not doc:
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
+    
+    # Convert all datetime objects to ISO strings
+    for key in ["date_added", "last_modified", "last_generated"]:
+        if key in doc and isinstance(doc[key], datetime):
+            doc[key] = doc[key].strftime("%A, %B %d, %Y, %I:%M:%S %p")
+    
+    return JSONResponse(content=doc)
+
+# -----------------------------
+# Check status of database
+# -----------------------------
+@app.get("/db_status")
+async def db_status():
+    try:
+        # Try a lightweight operation
+        client.admin.command("ping")
+        return {"status": "ok", "message": "Database connection successful"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
