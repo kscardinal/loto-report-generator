@@ -8,8 +8,9 @@
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
-    "target": "es2020",
+    "target": "es2017",
     "types": [],
+    "lib": ["dom", "es2017", "dom.iterable", "scripthost"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
