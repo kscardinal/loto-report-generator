@@ -1,82 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Report: {{ report.report_name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            background-color: #f7f7f7;
+            color: #333;
         }
-        h1 {
-            margin-bottom: 10px;
+
+        header {
+            background-color: #C32026;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .metadata, .json-data, .photos {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
         }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            font-size: 1.3em;
+            color: #C32026;
+        }
+
         .metadata p {
-            margin: 4px 0;
+            margin: 5px 0;
         }
+
+        .metadata ul {
+            margin: 5px 0 0 20px;
+            padding: 0;
+        }
+
+        .metadata ul li {
+            list-style-type: disc;
+        }
+
         pre {
             background-color: #f4f4f4;
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 6px;
             overflow-x: auto;
         }
-        .photos img {
-            max-width: 200px;
-            max-height: 200px;
-            margin: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        .photos-container {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 20px; /* increased spacing between photos */
+            padding: 10px 0;
         }
+
+        .photos-container div {
+            flex: 0 0 auto;
+            text-align: center;
+            height: 220px; /* fixed height for alignment */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .photos-container img {
+            max-width: 200px;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* subtle drop shadow */
+        }
+
+        .photos-container a {
+            text-decoration: none; /* removes underline */
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100%;
+        }
+
+        .photos-container p {
+            margin: 0;
+            font-size: 0.9em;
+        }
+
         a.download-link {
             display: inline-block;
             margin-top: 10px;
-            padding: 6px 12px;
+            padding: 8px 16px;
             background-color: #2d89ef;
             color: white;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
         }
+
         a.download-link:hover {
             background-color: #1b5fa7;
         }
     </style>
 </head>
 <body>
-    <h1>Report: {{ report.report_name }}</h1>
+    <header>
+        <h1>Report: {{ report.report_name }}</h1>
+    </header>
 
-    <div class="metadata">
-        <h2>Metadata</h2>
-        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
-        <p><strong>Tags:</strong> {{ report.tags | join(', ') }}</p>
-        <p><strong>Notes:</strong> {{ report.notes }}</p>
-        <p><strong>Date Added:</strong> {{ report.date_added }}</p>
-        <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
-        <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
-    </div>
+    <main>
+        <div class="section metadata">
+            <h2>Metadata</h2>
+            <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+            <p><strong>Tags:</strong></p>
+            <ul>
+                {% for tag in report.tags %}
+                    <li>{{ tag }}</li>
+                {% endfor %}
+            </ul>
+            <p><strong>Notes:</strong> {{ report.notes }}</p>
+            <p><strong>Date Added:</strong> {{ report.date_added }}</p>
+            <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
+            <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
+        </div>
 
-    <div class="json-data">
-        <h2>JSON Data</h2>
-        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
-    </div>
+        <div class="section json-data">
+            <h2>JSON Data</h2>
+            <pre>{{ report.json_data | tojson(indent=2) }}</pre>
+        </div>
 
-    <div class="photos">
-        <h2>Photos</h2>
-        {% for photo in report.photos %}
-            <div>
-                <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
-                <p>{{ photo.photo_name }}</p>
+        <div class="section photos">
+            <h2>Photos</h2>
+            <div class="photos-container">
+                {% for photo in report.photos %}
+                    <div>
+                        <a href="{{ url_for('get_photo', photo_id=photo.photo_id) }}" target="_blank">
+                            <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
+                            <p>{{ photo.photo_name }}</p>
+                        </a>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    </div>
+        </div>
 
-    <div class="download">
-        <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
-    </div>
+        <div class="section download">
+            <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+        </div>
+    </main>
 </body>
 </html>
