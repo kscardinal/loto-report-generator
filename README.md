@@ -46,6 +46,7 @@
 - [PyTest](#pytest)
 - [Web Interface](#web-interface)
 - [SSH](#ssh)
+- [Misc](#misc)
 - [Customization](#customization)
 - [API Endpoints](#api-endpoints)
 - [License](#license)
@@ -269,6 +270,15 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 ```
 - Enter passpharse and it should stop bugging you
+
+---
+
+### Misc
+
+1. Count lines of code
+```bash
+git ls-files | xargs wc -l
+```
 
 --- 
 

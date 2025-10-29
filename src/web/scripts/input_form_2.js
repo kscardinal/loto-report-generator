@@ -11,7 +11,8 @@ let fieldValidity = {
   machine_image: true
 };
 
-let downloadable = false; // overall downloadable flag
+// Overall downloadable flag
+let downloadable = false; 
 
 // Enables/Disables a single button based on downloadable state
 function updateButton(buttonElement) {
@@ -32,6 +33,8 @@ function updateButtons() {
   updateButton(generateButton);
 }
 
+
+// Checks if the given file is an image file or not
 function isImageFile(file) {
   const validTypes = ["image/jpg", "image/jpeg", "image/png"];
   const validExt = /\.(jpg|jpeg|png)$/i;
@@ -83,6 +86,8 @@ function checkOnlyNumber(inputId, validityObj) {
   });
 }
 
+
+// Adds input listener for image-only validation, updates validity state and buttons
 function checkOnlyImage(inputId, validityObj) {
     const inputElement = document.getElementById(inputId);
     const labelElement = document.getElementById(inputId + "_label");
@@ -120,16 +125,18 @@ checkOnlyNumber("origin", fieldValidity);
 checkOnlyNumber("isolation_points", fieldValidity);
 checkOnlyImage("machine_image", fieldValidity);
 
+
 // Initially update buttons disabled state according to initial validity
 downloadable = Object.values(fieldValidity).every(Boolean);
 updateButtons();
 
 
-
+// Download Button Check Function
 downloadButton.addEventListener("click", function() {
     console.log("Download Button Pressed!")
 });
 
+// Generate Button Check Function
 generateButton.addEventListener("click", function() {
     console.log("Generate Button Pressed!")
 });
