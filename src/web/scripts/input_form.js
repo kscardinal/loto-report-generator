@@ -20,7 +20,6 @@ function updateButton(buttonElement) {
 }
 
 function updateSourceButton(buttonElement, numSources, maxSources) {
-    console.log(buttonElement, numSources);
     if (buttonElement === removeSourceButton) {
         if (numSources > 0) {
             buttonElement.disabled = false;
@@ -103,6 +102,7 @@ function validateInput({ id, type }) {
     } else if (type === "image") {
         const picker = document.getElementById(id + "_picker");
         const preview = document.getElementById(id + "_preview");
+        const button = document.getElementById(id + "_button");
         if (!picker || !preview) return;
 
         input.addEventListener("change", () => {
@@ -114,12 +114,14 @@ function validateInput({ id, type }) {
                 picker.classList.remove("error");
                 preview.style.display = "none";
                 fieldValidity[id] = true;
+                button.style.display = "none";
             } else if (!isValid) {
                 label.style.display = "block";
                 label.textContent = ` ❌ ${extension || "File"} not supported. Only jpg, jpeg, png`;
                 picker.classList.add("error");
                 preview.style.display = "none";
                 fieldValidity[id] = false;
+                button.style.display = "block";
             } else {
                 label.style.display = "none";
                 picker.classList.remove("error");
@@ -127,6 +129,7 @@ function validateInput({ id, type }) {
                 preview.style.display = "block";
                 preview.onload = () => URL.revokeObjectURL(preview.src);
                 fieldValidity[id] = true;
+                button.style.display = "block";
             }
 
             downloadable = Object.values(fieldValidity).every(Boolean);
@@ -188,34 +191,97 @@ function setText(inputId, text) {
 setText("approved_by_company", "Cardinal Compliance Consultants");
 
 
+function clearPhoto(inputId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(inputId + "_preview");
+    const label = document.getElementById(inputId + "_label");
+    const button = document.getElementById(inputId + "_button"); // ← get the clear button
+    const picker = document.getElementById(inputId + "_picker");
+
+    if (!input || !preview || !label || !button) return;
+
+    // Clear the file input
+    input.value = "";
+
+    // Hide the preview
+    preview.src = "";
+    preview.style.display = "none";
+
+    // Hide the clear button
+    button.style.display = "none";
+
+    // Reset warning label
+    label.style.display = "none";
+    label.textContent = "";
+
+    // Remove error highlight
+    if (picker) picker.classList.remove("error");
+
+    // Reset field validity
+    fieldValidity[inputId] = true;
+
+    // Recalculate downloadable and update buttons
+    downloadable = Object.values(fieldValidity).every(Boolean);
+    updateButtons();
+}
+
+
 // -----------------------------
 // Setup image preview for a file input
 // -----------------------------
 function setupImagePreview(inputId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(inputId + "_preview");
+    const button = document.getElementById(inputId + "_button");
+    const label = document.getElementById(inputId + "_label");
+    const picker = document.getElementById(inputId + "_picker");
 
-    if (!input || !preview) return;
+    if (!input || !preview || !button || !label) return;
 
     input.addEventListener("change", () => {
         const file = input.files[0];
         const valid = file ? file.type.startsWith("image/") && /\.(jpg|jpeg|png)$/i.test(file.name) : false;
 
-        if (!file || !valid) {
+        if (!file) {
+            // No file selected: hide preview, hide button
             preview.style.display = "none";
             preview.src = "";
-            return;
+            button.style.display = "none";
+            label.style.display = "none";
+            if (picker) picker.classList.remove("error");
+            fieldValidity[inputId] = true;
+        } else if (!valid) {
+            // Invalid file: hide preview but show clear button
+            preview.style.display = "none";
+            preview.src = "";
+            button.style.display = "inline-block";
+            label.style.display = "block";
+            label.textContent = " ❌ File not supported. Only jpg, jpeg, png";
+            if (picker) picker.classList.add("error");
+            fieldValidity[inputId] = false;
+        } else {
+            // Valid file: show preview and clear button
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = "block";
+            button.style.display = "inline-block";
+            label.style.display = "none";
+            if (picker) picker.classList.remove("error");
+            fieldValidity[inputId] = true;
+
+            preview.onload = () => URL.revokeObjectURL(preview.src); // free memory
         }
 
-        // Only show preview if valid
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-
-        preview.onload = () => URL.revokeObjectURL(preview.src); // free memory
+        downloadable = Object.values(fieldValidity).every(Boolean);
+        updateButtons();
     });
+
+    // Always attach clear button
+    button.addEventListener("click", () => clearPhoto(inputId));
 }
 
+// Initialize for your static field
 setupImagePreview("machine_image");
+
 
 
 
@@ -339,19 +405,22 @@ function addSource() {
         <label>Verification Method:
             <select class="verification_method"></select>
         </label>
-        <label>Isolation Point:
-            <div class="input-with-preview" id="isolation_point_${sourceCount}_picker">
+        <div class="input-with-preview" id="isolation_point_${sourceCount}_picker">
+            <div class="inline-button-wrapper">
                 <input type="file" accept="image/*" id="isolation_point_${sourceCount}" class="image-picker" />
-                <img id="isolation_point_${sourceCount}_preview" class="preview_image" />
+                <button type="button" id="isolation_point_${sourceCount}_button" class="clear-photo-button">Clear</button>
             </div>
-        </label>
+            <img id="isolation_point_${sourceCount}_preview" class="preview_image" />
+        </div>
         <p class="warning_label" id="isolation_point_${sourceCount}_label"></p>
-        <label>Verification Device:
-            <div class="input-with-preview" id="verification_device_${sourceCount}_picker">
+
+        <div class="input-with-preview" id="verification_device_${sourceCount}_picker">
+            <div class="inline-button-wrapper">
                 <input type="file" accept="image/*" id="verification_device_${sourceCount}" class="image-picker" />
-                <img id="verification_device_${sourceCount}_preview" class="preview_image" />
+                <button type="button" id="verification_device_${sourceCount}_button" class="clear-photo-button">Clear</button>
             </div>
-        </label>
+            <img id="verification_device_${sourceCount}_preview" class="preview_image" />
+        </div>
         <p class="warning_label" id="verification_device_${sourceCount}_label"></p>
     `;
 
