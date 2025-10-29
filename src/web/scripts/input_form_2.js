@@ -106,12 +106,6 @@ downloadable = Object.values(fieldValidity).every(Boolean);
 updateButtons();
 
 // -----------------------------
-// Action Button Event Listeners
-// -----------------------------
-downloadButton.addEventListener("click", () => console.log("Download Button Pressed!"));
-generateButton.addEventListener("click", () => console.log("Generate Button Pressed!"));
-
-// -----------------------------
 // Today Button Setup
 // -----------------------------
 function todayButton(inputId) {
