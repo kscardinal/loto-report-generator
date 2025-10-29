@@ -206,61 +206,61 @@ let sourceCount = 0;
 const MAX_SOURCES = 12; // adjust as needed
 const energyData = {
     "Electric": {
-        "inputs": ["volt"], 
+        "inputs": [{filed_name: "volt", unit_name: "volts", title_name: "Volts"}], 
         "device": ["Main Disconnect", "Circuit Breaker Panel"],
         "isolation_method": ["Turn off disconnect and apply personal lock and tag."],
         "verification_method": ["Verify the power has been isolated by pressing the start button on control panel.", "Verify no voltage."]
     },
     "Natural Gas": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Ball Valve"],
         "isolation_method": ["Close valves, apply cover and personal lock and tag."],
         "verification_method": ["Verify pressure on gauge is zero."]
     },
     "Steam": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Ball Valve"],
         "isolation_method": ["Close valves, apply cover and personal lock and tag."],
         "verification_method": ["Open drain or bleed of valve.", "Verify pressure on gauge is zero."]
     },
     "Chemical": {
-        "inputs": ["psi", "chemical_name"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}, {filed_name: "chemical_name", unit_name: "Oxygen", title_name: "Chemical Name"}],
         "device": ["Isolation Valve"],
         "isolation_method": ["Close valves, open bleed valve, apply cover and personal lock and tag."],
         "verification_method": ["Verify zero pressure by checking the pressure gauge.", "Verify no flow."]
     },
     "Hydraulic": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Isolation Valve", "Isolation and Bleed Valve"],
         "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
         "verification_method": ["Verify zero pressure by checking the pressure gauge."]
     },
     "Gravity": {
-        "inputs": ["lbs"],
+        "inputs": [{filed_name: "lbs", unit_name: "lbs", title_name: "Weight"}],
         "device": ["Lower component to full down position.", "Use cribbing to support component."],
         "isolation_method": ["Component in down position.", "Cribbing is in place."],
         "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
     },
     "Thermal": {
-        "inputs": ["temp"],
+        "inputs": [{filed_name: "temp", unit_name: "temperature (°F)", title_name: "Temperature"}],
         "device": ["Steam Coils", "Hot Water", "Residual Burner Heat", "Electric Element", "Cryogenics"],
         "isolation_method": ["Source Dependent, allow time to cool if direct contact is expected.", "Source Dependent, allow time to heat if direct contact is expected."],
         "verification_method": ["Allow sufficient time to cool.", "Verify temp is < 120 °F.", "Verify temp > 35 °F."]
     },
     "Refrigerant": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Ball Valve"],
         "isolation_method": ["Close valves, apply cover and personal lock and tag."],
         "verification_method": ["Verify zero pressure by checking the pressure gauge."]
     },
     "Water": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Isolation Valve", "Isolation and Bleed Valve"],
         "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
         "verification_method": ["Verify zero pressure by checking the pressure gauge."]
     },
     "Pneumatic": {
-        "inputs": ["psi"],
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
         "device": ["Ball Valve"],
         "isolation_method": ["Close valves, apply cover and personal lock and tag."],
         "verification_method": ["Verify pressure on gauge is zero."]
@@ -283,7 +283,10 @@ function addSource() {
     div.className = "source";
     div.dataset.index = sourceCount;
 
-    const energyOptions = Object.keys(energyData).map(e => `<option value="${e}">${e}</option>`).join("");
+    const energyOptions = Object.keys(energyData)
+        .map(e => `<option value="${e}">${e}</option>`)
+        .join("");
+
     div.innerHTML = `
         <div class="source-header">Source ${sourceCount + 1}</div>
         <label>Energy Source:
@@ -382,26 +385,28 @@ function updateSourceDropdowns(sourceDiv, energy) {
 
     // Remove old dynamic inputs from fieldValidity
     const oldInputs = dynamicInputs.querySelectorAll("input");
-    oldInputs.forEach(input => {
-        delete fieldValidity[input.id];
-    });
+    oldInputs.forEach(input => delete fieldValidity[input.id]);
 
     // Clear previous dynamic inputs
     dynamicInputs.innerHTML = "";
 
-    // Clear dropdowns
+    // Populate dropdowns
     device.innerHTML = data.device.map(d => `<option value="${d}">${d}</option>`).join("");
     isolation.innerHTML = data.isolation_method.map(d => `<option value="${d}">${d}</option>`).join("");
     verification.innerHTML = data.verification_method.map(d => `<option value="${d}">${d}</option>`).join("");
 
-    data.inputs.forEach(inputName => {
-        const inputId = `${inputName}_${sourceDiv.dataset.index}`;
+    // Create new inputs from array of objects
+    data.inputs.forEach(inputObj => {
+        const { filed_name, unit_name, title_name } = inputObj;
+        const inputId = `${filed_name}_${sourceDiv.dataset.index}`;
+
         const label = document.createElement("label");
-        label.textContent = inputName.toUpperCase() + ": ";
+        label.textContent = title_name + ": ";
+
         const input = document.createElement("input");
         input.type = "text";
         input.id = inputId;
-        input.placeholder = inputName;
+        input.placeholder = unit_name;
         input.style.width = "100%";
 
         // Add warning label
@@ -413,10 +418,10 @@ function updateSourceDropdowns(sourceDiv, energy) {
         dynamicInputs.appendChild(label);
         dynamicInputs.appendChild(warning);
 
-        // Setup number validation, skip chemical_name
-        fieldValidity[inputId] = true; // default valid
+        // Setup validation: skip chemical_name
+        fieldValidity[inputId] = true;
         input.addEventListener("input", () => {
-            if (inputName === "chemical_name") {
+            if (filed_name === "chemical_name") {
                 warning.style.display = "none";
                 input.classList.remove("error");
                 fieldValidity[inputId] = true;
@@ -433,13 +438,12 @@ function updateSourceDropdowns(sourceDiv, energy) {
                 }
                 fieldValidity[inputId] = isValid;
             }
-
             downloadable = Object.values(fieldValidity).every(Boolean);
             updateButtons();
         });
     });
 
-    // Recalculate downloadable in case old fields were invalid
+    // Recalculate downloadable
     downloadable = Object.values(fieldValidity).every(Boolean);
     updateButtons();
 }
