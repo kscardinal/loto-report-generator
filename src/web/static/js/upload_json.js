@@ -1,3 +1,5 @@
+console.log("upload_json.js");
+
 // -----------------------------
 // Upload JSON + images
 // -----------------------------

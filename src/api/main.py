@@ -40,14 +40,16 @@ from src.database.db_2 import get_report_entry
 BASE_DIR = Path(__file__).parent.parent.parent
 TEMP_DIR = BASE_DIR / "temp"
 PROCESS_DIR = BASE_DIR / "src" / "pdf"
+WEB_DIR = BASE_DIR / "src" / "web"
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
 
 # Ensure TEMP_DIR exists
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-# SVG for webpage
-app.mount("/static", StaticFiles(directory=BASE_DIR / "includes"), name="static")
+# Mount files
+app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+
 
 # -----------------------------
 # MongoDB Connection
@@ -323,3 +325,13 @@ async def db_status():
         return {"status": "ok", "message": "Database connection successful"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+
+@app.get("/create-report", response_class=HTMLResponse)
+async def create_report(request: Request):
+    """
+    Serves the input_form.html page for creating a new report.
+    """
+    return templates.TemplateResponse("input_form.html", {"request": request})
+
