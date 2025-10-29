@@ -85,7 +85,7 @@ button {
 }
 
 button:hover {
-    background-color: #a01d20;
+    background-color: #A01D20;
 }
 
 #output {
@@ -104,10 +104,20 @@ button:hover {
 }
 
 .error {
-    border-color: red;
+    border-color: #C32026;
     background-color: #ffecec;
 }
 
 .button-disabled, .button-disabled:hover {
     background-color: #999;
+}
+
+.inline-button-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-button-wrapper button {
+    margin-top: -5px;
 }

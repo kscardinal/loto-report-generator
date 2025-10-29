@@ -280,6 +280,11 @@ ssh-add ~/.ssh/id_ed25519
 git ls-files | xargs wc -l
 ```
 
+2. Git file endings
+```bash
+git config --global core.autocrlf
+```
+
 --- 
 
 ## Customization
