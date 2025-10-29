@@ -277,7 +277,7 @@ ssh-add ~/.ssh/id_ed25519
 
 1. Count lines of code
 ```bash
-git ls-files | xargs wc -l
+git ls-files src | xargs wc -l
 ```
 
 2. Git file endings
