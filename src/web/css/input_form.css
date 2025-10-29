@@ -125,6 +125,12 @@ button:hover {
     padding: 6px 15px;
 }
 
+.inline-button-wrapper .clear-photo-button {
+    margin-top: 0;
+    padding: 6px 15px;
+    display: none;
+}
+
 #output {
     width: 100%;          /* keep full width of container */
     min-height: 265px;        /* default height */

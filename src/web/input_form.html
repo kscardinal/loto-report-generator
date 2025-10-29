@@ -31,7 +31,10 @@
         <p class="warning_label" id="origin_label"></p>
         <label>Machine Image:
             <div class="input-with-preview" id="machine_image_picker">
-                <input type="file" accept="image/*" id="machine_image" class="image-picker" />
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="machine_image" class="image-picker" />
+                    <button type="button" id="machine_image_button" class="clear-photo-button">Clear</button>
+                </div>
                 <img id="machine_image_preview" class="preview_image" />
             </div>
         </label>
@@ -44,7 +47,9 @@
         <label>Approved By Company:
             <div class="inline-button-wrapper">
                 <input type="text" id="approved_by_company" />
+                <!--
                 <button type="button" id="approved_by_company_button">Cardinal</button>
+                -->
             </div>
         </label>
         <label>Completed Date:
