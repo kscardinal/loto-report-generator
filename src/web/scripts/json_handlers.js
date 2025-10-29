@@ -1,68 +1,23 @@
 // -----------------------------
 // JSON Energy Data
 // -----------------------------
-const energyData = {
-    "Electric": {
-        "inputs": [{filed_name: "volt", unit_name: "volts", title_name: "Volts"}], 
-        "device": ["Main Disconnect", "Circuit Breaker Panel"],
-        "isolation_method": ["Turn off disconnect and apply personal lock and tag."],
-        "verification_method": ["Verify the power has been isolated by pressing the start button on control panel.", "Verify no voltage."]
-    },
-    "Natural Gas": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Ball Valve"],
-        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
-        "verification_method": ["Verify pressure on gauge is zero."]
-    },
-    "Steam": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Ball Valve"],
-        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
-        "verification_method": ["Open drain or bleed of valve.", "Verify pressure on gauge is zero."]
-    },
-    "Chemical": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}, {filed_name: "chemical_name", unit_name: "Oxygen", title_name: "Chemical Name"}],
-        "device": ["Isolation Valve"],
-        "isolation_method": ["Close valves, open bleed valve, apply cover and personal lock and tag."],
-        "verification_method": ["Verify zero pressure by checking the pressure gauge.", "Verify no flow."]
-    },
-    "Hydraulic": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
-        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
-        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
-    },
-    "Gravity": {
-        "inputs": [{filed_name: "lbs", unit_name: "lbs", title_name: "Weight"}],
-        "device": ["Lower component to full down position.", "Use cribbing to support component."],
-        "isolation_method": ["Component in down position.", "Cribbing is in place."],
-        "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
-    },
-    "Thermal": {
-        "inputs": [{filed_name: "temp", unit_name: "temperature (°F)", title_name: "Temperature"}],
-        "device": ["Steam Coils", "Hot Water", "Residual Burner Heat", "Electric Element", "Cryogenics"],
-        "isolation_method": ["Source Dependent, allow time to cool if direct contact is expected.", "Source Dependent, allow time to heat if direct contact is expected."],
-        "verification_method": ["Allow sufficient time to cool.", "Verify temp is < 120 °F.", "Verify temp > 35 °F."]
-    },
-    "Refrigerant": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Ball Valve"],
-        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
-        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
-    },
-    "Water": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
-        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
-        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
-    },
-    "Pneumatic": {
-        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
-        "device": ["Ball Valve"],
-        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
-        "verification_method": ["Verify pressure on gauge is zero."]
-    }
-};
+let energyData = {}; // placeholder
+
+// Load energySources.json
+fetch("dependencies/energySources.json")
+    .then(response => {
+        if (!response.ok) throw new Error("Failed to load energySources.json");
+        return response.json();
+    })
+    .then(data => {
+        energyData = data;
+
+        // Optionally: initialize the first source if needed
+        // addSource(); // if you want to auto-add a source on page load
+    })
+    .catch(err => {
+        console.error("Error loading energy sources:", err);
+    });
 
 // helpers ---------------------------------------------------------
 
@@ -259,7 +214,7 @@ function generateJSON() {
         // Build the object in the exact order you want
         const finalSource = {
             device: deviceVal,
-            chemical_name: chemicalName,
+            ...(energyVal === "Chemical" && chemicalName ? { chemical_name: chemicalName } : {}),
             ...unitValues, // e.g., psi, volts
             tag: tagVal,
             source_description: descVal,
