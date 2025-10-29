@@ -7,7 +7,8 @@ let fieldValidity = {
   procedure_number: true,
   revision: true,
   origin: true,
-  isolation_points: true
+  isolation_points: true,
+  machine_image: true
 };
 
 let downloadable = false; // overall downloadable flag
@@ -30,6 +31,20 @@ function updateButtons() {
   updateButton(downloadButton);
   updateButton(generateButton);
 }
+
+function isImageFile(file) {
+  const validTypes = ["image/jpg", "image/jpeg", "image/png"];
+  const validExt = /\.(jpg|jpeg|png)$/i;
+
+  // Extract extension (lowercase, without the dot)
+  const match = file.name.toLowerCase().match(/\.([a-z0-9]+)$/);
+  const extension = match ? match[1] : null;
+
+  const isValid = validTypes.includes(file.type) && validExt.test(file.name);
+
+  return { isValid, extension };
+}
+
 
 // Adds input listener for number-only validation, updates validity state and buttons
 function checkOnlyNumber(inputId, validityObj) {
@@ -68,11 +83,42 @@ function checkOnlyNumber(inputId, validityObj) {
   });
 }
 
+function checkOnlyImage(inputId, validityObj) {
+    const inputElement = document.getElementById(inputId);
+    const labelElement = document.getElementById(inputId + "_label");
+
+    if (!inputElement || !labelElement) return;
+
+        inputElement.addEventListener("change", () => {
+            const file = inputElement.files[0];
+            if (!file) return;
+
+            const { isValid, extension } = isImageFile(file);
+
+            if (!isValid) {
+                labelElement.style.display = "block";
+                labelElement.textContent = " ❌ " + extension + " is not supported. Can only be jpg, jpeg or png.";
+                inputElement.classList.add("error");
+                validityObj[inputId] = false;
+            } else {
+                labelElement.style.display = "none";
+                inputElement.classList.remove("error");
+                validityObj[inputId] = true;
+            }
+
+            // Update overall downloadable state: all fields must be valid
+            downloadable = Object.values(validityObj).every(Boolean);
+            updateButtons();
+        });
+}
+
+
 // Set up validation listeners on all desired fields
 checkOnlyNumber("procedure_number", fieldValidity);
 checkOnlyNumber("revision", fieldValidity);
 checkOnlyNumber("origin", fieldValidity);
 checkOnlyNumber("isolation_points", fieldValidity);
+checkOnlyImage("machine_image", fieldValidity);
 
 // Initially update buttons disabled state according to initial validity
 downloadable = Object.values(fieldValidity).every(Boolean);
