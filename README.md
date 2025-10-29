@@ -44,6 +44,9 @@
 - [PDF Generation](#pdf-generation)
 - [Database Management](#database-management)
 - [PyTest](#pytest)
+- [Web Interface](#web-interface)
+- [SSH](#ssh)
+- [Misc](#misc)
 - [Customization](#customization)
 - [API Endpoints](#api-endpoints)
 - [License](#license)
@@ -250,7 +253,36 @@ npx tsc --init
 
 2. Compile TypeScipt to JavaScript
 ```bash
-npx tsc src/web/scripts/input_form.ts --outDir src/web/scripts
+npx tsc src/web/scripts/input_form_3.ts --outDir src/web/scripts
+```
+
+---
+
+### SSH
+
+1. Start agent
+``` bash
+eval "$(ssh-agent -s)"
+```
+
+2. Add key to agent
+```bash
+ssh-add ~/.ssh/id_ed25519
+```
+- Enter passpharse and it should stop bugging you
+
+---
+
+### Misc
+
+1. Count lines of code
+```bash
+git ls-files src | xargs wc -l
+```
+
+2. Git file endings
+```bash
+git config --global core.autocrlf
 ```
 
 --- 

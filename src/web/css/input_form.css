@@ -46,7 +46,8 @@ input, textarea {
     padding: 6px 10px;
     margin-top: 2px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    background-color: #F4F4F4;
+    border: 1px solid #F4F4F4;
     border-radius: 4px;
     box-sizing: border-box;
 }
@@ -85,7 +86,7 @@ button {
 }
 
 button:hover {
-    background-color: #a01d20;
+    background-color: #A01D20;
 }
 
 #output {
@@ -94,4 +95,117 @@ button:hover {
     padding: 10px;
     font-family: monospace;
     height: 250px;
+}
+
+.warning_label {
+    padding: 0px;
+    margin-top: -10px;
+    display: none;
+    font-size: 0.75rem;
+}
+
+.error {
+    border: 1px solid #C32026;  /* red border when invalid */
+    background-color: #ffecec;  /* light red like other errors */
+    border-radius: 4px;
+}
+
+.button-disabled, .button-disabled:hover {
+    background-color: #999;
+}
+
+.inline-button-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-button-wrapper button {
+    margin-top: -8px;
+    padding: 6px 15px;
+}
+
+.inline-button-wrapper .clear-photo-button {
+    margin-top: 0;
+    padding: 6px 15px;
+    display: none;
+}
+
+#output {
+    width: 100%;          /* keep full width of container */
+    min-height: 265px;        /* default height */
+    resize: vertical;     /* user can only resize vertically, not horizontally */
+}
+
+.input-with-preview {
+    display: flex;
+    flex-direction: column;       /* stack input and preview vertically */
+    width: 100%;
+    background-color: #F4F4F4;    /* same as inputs */
+    border-radius: 4px;
+    border: none;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.input-with-preview input {
+    border: none;                 /* remove input border since container has it */
+    border-radius: 0;             /* align with container edges */
+    background-color: transparent;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
+}
+
+.preview_image {
+    display: none;
+    max-width: 80%;               /* maximum width of 80% of container */
+    max-height: 200px;            /* maximum height 200px */
+    width: auto;                  /* scale width to maintain aspect ratio */
+    height: auto;
+    object-fit: contain;          /* keep image aspect ratio */
+    border-radius: 0 0 4px 4px;   /* round bottom corners only */
+    margin-top: 2px;              /* small space from input */
+    padding-bottom: 10px;
+    margin-left: 10%;
+}
+
+.input-with-preview.error {
+    border: 1px solid #C32026;  /* red border when invalid */
+    background-color: #ffecec;  /* light red like other errors */
+    border-radius: 4px;
+}
+
+/* Style all dropdowns to look like buttons */
+.source select {
+    appearance: none;       /* Remove default arrow for most browsers */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #F4F4F4;
+    border: none;
+    border-radius: 4px; 
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+/* Optional: add custom arrow icon */
+.source select {
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2rem; /* space for arrow */
+}
+
+/* Hover and focus effects */
+.source select:hover,
+.source select:focus {
+    background-color: #e0e0e0;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
 }

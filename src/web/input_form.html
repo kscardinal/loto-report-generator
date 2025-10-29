@@ -13,25 +13,55 @@
 <main>
     <div class="section">
         <h2>General Information</h2>
-        <label>Name: <input type="text" id="name" /></label>
+        <label>Report Name: <input type="text" id="name" placeholder="air compressor" /></label>
         <label>Description: <input type="text" id="description" /></label>
-        <label>Procedure Number: <input type="text" id="procedureNumber" /></label>
+        <label>Procedure Number: <input type="text" id="procedure_number" placeholder="01"/></label>
+        <p class="warning_label" id="procedure_number_label"></p>
         <label>Facility: <input type="text" id="facility" /></label>
         <label>Location: <input type="text" id="location" /></label>
         <label>Revision: <input type="text" id="revision" /></label>
-        <label>Date: <input type="date" id="date" /></label>
+        <p class="warning_label" id="revision_label"></p>
+        <label>Date:
+            <div class="inline-button-wrapper">
+                <input type="date" id="date" />
+                <button type="button" id="date_button">Today</button>
+            </div>
+        </label>
         <label>Origin: <input type="text" id="origin" /></label>
-        <label>Machine Image: <input type="file" accept="image/*" id="machineImage" /></label>
-        <label>Isolation Points: <input type="text" id="isolationPoints" /></label>
+        <p class="warning_label" id="origin_label"></p>
+        <label>Machine Image:
+            <div class="input-with-preview" id="machine_image_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="machine_image" class="image-picker" />
+                    <button type="button" id="machine_image_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="machine_image_preview" class="preview_image" />
+            </div>
+        </label>
+        <p class="warning_label" id="machine_image_label"></p>
+        <label>Isolation Points: <input type="text" id="isolation_points" /></label>
+        <p class="warning_label" id="isolation_points_label"></p>
         <label>Notes: <input type="text" id="notes" /></label>
-        <label>Prepared By: <input type="text" id="preparedBy" /></label>
-        <label>Approved By: <input type="text" id="approvedBy" /></label>
-        <label>Approved By Company: <input type="text" id="approvedByCompany" /></label>
-        <label>Completed Date: <input type="date" id="completedDate" /></label>
+        <label>Prepared By: <input type="text" id="prepared_by" /></label>
+        <label>Approved By: <input type="text" id="approved_by" /></label>
+        <label>Approved By Company:
+            <div class="inline-button-wrapper">
+                <input type="text" id="approved_by_company" />
+                <!--
+                <button type="button" id="approved_by_company_button">Cardinal</button>
+                -->
+            </div>
+        </label>
+        <label>Completed Date:
+            <div class="inline-button-wrapper">
+                <input type="date" id="completed_date" />
+                <button type="button" id="completed_date_button">Today</button>
+            </div>
+        </label>
     </div>
 
     <div class="section">
-        <h2>Energy Sources (max 8)</h2>
+        <h2>Energy Sources</h2>
         <div id="sources"></div>
         <div class="source-buttons">
             <button type="button" id="addSourceBtn">Add Source</button>
@@ -46,10 +76,11 @@
 
     <div style="margin-top: 10px;">
         <button type="button" id="generateBtn">Generate JSON</button>
-        <button type="button" id="downloadBtn">Download JSON</button>
+        <button type="button" id="downloadBtn">Download</button>
     </div>
 </main>
 
 <script type="module" src="scripts/input_form.js"></script>
+<script type="module" src="scripts/json_handlers.js"></script>
 </body>
 </html>
