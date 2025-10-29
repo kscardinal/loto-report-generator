@@ -159,26 +159,29 @@ function generateJSON() {
     const sources = [];
 
     sourceDivs.forEach((div) => {
-        const idx = div.dataset.index; // string index (0,1,...)
+        const idx = div.dataset.index;
         const sourceObj = {};
 
         // energy source
         const energySelect = div.querySelector(".energy_source");
         const energyVal = energySelect ? energySelect.value : "";
-        if (!energyVal) return; // skip empty source
+        if (!energyVal) return;
+
         sourceObj["energy_source"] = energyVal;
 
-        // get data config for this energy type
+        // get data config
         const config = energyData[energyVal] || { inputs: [] };
 
-        // dynamic inputs from energyData
+        // Prepare values first
+        let chemicalName = "";
+        let unitValues = {};
+
         (config.inputs || []).forEach(inpObj => {
             const field = inpObj.filed_name;
             const unit = inpObj.unit_name || "";
             const elIdIndexed = `${field}_${idx}`;
             const elIndexed = div.querySelector(`#${CSS.escape(elIdIndexed)}`);
             const elNonIndexed = div.querySelector(`#${CSS.escape(field)}`);
-
             const el = elIndexed || elNonIndexed;
             if (!el) return;
 
@@ -186,87 +189,93 @@ function generateJSON() {
             if (!rawVal) return;
 
             if (field === "chemical_name") {
-                sourceObj[field] = rawVal;
-                return;
-            }
-
-            const formattedNumber = formatNumberWithCommas(rawVal);
-            if (unit) {
-                sourceObj[field] = `${formattedNumber} ${unit}`;
+                chemicalName = rawVal;
             } else {
-                sourceObj[field] = formattedNumber;
+                const formattedNumber = formatNumberWithCommas(rawVal);
+                unitValues[field] = unit ? `${formattedNumber} ${unit}` : formattedNumber;
             }
         });
 
-        // device (select with custom)
+        // device (with custom)
+        let deviceVal = "";
         const deviceEl = div.querySelector(".device");
         if (deviceEl && deviceEl.value) {
             if (deviceEl.value === "__custom__") {
-                const deviceCustom = div.querySelector(".device_custom");
-                sourceObj["device"] = deviceCustom ? deviceCustom.value.trim() : "";
+                const customEl = div.querySelector(".device_custom");
+                deviceVal = customEl ? customEl.value.trim() : "";
             } else {
-                sourceObj["device"] = deviceEl.value;
+                deviceVal = deviceEl.value;
             }
         }
 
-        // tag - try tag_index then tag
+        // tag
+        let tagVal = "";
         const tagIndexed = div.querySelector(`#${CSS.escape(`tag_${idx}`)}`);
         const tagNon = div.querySelector(`#${CSS.escape(`tag`)}`);
         const tagEl = tagIndexed || tagNon;
-        if (tagEl && tagEl.value.trim() !== "") {
-            sourceObj["tag"] = tagEl.value.trim();
-        }
+        if (tagEl && tagEl.value.trim() !== "") tagVal = tagEl.value.trim();
 
-        // source_description - try index variant first
+        // description
+        let descVal = "";
         const descIndexed = div.querySelector(`#${CSS.escape(`source_description_${idx}`)}`);
         const descNon = div.querySelector(`#${CSS.escape(`source_description`)}`);
         const descEl = descIndexed || descNon;
-        if (descEl && descEl.value.trim() !== "") {
-            sourceObj["source_description"] = descEl.value.trim();
-        }
+        if (descEl && descEl.value.trim() !== "") descVal = descEl.value.trim();
 
-        // isolation_point file name
+        // isolation point
+        let isoPoint = "";
         const isolationInput = div.querySelector(`#${CSS.escape(`isolation_point_${idx}`)}`);
-        if (isolationInput) {
-            const fn = getFileName(isolationInput);
-            if (fn) sourceObj["isolation_point"] = fn;
-        }
+        if (isolationInput) isoPoint = getFileName(isolationInput);
 
-        // verification device file name
-        const verInput = div.querySelector(`#${CSS.escape(`verification_device_${idx}`)}`);
-        if (verInput) {
-            const fn = getFileName(verInput);
-            if (fn) sourceObj["verification_device"] = fn;
-        }
-
-        // isolation_method (with custom)
+        // isolation method
+        let isoMethodVal = "";
         const isoMethodEl = div.querySelector(".isolation_method");
         if (isoMethodEl && isoMethodEl.value) {
             if (isoMethodEl.value === "__custom__") {
-                const isoMethodCustom = div.querySelector(".isolation_method_custom");
-                sourceObj["isolation_method"] = isoMethodCustom ? isoMethodCustom.value.trim() : "";
+                const isoCustom = div.querySelector(".isolation_method_custom");
+                isoMethodVal = isoCustom ? isoCustom.value.trim() : "";
             } else {
-                sourceObj["isolation_method"] = isoMethodEl.value;
+                isoMethodVal = isoMethodEl.value;
             }
         }
 
-        // verification_method (with custom)
+        // verification method
+        let verMethodVal = "";
         const verMethodEl = div.querySelector(".verification_method");
         if (verMethodEl && verMethodEl.value) {
             if (verMethodEl.value === "__custom__") {
-                const verMethodCustom = div.querySelector(".verification_method_custom");
-                sourceObj["verification_method"] = verMethodCustom ? verMethodCustom.value.trim() : "";
+                const verCustom = div.querySelector(".verification_method_custom");
+                verMethodVal = verCustom ? verCustom.value.trim() : "";
             } else {
-                sourceObj["verification_method"] = verMethodEl.value;
+                verMethodVal = verMethodEl.value;
             }
         }
 
-        // Only push if there is any meaningful data beyond energy_source
-        const keys = Object.keys(sourceObj);
-        if (keys.length > 1) {
-            sources.push(sourceObj);
+        // verification device
+        let verDevice = "";
+        const verInput = div.querySelector(`#${CSS.escape(`verification_device_${idx}`)}`);
+        if (verInput) verDevice = getFileName(verInput);
+
+        // Build the object in the exact order you want
+        const finalSource = {
+            device: deviceVal,
+            chemical_name: chemicalName,
+            ...unitValues, // e.g., psi, volts
+            tag: tagVal,
+            source_description: descVal,
+            isolation_point: isoPoint,
+            isolation_method: isoMethodVal,
+            verification_method: verMethodVal,
+            verification_device: verDevice
+        };
+
+        // Only push if at least one key beyond energy_source exists
+        const keys = Object.keys(finalSource).filter(k => finalSource[k] !== "" && finalSource[k] != null);
+        if (keys.length > 0) {
+            sources.push({ energy_source: energyVal, ...finalSource });
         }
     });
+
 
     if (sources.length > 0) jsonData["sources"] = sources;
 
