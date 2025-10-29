@@ -487,13 +487,15 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
     isolation_points_font = 'Inter'
 
     isolation_points = data.get('isolation_points', '0')
-    if len(isolation_points) == 1:
+    if len(isolation_points) <= 1:
         isolation_points_font_size = 36
     elif len(isolation_points) == 2:
         isolation_points_font_size = 28
     elif len(isolation_points) >= 3:
         isolation_points_font_size = 20
         isolation_points = isolation_points[:3]
+    else:
+        print_error("error with isolation_point font size")
 
     # Lock Tag Formatting Options
     lock_image_file = str(INCLUDES_DIR / 'LockTag.png')
