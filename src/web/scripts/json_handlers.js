@@ -1,22 +1,116 @@
 // -----------------------------
-// Helper Functions
+// JSON Energy Data
 // -----------------------------
+const energyData = {
+    "Electric": {
+        "inputs": [{filed_name: "volt", unit_name: "volts", title_name: "Volts"}], 
+        "device": ["Main Disconnect", "Circuit Breaker Panel"],
+        "isolation_method": ["Turn off disconnect and apply personal lock and tag."],
+        "verification_method": ["Verify the power has been isolated by pressing the start button on control panel.", "Verify no voltage."]
+    },
+    "Natural Gas": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    },
+    "Steam": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Open drain or bleed of valve.", "Verify pressure on gauge is zero."]
+    },
+    "Chemical": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}, {filed_name: "chemical_name", unit_name: "Oxygen", title_name: "Chemical Name"}],
+        "device": ["Isolation Valve"],
+        "isolation_method": ["Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge.", "Verify no flow."]
+    },
+    "Hydraulic": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Gravity": {
+        "inputs": [{filed_name: "lbs", unit_name: "lbs", title_name: "Weight"}],
+        "device": ["Lower component to full down position.", "Use cribbing to support component."],
+        "isolation_method": ["Component in down position.", "Cribbing is in place."],
+        "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
+    },
+    "Thermal": {
+        "inputs": [{filed_name: "temp", unit_name: "temperature (°F)", title_name: "Temperature"}],
+        "device": ["Steam Coils", "Hot Water", "Residual Burner Heat", "Electric Element", "Cryogenics"],
+        "isolation_method": ["Source Dependent, allow time to cool if direct contact is expected.", "Source Dependent, allow time to heat if direct contact is expected."],
+        "verification_method": ["Allow sufficient time to cool.", "Verify temp is < 120 °F.", "Verify temp > 35 °F."]
+    },
+    "Refrigerant": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Water": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Pneumatic": {
+        "inputs": [{filed_name: "psi", unit_name: "psi", title_name: "Pressure"}],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    }
+};
 
-// Utility: format a date input (YYYY-MM-DD) to MM/DD/YYYY
-function formatDate(inputValue) {
-    if (!inputValue) return "";
-    const [year, month, day] = inputValue.split("-");
-    return `${month}/${day}/${year}`;
+// helpers ---------------------------------------------------------
+
+// format yyyy-mm-dd or Date -> "MM/DD/YYYY"
+function formatDate(value) {
+    if (!value) return "";
+    // value may already be a Date object or an ISO string yyyy-mm-dd
+    let d;
+    if (value instanceof Date) d = value;
+    else d = new Date(value);
+    if (isNaN(d)) return ""; // invalid
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
 }
 
-// Utility: get filename from a file input
-function getFileName(inputElement) {
-    if (!inputElement || !inputElement.files || inputElement.files.length === 0) return "";
-    return inputElement.files[0].name;
+// return filename (not full path) or "" if none
+function getFileName(input) {
+    if (!input) return "";
+    if (input.files && input.files.length > 0) {
+        return input.files[0].name || "";
+    }
+    // if input.value holds a fakepath, extract filename fallback
+    if (typeof input.value === "string" && input.value) {
+        return input.value.split("\\").pop().split("/").pop();
+    }
+    return "";
 }
 
-// Main function: collects all input values and returns a JSON object
+// Add thousands separators for numeric strings (keeps non-numeric unchanged)
+function formatNumberWithCommas(raw) {
+    if (raw == null) return "";
+    // remove commas, spaces
+    const cleaned = String(raw).replace(/[, ]+/g, "").trim();
+    // allow numeric with optional decimal (we treat integer case primarily)
+    if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
+        const parts = cleaned.split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+    }
+    return String(raw); // not a pure number -> return original
+}
+
+// main ------------------------------------------------------------
+
 function generateJSON() {
+    // static fields to collect (ids in DOM)
     const fields = [
         "description",
         "procedure_number",
@@ -36,19 +130,134 @@ function generateJSON() {
 
     const jsonData = {};
 
+    // gather static fields
     fields.forEach((id) => {
         const input = document.getElementById(id);
-        if (!input) return;
+        if (!input) {
+            jsonData[id] = "";
+            return;
+        }
 
-        // Handle special cases
+        // Date handling
         if (input.type === "date") {
             jsonData[id] = formatDate(input.value);
-        } else if (input.type === "file") {
+            return;
+        }
+
+        // File handling
+        if (input.type === "file") {
             jsonData[id] = getFileName(input);
+            return;
+        }
+
+        // fallback for other inputs
+        jsonData[id] = input.value || "";
+    });
+
+    // gather dynamic sources
+    const sourceDivs = document.querySelectorAll(".source");
+    const sources = [];
+
+    sourceDivs.forEach((div) => {
+        const idx = div.dataset.index; // string index (0,1,...)
+        const sourceObj = {};
+
+        // energy source
+        const energySelect = div.querySelector(".energy_source");
+        const energyVal = energySelect ? energySelect.value : "";
+        if (!energyVal) return; // skip empty source (shouldn't happen)
+        sourceObj["energy_source"] = energyVal;
+
+        // get data config for this energy type (guard if missing)
+        const config = energyData[energyVal] || { inputs: [] };
+
+        // dynamic inputs defined in energyData (array of objects)
+        // each inputObj has filed_name, unit_name, title_name
+        (config.inputs || []).forEach(inpObj => {
+            const field = inpObj.filed_name;      // e.g. "psi", "volt", "chemical_name"
+            const unit = inpObj.unit_name || "";  // e.g. "psi"
+            // try both id patterns: with index (field_idx) or without (field)
+            const elIdIndexed = `${field}_${idx}`;
+            const elIndexed = div.querySelector(`#${CSS.escape(elIdIndexed)}`);
+            const elNonIndexed = div.querySelector(`#${CSS.escape(field)}`); // fallback
+
+            const el = elIndexed || elNonIndexed;
+            if (!el) return;
+
+            const rawVal = el.value ? String(el.value).trim() : "";
+            if (!rawVal) return; // only include non-empty fields
+
+            // chemical_name is textual; keep as-is
+            if (field === "chemical_name") {
+                sourceObj[field] = rawVal;
+                return;
+            }
+
+            // numeric inputs: format with commas and append unit
+            const formattedNumber = formatNumberWithCommas(rawVal);
+            if (unit) {
+                sourceObj[field] = `${formattedNumber} ${unit}`;
+            } else {
+                sourceObj[field] = formattedNumber;
+            }
+        });
+
+        // device (select)
+        const deviceEl = div.querySelector(".device");
+        if (deviceEl && deviceEl.value) sourceObj["device"] = deviceEl.value;
+
+        // tag - try tag_index then tag
+        const tagIndexed = div.querySelector(`#${CSS.escape(`tag_${idx}`)}`);
+        const tagNon = div.querySelector(`#${CSS.escape(`tag`)}`);
+        const tagEl = tagIndexed || tagNon;
+        if (tagEl && tagEl.value.trim() !== "") {
+            sourceObj["tag"] = tagEl.value.trim();
+        }
+
+        // source_description - try index variant first
+        const descIndexed = div.querySelector(`#${CSS.escape(`source_description_${idx}`)}`);
+        const descNon = div.querySelector(`#${CSS.escape(`source_description`)}`);
+        const descEl = descIndexed || descNon;
+        if (descEl && descEl.value.trim() !== "") {
+            sourceObj["source_description"] = descEl.value.trim();
+        }
+
+        // isolation_point file name
+        const isolationInput = div.querySelector(`#${CSS.escape(`isolation_point_${idx}`)}`);
+        if (isolationInput) {
+            const fn = getFileName(isolationInput);
+            if (fn) sourceObj["isolation_point"] = fn;
+        }
+
+        // verification device file name
+        const verInput = div.querySelector(`#${CSS.escape(`verification_device_${idx}`)}`);
+        if (verInput) {
+            const fn = getFileName(verInput);
+            if (fn) sourceObj["verification_device"] = fn;
+        }
+
+        // isolation_method & verification_method selects
+        const isoMethod = div.querySelector(".isolation_method");
+        if (isoMethod && isoMethod.value) sourceObj["isolation_method"] = isoMethod.value;
+
+        const verMethod = div.querySelector(".verification_method");
+        if (verMethod && verMethod.value) sourceObj["verification_method"] = verMethod.value;
+
+        // Only push if there is any meaningful data (beyond just energy_source)
+        // i.e., at least one other key present
+        const keys = Object.keys(sourceObj);
+        if (keys.length > 1) {
+            sources.push(sourceObj);
         } else {
-            jsonData[id] = input.value || "";
+            // If you want to include empty sources with just energy_source, remove this guard
         }
     });
+
+    if (sources.length > 0) jsonData["sources"] = sources;
+
+    // write to output textarea if present
+    const outputEl = document.getElementById("output");
+    if (outputEl) outputEl.value = JSON.stringify(jsonData, null, 2);
 
     return jsonData;
 }
