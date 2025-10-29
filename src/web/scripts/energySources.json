@@ -1,0 +1,54 @@
+{
+    "Electric": {
+        "inputs": ["volt"], 
+        "device": ["Main Disconnect", "Circuit Breaker Panel"],
+        "isolation_method": ["Turn off disconnect and apply personal lock and tag."],
+        "verification_method": ["Verify the power has been isolated by pressing the start button on control panel.", "Verify no voltage."]
+    }, 
+    "Natural Gas": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    }, "Steam": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Open drain or bleed of valve.", "Verify pressure on gauge is zero."]
+    } , "Chemical": {
+        "inputs": ["psi", "chemical_name"],
+        "device": ["Isolation Valve"],
+        "isolation_method": ["Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge.", "Verify no flow."]
+    }, "Hydraulic": {
+        "inputs": ["psi"],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    }, "Gravity": {
+        "inputs": ["lbs"],
+        "device": ["Lower component to full down position.", "Use cribbing to support component."],
+        "isolation_method": ["Component in down position.", "Cribbing is in place."],
+        "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
+    }, "Thermal": {
+        "inputs": ["temp"],
+        "device": ["Steam Coils", "Hot Water", "Residual Burner Heat", "Electric Element", "Cryogenics"],
+        "isolation_method": ["Source Dependent, allow time to cool if direct contact is expected.", "Source Dependent, allow time to heat if direct contact is expected."],
+        "verification_method": ["Allow sufficient time to cool.", "Verify temp is < 120 °F.", "Verify temp > 35 °F."]
+    }, "Refrigerant": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    }, "Water": {
+        "inputs": ["psi"],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    }, "Pneumatic": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    }
+}
