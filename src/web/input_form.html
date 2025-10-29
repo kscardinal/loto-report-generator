@@ -21,7 +21,12 @@
         <label>Location: <input type="text" id="location" /></label>
         <label>Revision: <input type="text" id="revision" /></label>
         <p class="warning_label" id="revision_label"></p>
-        <label>Date: <input type="date" id="date" /></label>
+        <label>Date:
+            <div class="inline-button-wrapper">
+                <input type="date" id="date" />
+                <button type="button" id="date_button">Today</button>
+            </div>
+        </label>
         <label>Origin: <input type="text" id="origin" /></label>
         <p class="warning_label" id="origin_label"></p>
         <label>Machine Image: <input type="file" accept="image/*" id="machine_image" /></label>
@@ -31,8 +36,18 @@
         <label>Notes: <input type="text" id="notes" /></label>
         <label>Prepared By: <input type="text" id="prepared_by" /></label>
         <label>Approved By: <input type="text" id="approved_by" /></label>
-        <label>Approved By Company: <input type="text" id="approved_by_company" /></label>
-        <label>Completed Date: <input type="date" id="completed_date" /></label>
+        <label>Approved By Company:
+            <div class="inline-button-wrapper">
+                <input type="text" id="approved_by_company" />
+                <button type="button" id="approved_by_company_button">Cardinal</button>
+            </div>
+        </label>
+        <label>Completed Date:
+            <div class="inline-button-wrapper">
+                <input type="date" id="completed_date" />
+                <button type="button" id="completed_date_button">Today</button>
+            </div>
+        </label>
     </div>
 
     <div class="section">
