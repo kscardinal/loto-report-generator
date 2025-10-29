@@ -399,12 +399,9 @@ function addSource() {
         <label>Device:
             <select class="device"></select>
         </label>
-        <label>Isolation Method:
-            <select class="isolation_method"></select>
-        </label>
-        <label>Verification Method:
-            <select class="verification_method"></select>
-        </label>
+        <label>Tag: <input type="text" id="tag" placeholder="0001" /></label>
+        <label>Description: <input type="text" id="source_description" /></label>
+        <label>Isolation Point: </label>
         <div class="input-with-preview" id="isolation_point_${sourceCount}_picker">
             <div class="inline-button-wrapper">
                 <input type="file" accept="image/*" id="isolation_point_${sourceCount}" class="image-picker" />
@@ -413,7 +410,13 @@ function addSource() {
             <img id="isolation_point_${sourceCount}_preview" class="preview_image" />
         </div>
         <p class="warning_label" id="isolation_point_${sourceCount}_label"></p>
-
+        <label>Isolation Method:
+            <select class="isolation_method"></select>
+        </label>
+        <label>Verification Method:
+            <select class="verification_method"></select>
+        </label>
+        <label>Verification Device: </label>
         <div class="input-with-preview" id="verification_device_${sourceCount}_picker">
             <div class="inline-button-wrapper">
                 <input type="file" accept="image/*" id="verification_device_${sourceCount}" class="image-picker" />
