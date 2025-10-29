@@ -320,3 +320,44 @@ function downloadAssets() {
     }
   });
 }
+
+
+// -----------------------------
+// Auto JSON Generator
+// -----------------------------
+function setupAutoJSON(inputId) {
+    const inputEl = document.getElementById(inputId);
+    const outputEl = document.getElementById("output");
+    if (!inputEl || !outputEl) return;
+
+    function updateJSON() {
+        const json = generateJSON();
+        outputEl.value = JSON.stringify(json, null, 4);
+    }
+
+    // Trigger JSON update on user input or change
+    inputEl.addEventListener("input", updateJSON);
+    inputEl.addEventListener("change", updateJSON);
+
+    // If you have a "Today" button for this input, trigger updateJSON when button sets value
+    const buttonEl = document.getElementById(inputId + "_button");
+    if (buttonEl) {
+        buttonEl.addEventListener("click", () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, "0");
+            const dd = String(today.getDate()).padStart(2, "0");
+            inputEl.value = `${yyyy}-${mm}-${dd}`;
+
+            // manually trigger update
+            inputEl.dispatchEvent(new Event("input"));
+        });
+    }
+}
+
+// -----------------------------
+// Usage Examples
+// -----------------------------
+setupAutoJSON("completed_date");
+setupAutoJSON("approved_by_company");
+setupAutoJSON("approved_by"); // or any other input
