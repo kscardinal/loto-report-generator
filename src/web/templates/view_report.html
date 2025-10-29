@@ -69,14 +69,13 @@
             display: flex;
             flex-wrap: nowrap;
             overflow-x: auto;
-            gap: 20px; /* increased spacing between photos */
+            gap: 40px; /* increased spacing between photos */
             padding: 10px 0;
         }
 
         .photos-container div {
             flex: 0 0 auto;
             text-align: center;
-            height: 220px; /* fixed height for alignment */
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -84,13 +83,15 @@
         }
 
         .photos-container img {
-            max-width: 200px;
-            max-height: 150px;
-            object-fit: contain;
+            height: clamp(100px, 20vw, 150px);
+            max-width: 250px;    /* cap width to avoid huge panoramas */
+            width: auto;          /* scale width to maintain aspect ratio */
+            object-fit: contain;    /* fills the img box while keeping aspect ratio */
             border-radius: 4px;
             margin-bottom: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* subtle drop shadow */
         }
+
+
 
         .photos-container a {
             text-decoration: none; /* removes underline */
