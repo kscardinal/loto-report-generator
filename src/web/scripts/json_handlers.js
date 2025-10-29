@@ -21,19 +21,28 @@ fetch("dependencies/energySources.json")
 
 // helpers ---------------------------------------------------------
 
-// format yyyy-mm-dd or Date -> "MM/DD/YYYY"
 function formatDate(value) {
     if (!value) return "";
-    // value may already be a Date object or an ISO string yyyy-mm-dd
-    let d;
-    if (value instanceof Date) d = value;
-    else d = new Date(value);
-    if (isNaN(d)) return ""; // invalid
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
+
+    let parts;
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        parts = value.split("-").map(Number);
+        // year, month-1, day
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+    } else {
+        const d = new Date(value);
+        if (isNaN(d)) return "";
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+    }
 }
+
 
 // return filename (not full path) or "" if none
 function getFileName(input) {
