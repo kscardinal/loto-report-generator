@@ -193,11 +193,9 @@ const  addSourceButton = document.getElementById("addSourceBtn");
 const removeSourceButton = document.getElementById("removeSourceBtn");
 
 addSourceButton.addEventListener("click", function() {
-    console.log("Add source!")
     addSource()
 });
 removeSourceButton.addEventListener("click", function() {
-    console.log("Remove source!")
     removeLastSource()
 });
 
@@ -346,26 +344,30 @@ function removeLastSource() {
     if (sourceCount === 0) return;
     const lastSource = sourcesContainer.lastElementChild;
 
+    // Check if there is any data
     const inputs = lastSource.querySelectorAll("input");
     let hasText = false;
     inputs.forEach(input => {
         if (input.value.trim() !== "") hasText = true;
+    });
+    if (hasText && !confirm("The last source contains data. Remove anyway?")) return;
 
-        // Remove this input from validation tracking
-        if (fieldValidity.hasOwnProperty(input.id)) {
-            delete fieldValidity[input.id];
+    // Remove fieldValidity entries for this source
+    inputs.forEach(input => {
+        const id = input.id;
+        if (fieldValidity.hasOwnProperty(id)) {
+            delete fieldValidity[id];
         }
     });
-
-    if (hasText && !confirm("The last source contains data. Remove anyway?")) return;
 
     lastSource.remove();
     sourceCount--;
 
-    // Recalculate button enable/disable
+    // Recalculate downloadable
     downloadable = Object.values(fieldValidity).every(Boolean);
     updateButtons();
 }
+
 
 
 // -----------------------------
@@ -378,22 +380,66 @@ function updateSourceDropdowns(sourceDiv, energy) {
     const verification = sourceDiv.querySelector(".verification_method");
     const dynamicInputs = sourceDiv.querySelector(".dynamic-inputs");
 
-    // Clear previous
+    // Remove old dynamic inputs from fieldValidity
+    const oldInputs = dynamicInputs.querySelectorAll("input");
+    oldInputs.forEach(input => {
+        delete fieldValidity[input.id];
+    });
+
+    // Clear previous dynamic inputs
+    dynamicInputs.innerHTML = "";
+
+    // Clear dropdowns
     device.innerHTML = data.device.map(d => `<option value="${d}">${d}</option>`).join("");
     isolation.innerHTML = data.isolation_method.map(d => `<option value="${d}">${d}</option>`).join("");
     verification.innerHTML = data.verification_method.map(d => `<option value="${d}">${d}</option>`).join("");
 
-    // Remove old dynamic inputs
-    dynamicInputs.innerHTML = "";
     data.inputs.forEach(inputName => {
+        const inputId = `${inputName}_${sourceDiv.dataset.index}`;
         const label = document.createElement("label");
         label.textContent = inputName.toUpperCase() + ": ";
         const input = document.createElement("input");
         input.type = "text";
-        input.className = inputName;
+        input.id = inputId;
         input.placeholder = inputName;
         input.style.width = "100%";
+
+        // Add warning label
+        const warning = document.createElement("p");
+        warning.className = "warning_label";
+        warning.id = inputId + "_label";
+
         label.appendChild(input);
         dynamicInputs.appendChild(label);
+        dynamicInputs.appendChild(warning);
+
+        // Setup number validation, skip chemical_name
+        fieldValidity[inputId] = true; // default valid
+        input.addEventListener("input", () => {
+            if (inputName === "chemical_name") {
+                warning.style.display = "none";
+                input.classList.remove("error");
+                fieldValidity[inputId] = true;
+            } else {
+                const val = input.value;
+                const isValid = val.length === 0 || /^\d+$/.test(val);
+                if (!isValid) {
+                    warning.style.display = "block";
+                    warning.textContent = " ❌ Must only be a number";
+                    input.classList.add("error");
+                } else {
+                    warning.style.display = "none";
+                    input.classList.remove("error");
+                }
+                fieldValidity[inputId] = isValid;
+            }
+
+            downloadable = Object.values(fieldValidity).every(Boolean);
+            updateButtons();
+        });
     });
+
+    // Recalculate downloadable in case old fields were invalid
+    downloadable = Object.values(fieldValidity).every(Boolean);
+    updateButtons();
 }
