@@ -1,12 +1,14 @@
-// -----------------------------
-// Action Buttons
-// -----------------------------
+// ===============
+// ACTION BUTTONS
+// ===============
+
 const downloadButton = document.getElementById("downloadBtn");
 const generateButton = document.getElementById("generateBtn");
 
 let fieldValidity = {};
 let downloadable = false;
 
+// === Utility: enable/disable a button based on downloadable ===
 function updateButton(buttonElement) {
     if (downloadable) {
         buttonElement.disabled = false;
@@ -19,48 +21,39 @@ function updateButton(buttonElement) {
     }
 }
 
+// === Utility: enable/disable source add/remove buttons ===
 function updateSourceButton(buttonElement, numSources, maxSources) {
     if (buttonElement === removeSourceButton) {
-        if (numSources > 0) {
-            buttonElement.disabled = false;
-            buttonElement.style.cursor = "pointer";
-            buttonElement.classList.remove("button-disabled");       
-         } else {
-            buttonElement.disabled = true;
-            buttonElement.style.cursor = "not-allowed";
-            buttonElement.classList.add("button-disabled");
-        }
+        buttonElement.disabled = numSources <= 0;
+        buttonElement.style.cursor = numSources > 0 ? "pointer" : "not-allowed";
+        buttonElement.classList.toggle("button-disabled", numSources <= 0);
     } else if (buttonElement === addSourceButton) {
-        if (numSources === maxSources) {
-            buttonElement.disabled = true;
-            buttonElement.style.cursor = "not-allowed";
-            buttonElement.classList.add("button-disabled");
-        } else {
-            buttonElement.disabled = false;
-            buttonElement.style.cursor = "pointer";
-            buttonElement.classList.remove("button-disabled");
-        }
+        buttonElement.disabled = numSources >= maxSources;
+        buttonElement.style.cursor = numSources < maxSources ? "pointer" : "not-allowed";
+        buttonElement.classList.toggle("button-disabled", numSources >= maxSources);
     } else {
         console.log("ERROR");
     }
-
-
 }
 
+// === Utility: update main buttons ===
 function updateButtons() {
     updateButton(downloadButton);
     updateButton(generateButton);
 }
 
+// === Utility: update source buttons ===
 function updateSourceButtons() {
     updateSourceButton(addSourceButton, sourceCount, MAX_SOURCES);
     updateSourceButton(removeSourceButton, sourceCount, MAX_SOURCES);
 }
 
 
-// -----------------------------
-// Validation Helpers
-// -----------------------------
+// ===============
+// VALIDATION HELPERS
+// ===============
+
+// === Tool: check if file is valid image ===
 function isImageFile(file) {
     const validTypes = ["image/jpg", "image/jpeg", "image/png"];
     const validExt = /\.(jpg|jpeg|png)$/i;
@@ -71,9 +64,11 @@ function isImageFile(file) {
 }
 
 
-// -----------------------------
-// Unified Input Validation
-// -----------------------------
+// ===============
+// UNIFIED INPUT VALIDATION
+// ===============
+
+// === Tool: validate a specific input field ===
 function validateInput({ id, type }) {
     const input = document.getElementById(id);
     const label = document.getElementById(id + "_label");
@@ -85,7 +80,6 @@ function validateInput({ id, type }) {
         input.addEventListener("input", () => {
             const val = input.value;
             const isValid = val.length === 0 || /^\d+$/.test(val);
-
             if (!isValid) {
                 label.style.display = "block";
                 label.textContent = " ❌ Must only be a number";
@@ -94,7 +88,6 @@ function validateInput({ id, type }) {
                 label.style.display = "none";
                 input.classList.remove("error");
             }
-
             fieldValidity[id] = isValid;
             downloadable = Object.values(fieldValidity).every(Boolean);
             updateButtons();
@@ -108,7 +101,6 @@ function validateInput({ id, type }) {
         input.addEventListener("change", () => {
             const file = input.files[0];
             const { isValid, extension } = file ? isImageFile(file) : { isValid: true };
-
             if (!file) {
                 label.style.display = "none";
                 picker.classList.remove("error");
@@ -131,30 +123,27 @@ function validateInput({ id, type }) {
                 fieldValidity[id] = true;
                 button.style.display = "block";
             }
-
             downloadable = Object.values(fieldValidity).every(Boolean);
             updateButtons();
         });
     }
 }
 
-
-// -----------------------------
-// Initialize Validation for static fields
-// -----------------------------
+// === Initialize validation for static fields ===
 validateInput({ id: "procedure_number", type: "number" });
 validateInput({ id: "revision", type: "number" });
 validateInput({ id: "origin", type: "number" });
 validateInput({ id: "isolation_points", type: "number" });
 validateInput({ id: "machine_image", type: "image" });
-
-// Initial check for buttons
 downloadable = Object.values(fieldValidity).every(Boolean);
 updateButtons();
 
-// -----------------------------
-// Today Button Setup
-// -----------------------------
+
+// ===============
+// TODAY BUTTON
+// ===============
+
+// === Tool: set input to today ===
 function todayButton(inputId) {
     const inputElement = document.getElementById(inputId);
     const buttonElement = document.getElementById(inputId + "_button");
@@ -169,14 +158,15 @@ function todayButton(inputId) {
     });
 }
 
-// Initialize Today buttons
 todayButton("date");
 todayButton("completed_date");
 
 
-// -----------------------------
-// Set Text via Button
-// -----------------------------
+// ===============
+// SET TEXT VIA BUTTON
+// ===============
+
+// === Tool: set input text via button click ===
 function setText(inputId, text) {
     const inputElement = document.getElementById(inputId);
     const buttonElement = document.getElementById(inputId + "_button");
@@ -187,55 +177,42 @@ function setText(inputId, text) {
     });
 }
 
-// Example: automatically set Approved By Company
 setText("approved_by_company", "Cardinal Compliance Consultants");
 
 
+// ===============
+// IMAGE UTILS
+// ===============
+
+// === Tool: clear a photo input ===
 function clearPhoto(inputId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(inputId + "_preview");
     const label = document.getElementById(inputId + "_label");
-    const button = document.getElementById(inputId + "_button"); // ← get the clear button
+    const button = document.getElementById(inputId + "_button");
     const picker = document.getElementById(inputId + "_picker");
-
     if (!input || !preview || !label || !button) return;
 
-    // Clear the file input
     input.value = "";
-
-    // Hide the preview
     preview.src = "";
     preview.style.display = "none";
-
-    // Hide the clear button
     button.style.display = "none";
-
-    // Reset warning label
     label.style.display = "none";
     label.textContent = "";
-
-    // Remove error highlight
     if (picker) picker.classList.remove("error");
-
-    // Reset field validity
     fieldValidity[inputId] = true;
 
-    // Recalculate downloadable and update buttons
     downloadable = Object.values(fieldValidity).every(Boolean);
     updateButtons();
 }
 
-
-// -----------------------------
-// Setup image preview for a file input
-// -----------------------------
+// === Tool: setup image preview and clear button ===
 function setupImagePreview(inputId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(inputId + "_preview");
     const button = document.getElementById(inputId + "_button");
     const label = document.getElementById(inputId + "_label");
     const picker = document.getElementById(inputId + "_picker");
-
     if (!input || !preview || !button || !label) return;
 
     input.addEventListener("change", () => {
@@ -243,7 +220,6 @@ function setupImagePreview(inputId) {
         const valid = file ? file.type.startsWith("image/") && /\.(jpg|jpeg|png)$/i.test(file.name) : false;
 
         if (!file) {
-            // No file selected: hide preview, hide button
             preview.style.display = "none";
             preview.src = "";
             button.style.display = "none";
@@ -251,7 +227,6 @@ function setupImagePreview(inputId) {
             if (picker) picker.classList.remove("error");
             fieldValidity[inputId] = true;
         } else if (!valid) {
-            // Invalid file: hide preview but show clear button
             preview.style.display = "none";
             preview.src = "";
             button.style.display = "inline-block";
@@ -260,7 +235,6 @@ function setupImagePreview(inputId) {
             if (picker) picker.classList.add("error");
             fieldValidity[inputId] = false;
         } else {
-            // Valid file: show preview and clear button
             preview.src = URL.createObjectURL(file);
             preview.style.display = "block";
             button.style.display = "inline-block";
@@ -268,94 +242,63 @@ function setupImagePreview(inputId) {
             if (picker) picker.classList.remove("error");
             fieldValidity[inputId] = true;
 
-            preview.onload = () => URL.revokeObjectURL(preview.src); // free memory
+            preview.onload = () => URL.revokeObjectURL(preview.src);
         }
 
         downloadable = Object.values(fieldValidity).every(Boolean);
         updateButtons();
     });
 
-    // Always attach clear button
     button.addEventListener("click", () => clearPhoto(inputId));
 }
 
-// Initialize for your static field
 setupImagePreview("machine_image");
 
 
+// ===============
+// SOURCES
+// ===============
 
-
-// -----------------------------
-// SOURCES ------------------
-// -----------------------------
-
-const  addSourceButton = document.getElementById("addSourceBtn");
+const addSourceButton = document.getElementById("addSourceBtn");
 const removeSourceButton = document.getElementById("removeSourceBtn");
 
 addSourceButton.addEventListener("click", function() {
-    addSource()
-    updateSourceButtons()
+    addSource();
+    updateSourceButtons();
 });
 removeSourceButton.addEventListener("click", function() {
-    removeLastSource()
-    updateSourceButtons()
+    removeLastSource();
+    updateSourceButtons();
 });
 
-// -----------------------------
-// Sources Dynamic Section
-// -----------------------------
 let sourceCount = 0;
-const MAX_SOURCES = 12; // adjust as needed
-updateSourceButtons()
+const MAX_SOURCES = 12;
+updateSourceButtons();
 
-let energyData = {}; // placeholder
-
-// Load energySources.json
-fetch("dependencies/energySources.json")
-    .then(response => {
-        if (!response.ok) throw new Error("Failed to load energySources.json");
-        return response.json();
-    })
-    .then(data => {
-        energyData = data;
-
-        // Optionally: initialize the first source if needed
-        // addSource(); // if you want to auto-add a source on page load
-    })
-    .catch(err => {
-        console.error("Error loading energy sources:", err);
-    });
-
-
-// Container for sources
+let energyData = {};
 const sourcesContainer = document.getElementById("sources");
 
-// -----------------------------
-// Add Source Function
-// -----------------------------
+// === Tool: load energy sources JSON ===
+fetch("dependencies/energySources.json")
+    .then(res => res.ok ? res.json() : Promise.reject("Failed to load"))
+    .then(data => { energyData = data; })
+    .catch(err => console.error("Error loading energy sources:", err));
+
+
+// === Tool: add a new source dynamically ===
 function addSource() {
-    if (sourceCount >= MAX_SOURCES) {
-        alert(`Max ${MAX_SOURCES} sources allowed`);
-        return;
-    }
+    if (sourceCount >= MAX_SOURCES) { alert(`Max ${MAX_SOURCES} sources allowed`); return; }
 
     const div = document.createElement("div");
     div.className = "source";
     div.dataset.index = sourceCount;
 
-    const energyOptions = Object.keys(energyData)
-        .map(e => `<option value="${e}">${e}</option>`)
-        .join("");
-
+    const energyOptions = Object.keys(energyData).map(e => `<option value="${e}">${e}</option>`).join("");
     div.innerHTML = `
         <div class="source-header">Source ${sourceCount + 1}</div>
-        <label>Energy Source:
-            <select class="energy_source">${energyOptions}</select>
-        </label>
+        <label>Energy Source: <select class="energy_source">${energyOptions}</select></label>
         <div class="dynamic-inputs"></div>
-        <label>Device:
-            <select class="device"></select>
-        </label>
+        <label>Device: <select class="device"></select></label>
         <label>Tag: <input type="text" id="tag" placeholder="0001" /></label>
         <label>Description: <input type="text" id="source_description" /></label>
         <label>Isolation Point: </label>
@@ -367,12 +310,8 @@ function addSource() {
             <img id="isolation_point_${sourceCount}_preview" class="preview_image" />
         </div>
         <p class="warning_label" id="isolation_point_${sourceCount}_label"></p>
-        <label>Isolation Method:
-            <select class="isolation_method"></select>
-        </label>
-        <label>Verification Method:
-            <select class="verification_method"></select>
-        </label>
+        <label>Isolation Method: <select class="isolation_method"></select></label>
+        <label>Verification Method: <select class="verification_method"></select></label>
         <label>Verification Device: </label>
         <div class="input-with-preview" id="verification_device_${sourceCount}_picker">
             <div class="inline-button-wrapper">
@@ -387,58 +326,33 @@ function addSource() {
     sourcesContainer.appendChild(div);
 
     const energySelect = div.querySelector(".energy_source");
-
-    // Populate dependent dropdowns initially
     updateSourceDropdowns(div, energySelect.value);
-
-    // Update dropdowns on energy source change
     energySelect.addEventListener("change", () => updateSourceDropdowns(div, energySelect.value));
 
-    // Validate images and handle previews
     validateInput({ id: `isolation_point_${sourceCount}`, type: "image" });
     validateInput({ id: `verification_device_${sourceCount}`, type: "image" });
-
-    // Setup image previews after they exist in DOM
     setupImagePreview(`verification_device_${sourceCount}`);
     setupImagePreview(`isolation_point_${sourceCount}`);
 
     sourceCount++;
 }
 
-
-// -----------------------------
-// Remove Last Source Function
-// -----------------------------
+// === Tool: remove last source ===
 function removeLastSource() {
     if (sourceCount === 0) return;
     const lastSource = sourcesContainer.lastElementChild;
-
-    // Check if there is any data
     const inputs = lastSource.querySelectorAll("input");
-    let hasText = false;
-    inputs.forEach(input => {
-        if (input.value.trim() !== "") hasText = true;
-    });
+    let hasText = Array.from(inputs).some(input => input.value.trim() !== "");
     if (hasText && !confirm("The last source contains data. Remove anyway?")) return;
 
-    // Remove fieldValidity entries for this source
-    inputs.forEach(input => {
-        const id = input.id;
-        if (fieldValidity.hasOwnProperty(id)) {
-            delete fieldValidity[id];
-        }
-    });
-
+    inputs.forEach(input => { delete fieldValidity[input.id]; });
     lastSource.remove();
     sourceCount--;
-
-    // Recalculate downloadable
     downloadable = Object.values(fieldValidity).every(Boolean);
     updateButtons();
 }
 
-
-
+// === Tool: populate source dropdowns and dynamic fields ===
 function updateSourceDropdowns(sourceDiv, energy) {
     const data = energyData[energy];
     const device = sourceDiv.querySelector(".device");
@@ -446,62 +360,41 @@ function updateSourceDropdowns(sourceDiv, energy) {
     const verification = sourceDiv.querySelector(".verification_method");
     const dynamicInputs = sourceDiv.querySelector(".dynamic-inputs");
 
-    // Remove old dynamic inputs from fieldValidity
-    const oldInputs = dynamicInputs.querySelectorAll("input");
-    oldInputs.forEach(input => delete fieldValidity[input.id]);
-
-    // Clear previous dynamic inputs
+    dynamicInputs.querySelectorAll("input").forEach(input => delete fieldValidity[input.id]);
     dynamicInputs.innerHTML = "";
 
-    // Helper: populate dropdown + add custom field support
     function populateDropdown(selectElem, items, name) {
-        selectElem.innerHTML =
-            items.map(d => `<option value="${d}">${d}</option>`).join("") +
-            `<option value="__custom__">Other (custom)</option>`;
-
-        // Create hidden input for custom text
+        selectElem.innerHTML = items.map(d => `<option value="${d}">${d}</option>`).join("") + `<option value="__custom__">Other (custom)</option>`;
         let customInput = document.createElement("input");
         customInput.type = "text";
         customInput.className = `${name}_custom custom-input`;
-        customInput.placeholder = `Enter custom ${name.replace("_", " ")}...`;
+        customInput.placeholder = `Enter custom ${name.replace("_"," ")}...`;
         customInput.style.display = "none";
         customInput.style.marginTop = "5px";
         customInput.style.width = "100%";
-
-        // Insert after the dropdown
         selectElem.parentElement.appendChild(customInput);
 
-        // Handle selection changes
         selectElem.addEventListener("change", () => {
-            if (selectElem.value === "__custom__") {
-                customInput.style.display = "block";
-            } else {
-                customInput.style.display = "none";
-                customInput.value = "";
-            }
+            customInput.style.display = selectElem.value === "__custom__" ? "block" : "none";
+            if (selectElem.value !== "__custom__") customInput.value = "";
         });
     }
 
-    // Populate dropdowns with “Other (custom)” support
     populateDropdown(device, data.device, "device");
     populateDropdown(isolation, data.isolation_method, "isolation_method");
     populateDropdown(verification, data.verification_method, "verification_method");
 
-    // Create new inputs from array of objects
     data.inputs.forEach(inputObj => {
         const { field_name, unit_name, title_name } = inputObj;
         const inputId = `${field_name}_${sourceDiv.dataset.index}`;
 
         const label = document.createElement("label");
         label.textContent = title_name + ": ";
-
         const input = document.createElement("input");
         input.type = "text";
         input.id = inputId;
         input.placeholder = unit_name;
         input.style.width = "100%";
-
-        // Add warning label
         const warning = document.createElement("p");
         warning.className = "warning_label";
         warning.id = inputId + "_label";
@@ -510,7 +403,6 @@ function updateSourceDropdowns(sourceDiv, energy) {
         dynamicInputs.appendChild(label);
         dynamicInputs.appendChild(warning);
 
-        // Setup validation: skip chemical_name
         fieldValidity[inputId] = true;
         input.addEventListener("input", () => {
             if (field_name === "chemical_name") {
@@ -535,7 +427,6 @@ function updateSourceDropdowns(sourceDiv, energy) {
         });
     });
 
-    // Recalculate downloadable
     downloadable = Object.values(fieldValidity).every(Boolean);
     updateButtons();
 }
