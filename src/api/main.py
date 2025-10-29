@@ -328,7 +328,7 @@ async def db_status():
 
 
 
-@app.get("/create-report", response_class=HTMLResponse)
+@app.get("/create_report", response_class=HTMLResponse)
 async def create_report(request: Request):
     """
     Serves the input_form.html page for creating a new report.
