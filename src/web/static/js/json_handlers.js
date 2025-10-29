@@ -1,10 +1,11 @@
+console.log("json_handlers.js");
+
 // -----------------------------
 // JSON Energy Data
 // -----------------------------
-let energyData = {}; // placeholder
 
 // Load energySources.json
-fetch("dependencies/energySources.json")
+fetch("/static/dependencies/energySources.json")
     .then(response => {
         if (!response.ok) throw new Error("Failed to load energySources.json");
         return response.json();
@@ -255,9 +256,6 @@ function generateJSON() {
 // -----------------------------
 // Generate JSON
 // -----------------------------
-const generateButton = document.getElementById("generateBtn");
-const outputJSON = document.getElementById("output");
-
 generateButton.addEventListener("click", function() {
     
     const json = generateJSON();
@@ -270,8 +268,6 @@ generateButton.addEventListener("click", function() {
 // -----------------------------
 // Download JSON
 // -----------------------------
-const downloadButton = document.getElementById("downloadBtn");
-
 downloadButton.addEventListener("click", () => {
     const json = generateJSON();
     const blob = new Blob([JSON.stringify(json, null, 4)], { type: "application/json" });

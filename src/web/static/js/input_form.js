@@ -1,3 +1,5 @@
+console.log("input_form.js");
+
 // ===============
 // ACTION BUTTONS
 // ===============
@@ -279,7 +281,7 @@ let energyData = {};
 const sourcesContainer = document.getElementById("sources");
 
 // === Tool: load energy sources JSON ===
-fetch("dependencies/energySources.json")
+fetch("/static/dependencies/energySources.json")
     .then(res => res.ok ? res.json() : Promise.reject("Failed to load"))
     .then(data => { energyData = data; })
     .catch(err => console.error("Error loading energy sources:", err));
