@@ -13,9 +13,9 @@
 <main>
     <div class="section">
         <h2>General Information</h2>
-        <label>Name: <input type="text" id="name" /></label>
+        <label>Report Name: <input type="text" id="name" placeholder="air compressor" /></label>
         <label>Description: <input type="text" id="description" /></label>
-        <label>Procedure Number: <input type="text" id="procedure_number" /></label>
+        <label>Procedure Number: <input type="text" id="procedure_number" placeholder="01"/></label>
         <p class="warning_label" id="procedure_number_label"></p>
         <label>Facility: <input type="text" id="facility" /></label>
         <label>Location: <input type="text" id="location" /></label>
@@ -29,7 +29,12 @@
         </label>
         <label>Origin: <input type="text" id="origin" /></label>
         <p class="warning_label" id="origin_label"></p>
-        <label>Machine Image: <input type="file" accept="image/*" id="machine_image" class="image-picker" /></label>
+        <label>Machine Image:
+            <div class="input-with-preview" id="machine_image_picker">
+                <input type="file" accept="image/*" id="machine_image" class="image-picker" />
+                <img id="machine_preview" class="preview_image" />
+            </div>
+        </label>
         <p class="warning_label" id="machine_image_label"></p>
         <label>Isolation Points: <input type="text" id="isolation_points" /></label>
         <p class="warning_label" id="isolation_points_label"></p>

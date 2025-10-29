@@ -46,7 +46,8 @@ input, textarea {
     padding: 6px 10px;
     margin-top: 2px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    background-color: #F4F4F4;
+    border: 1px solid #F4F4F4;
     border-radius: 4px;
     box-sizing: border-box;
 }
@@ -104,8 +105,9 @@ button:hover {
 }
 
 .error {
-    border-color: #C32026;
-    background-color: #ffecec;
+    border: 1px solid #C32026;  /* red border when invalid */
+    background-color: #ffecec;  /* light red like other errors */
+    border-radius: 4px;
 }
 
 .button-disabled, .button-disabled:hover {
@@ -119,5 +121,51 @@ button:hover {
 }
 
 .inline-button-wrapper button {
-    margin-top: -5px;
+    margin-top: -8px;
+    padding: 6px 15px;
+}
+
+#output {
+    width: 100%;          /* keep full width of container */
+    min-height: 265px;        /* default height */
+    resize: vertical;     /* user can only resize vertically, not horizontally */
+}
+
+.input-with-preview {
+    display: flex;
+    flex-direction: column;       /* stack input and preview vertically */
+    width: 100%;
+    background-color: #F4F4F4;    /* same as inputs */
+    border-radius: 4px;
+    border: none;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.input-with-preview input {
+    border: none;                 /* remove input border since container has it */
+    border-radius: 0;             /* align with container edges */
+    background-color: transparent;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
+}
+
+.preview_image {
+    display: none;
+    max-width: 80%;               /* maximum width of 80% of container */
+    max-height: 200px;            /* maximum height 200px */
+    width: auto;                  /* scale width to maintain aspect ratio */
+    height: auto;
+    object-fit: contain;          /* keep image aspect ratio */
+    border-radius: 0 0 4px 4px;   /* round bottom corners only */
+    margin-top: 2px;              /* small space from input */
+    padding-bottom: 10px;
+    margin-left: 10%;
+}
+
+.input-with-preview.error {
+    border: 1px solid #C32026;  /* red border when invalid */
+    background-color: #ffecec;  /* light red like other errors */
+    border-radius: 4px;
 }

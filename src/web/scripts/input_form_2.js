@@ -64,25 +64,35 @@ function inputValidation(fields) {
                 updateButtons();
             });
         } else if (type === "image") {
+            const picker = document.getElementById(id + "_picker"); // now exists
             input.addEventListener("change", () => {
                 const file = input.files[0];
+
+                // No file selected
                 if (!file) {
                     label.style.display = "none";
-                    input.classList.remove("error");
+                    picker.classList.remove("error");
                     fieldValidity[id] = true;
                     downloadable = Object.values(fieldValidity).every(Boolean);
                     updateButtons();
                     return;
-                };
+                }
+
                 const { isValid, extension } = isImageFile(file);
+
                 if (!isValid) {
                     label.style.display = "block";
                     label.textContent = ` ❌ ${extension || "File"} not supported. Only jpg, jpeg, png`;
-                    input.classList.add("error");
+                    picker.classList.add("error");   // highlight the whole picker div
+                    preview.style.display = "none";  // hide preview if invalid
                 } else {
                     label.style.display = "none";
-                    input.classList.remove("error");
+                    picker.classList.remove("error");
+                    preview.src = URL.createObjectURL(file);
+                    preview.style.display = "block";
+                    preview.onload = () => URL.revokeObjectURL(preview.src);
                 }
+
                 fieldValidity[id] = isValid;
                 downloadable = Object.values(fieldValidity).every(Boolean);
                 updateButtons();
@@ -141,3 +151,28 @@ function setText(inputId, text) {
 
 // Example: automatically set Approved By Company
 setText("approved_by_company", "Cardinal Compliance Consultants");
+
+
+
+// -----------------------------
+// Image preview only if valid
+// -----------------------------
+const machineInput = document.getElementById("machine_image");
+const preview = document.getElementById("machine_preview");
+
+machineInput.addEventListener("change", () => {
+    const file = machineInput.files[0];
+    const valid = file ? file.type.startsWith("image/") && /\.(jpg|jpeg|png)$/i.test(file.name) : false;
+
+    if (!file || !valid) {
+        preview.style.display = "none";
+        preview.src = "";
+        return;
+    }
+
+    // Only show preview if valid
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+
+    preview.onload = () => URL.revokeObjectURL(preview.src); // free memory
+});
