@@ -305,6 +305,7 @@ git config --global core.autocrlf
 | `/pdf_list`                      | GET    | Displays a webpage listing all PDFs available in the database               |
 | `/view_report/{report_name}`     | GET    | Displays detailed report metadata and associated photos                     |
 | `/download_pdf/{report_name}`    | GET    | Downloads the corresponding generated PDF file                              |
+| `/create_report` | GET | Displays a webpage for creating a PDF with options to down and upload to the database |
 | `/metadata/{report_name}`        | GET    | Returns the stored metadata for a specific report as JSON (for testing/debugging) |
 | `/db_status`                     | GET    | Checks database connection and returns a success message (for tests/health checks) |
 
