@@ -482,9 +482,6 @@ function removeLastSource() {
 
 
 
-// -----------------------------
-// Populate dependent dropdowns
-// -----------------------------
 function updateSourceDropdowns(sourceDiv, energy) {
     const data = energyData[energy];
     const device = sourceDiv.querySelector(".device");
@@ -499,10 +496,39 @@ function updateSourceDropdowns(sourceDiv, energy) {
     // Clear previous dynamic inputs
     dynamicInputs.innerHTML = "";
 
-    // Populate dropdowns
-    device.innerHTML = data.device.map(d => `<option value="${d}">${d}</option>`).join("");
-    isolation.innerHTML = data.isolation_method.map(d => `<option value="${d}">${d}</option>`).join("");
-    verification.innerHTML = data.verification_method.map(d => `<option value="${d}">${d}</option>`).join("");
+    // Helper: populate dropdown + add custom field support
+    function populateDropdown(selectElem, items, name) {
+        selectElem.innerHTML =
+            items.map(d => `<option value="${d}">${d}</option>`).join("") +
+            `<option value="__custom__">Other (custom)</option>`;
+
+        // Create hidden input for custom text
+        let customInput = document.createElement("input");
+        customInput.type = "text";
+        customInput.className = `${name}_custom custom-input`;
+        customInput.placeholder = `Enter custom ${name.replace("_", " ")}...`;
+        customInput.style.display = "none";
+        customInput.style.marginTop = "5px";
+        customInput.style.width = "100%";
+
+        // Insert after the dropdown
+        selectElem.parentElement.appendChild(customInput);
+
+        // Handle selection changes
+        selectElem.addEventListener("change", () => {
+            if (selectElem.value === "__custom__") {
+                customInput.style.display = "block";
+            } else {
+                customInput.style.display = "none";
+                customInput.value = "";
+            }
+        });
+    }
+
+    // Populate dropdowns with “Other (custom)” support
+    populateDropdown(device, data.device, "device");
+    populateDropdown(isolation, data.isolation_method, "isolation_method");
+    populateDropdown(verification, data.verification_method, "verification_method");
 
     // Create new inputs from array of objects
     data.inputs.forEach(inputObj => {
