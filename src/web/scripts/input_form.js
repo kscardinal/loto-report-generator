@@ -19,9 +19,43 @@ function updateButton(buttonElement) {
     }
 }
 
+function updateSourceButton(buttonElement, numSources, maxSources) {
+    console.log(buttonElement, numSources);
+    if (buttonElement === removeSourceButton) {
+        if (numSources > 0) {
+            buttonElement.disabled = false;
+            buttonElement.style.cursor = "pointer";
+            buttonElement.classList.remove("button-disabled");       
+         } else {
+            buttonElement.disabled = true;
+            buttonElement.style.cursor = "not-allowed";
+            buttonElement.classList.add("button-disabled");
+        }
+    } else if (buttonElement === addSourceButton) {
+        if (numSources === maxSources) {
+            buttonElement.disabled = true;
+            buttonElement.style.cursor = "not-allowed";
+            buttonElement.classList.add("button-disabled");
+        } else {
+            buttonElement.disabled = false;
+            buttonElement.style.cursor = "pointer";
+            buttonElement.classList.remove("button-disabled");
+        }
+    } else {
+        console.log("ERROR");
+    }
+
+
+}
+
 function updateButtons() {
     updateButton(downloadButton);
     updateButton(generateButton);
+}
+
+function updateSourceButtons() {
+    updateSourceButton(addSourceButton, sourceCount, MAX_SOURCES);
+    updateSourceButton(removeSourceButton, sourceCount, MAX_SOURCES);
 }
 
 
@@ -194,9 +228,11 @@ const removeSourceButton = document.getElementById("removeSourceBtn");
 
 addSourceButton.addEventListener("click", function() {
     addSource()
+    updateSourceButtons()
 });
 removeSourceButton.addEventListener("click", function() {
     removeLastSource()
+    updateSourceButtons()
 });
 
 // -----------------------------
@@ -204,6 +240,7 @@ removeSourceButton.addEventListener("click", function() {
 // -----------------------------
 let sourceCount = 0;
 const MAX_SOURCES = 12; // adjust as needed
+updateSourceButtons()
 const energyData = {
     "Electric": {
         "inputs": [{filed_name: "volt", unit_name: "volts", title_name: "Volts"}], 

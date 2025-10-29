@@ -169,3 +169,37 @@ button:hover {
     background-color: #ffecec;  /* light red like other errors */
     border-radius: 4px;
 }
+
+/* Style all dropdowns to look like buttons */
+.source select {
+    appearance: none;       /* Remove default arrow for most browsers */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #F4F4F4;
+    border: none;
+    border-radius: 4px; 
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+/* Optional: add custom arrow icon */
+.source select {
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2rem; /* space for arrow */
+}
+
+/* Hover and focus effects */
+.source select:hover,
+.source select:focus {
+    background-color: #e0e0e0;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
