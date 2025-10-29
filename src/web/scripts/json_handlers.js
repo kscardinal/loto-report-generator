@@ -165,35 +165,31 @@ function generateJSON() {
         // energy source
         const energySelect = div.querySelector(".energy_source");
         const energyVal = energySelect ? energySelect.value : "";
-        if (!energyVal) return; // skip empty source (shouldn't happen)
+        if (!energyVal) return; // skip empty source
         sourceObj["energy_source"] = energyVal;
 
-        // get data config for this energy type (guard if missing)
+        // get data config for this energy type
         const config = energyData[energyVal] || { inputs: [] };
 
-        // dynamic inputs defined in energyData (array of objects)
-        // each inputObj has filed_name, unit_name, title_name
+        // dynamic inputs from energyData
         (config.inputs || []).forEach(inpObj => {
-            const field = inpObj.filed_name;      // e.g. "psi", "volt", "chemical_name"
-            const unit = inpObj.unit_name || "";  // e.g. "psi"
-            // try both id patterns: with index (field_idx) or without (field)
+            const field = inpObj.filed_name;
+            const unit = inpObj.unit_name || "";
             const elIdIndexed = `${field}_${idx}`;
             const elIndexed = div.querySelector(`#${CSS.escape(elIdIndexed)}`);
-            const elNonIndexed = div.querySelector(`#${CSS.escape(field)}`); // fallback
+            const elNonIndexed = div.querySelector(`#${CSS.escape(field)}`);
 
             const el = elIndexed || elNonIndexed;
             if (!el) return;
 
             const rawVal = el.value ? String(el.value).trim() : "";
-            if (!rawVal) return; // only include non-empty fields
+            if (!rawVal) return;
 
-            // chemical_name is textual; keep as-is
             if (field === "chemical_name") {
                 sourceObj[field] = rawVal;
                 return;
             }
 
-            // numeric inputs: format with commas and append unit
             const formattedNumber = formatNumberWithCommas(rawVal);
             if (unit) {
                 sourceObj[field] = `${formattedNumber} ${unit}`;
@@ -202,9 +198,16 @@ function generateJSON() {
             }
         });
 
-        // device (select)
+        // device (select with custom)
         const deviceEl = div.querySelector(".device");
-        if (deviceEl && deviceEl.value) sourceObj["device"] = deviceEl.value;
+        if (deviceEl && deviceEl.value) {
+            if (deviceEl.value === "__custom__") {
+                const deviceCustom = div.querySelector(".device_custom");
+                sourceObj["device"] = deviceCustom ? deviceCustom.value.trim() : "";
+            } else {
+                sourceObj["device"] = deviceEl.value;
+            }
+        }
 
         // tag - try tag_index then tag
         const tagIndexed = div.querySelector(`#${CSS.escape(`tag_${idx}`)}`);
@@ -236,20 +239,32 @@ function generateJSON() {
             if (fn) sourceObj["verification_device"] = fn;
         }
 
-        // isolation_method & verification_method selects
-        const isoMethod = div.querySelector(".isolation_method");
-        if (isoMethod && isoMethod.value) sourceObj["isolation_method"] = isoMethod.value;
+        // isolation_method (with custom)
+        const isoMethodEl = div.querySelector(".isolation_method");
+        if (isoMethodEl && isoMethodEl.value) {
+            if (isoMethodEl.value === "__custom__") {
+                const isoMethodCustom = div.querySelector(".isolation_method_custom");
+                sourceObj["isolation_method"] = isoMethodCustom ? isoMethodCustom.value.trim() : "";
+            } else {
+                sourceObj["isolation_method"] = isoMethodEl.value;
+            }
+        }
 
-        const verMethod = div.querySelector(".verification_method");
-        if (verMethod && verMethod.value) sourceObj["verification_method"] = verMethod.value;
+        // verification_method (with custom)
+        const verMethodEl = div.querySelector(".verification_method");
+        if (verMethodEl && verMethodEl.value) {
+            if (verMethodEl.value === "__custom__") {
+                const verMethodCustom = div.querySelector(".verification_method_custom");
+                sourceObj["verification_method"] = verMethodCustom ? verMethodCustom.value.trim() : "";
+            } else {
+                sourceObj["verification_method"] = verMethodEl.value;
+            }
+        }
 
-        // Only push if there is any meaningful data (beyond just energy_source)
-        // i.e., at least one other key present
+        // Only push if there is any meaningful data beyond energy_source
         const keys = Object.keys(sourceObj);
         if (keys.length > 1) {
             sources.push(sourceObj);
-        } else {
-            // If you want to include empty sources with just energy_source, remove this guard
         }
     });
 
@@ -261,6 +276,7 @@ function generateJSON() {
 
     return jsonData;
 }
+
 
 
 // -----------------------------
