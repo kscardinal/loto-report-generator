@@ -1,190 +1,399 @@
-// input_form.js
+// -----------------------------
+// Action Buttons
+// -----------------------------
+const downloadButton = document.getElementById("downloadBtn");
+const generateButton = document.getElementById("generateBtn");
 
+let fieldValidity = {};
+let downloadable = false;
+
+function updateButton(buttonElement) {
+    if (downloadable) {
+        buttonElement.disabled = false;
+        buttonElement.style.cursor = "pointer";
+        buttonElement.classList.remove("button-disabled");
+    } else {
+        buttonElement.disabled = true;
+        buttonElement.style.cursor = "not-allowed";
+        buttonElement.classList.add("button-disabled");
+    }
+}
+
+function updateButtons() {
+    updateButton(downloadButton);
+    updateButton(generateButton);
+}
+
+
+// -----------------------------
+// Validation Helpers
+// -----------------------------
+function isImageFile(file) {
+    const validTypes = ["image/jpg", "image/jpeg", "image/png"];
+    const validExt = /\.(jpg|jpeg|png)$/i;
+    const match = file.name.toLowerCase().match(/\.([a-z0-9]+)$/);
+    const extension = match ? match[1] : null;
+    const isValid = validTypes.includes(file.type) && validExt.test(file.name);
+    return { isValid, extension };
+}
+
+
+// -----------------------------
+// Unified Input Validation
+// -----------------------------
+function validateInput({ id, type }) {
+    const input = document.getElementById(id);
+    const label = document.getElementById(id + "_label");
+    if (!input || !label) return;
+
+    fieldValidity[id] = true;
+
+    if (type === "number") {
+        input.addEventListener("input", () => {
+            const val = input.value;
+            const isValid = val.length === 0 || /^\d+$/.test(val);
+
+            if (!isValid) {
+                label.style.display = "block";
+                label.textContent = " ❌ Must only be a number";
+                input.classList.add("error");
+            } else {
+                label.style.display = "none";
+                input.classList.remove("error");
+            }
+
+            fieldValidity[id] = isValid;
+            downloadable = Object.values(fieldValidity).every(Boolean);
+            updateButtons();
+        });
+    } else if (type === "image") {
+        const picker = document.getElementById(id + "_picker");
+        const preview = document.getElementById(id + "_preview");
+        if (!picker || !preview) return;
+
+        input.addEventListener("change", () => {
+            const file = input.files[0];
+            const { isValid, extension } = file ? isImageFile(file) : { isValid: true };
+
+            if (!file) {
+                label.style.display = "none";
+                picker.classList.remove("error");
+                preview.style.display = "none";
+                fieldValidity[id] = true;
+            } else if (!isValid) {
+                label.style.display = "block";
+                label.textContent = ` ❌ ${extension || "File"} not supported. Only jpg, jpeg, png`;
+                picker.classList.add("error");
+                preview.style.display = "none";
+                fieldValidity[id] = false;
+            } else {
+                label.style.display = "none";
+                picker.classList.remove("error");
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+                preview.onload = () => URL.revokeObjectURL(preview.src);
+                fieldValidity[id] = true;
+            }
+
+            downloadable = Object.values(fieldValidity).every(Boolean);
+            updateButtons();
+        });
+    }
+}
+
+
+// -----------------------------
+// Initialize Validation for static fields
+// -----------------------------
+validateInput({ id: "procedure_number", type: "number" });
+validateInput({ id: "revision", type: "number" });
+validateInput({ id: "origin", type: "number" });
+validateInput({ id: "isolation_points", type: "number" });
+validateInput({ id: "machine_image", type: "image" });
+
+// Initial check for buttons
+downloadable = Object.values(fieldValidity).every(Boolean);
+updateButtons();
+
+// -----------------------------
+// Today Button Setup
+// -----------------------------
+function todayButton(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = document.getElementById(inputId + "_button");
+    if (!inputElement || !buttonElement) return;
+
+    buttonElement.addEventListener("click", () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        inputElement.value = `${yyyy}-${mm}-${dd}`;
+    });
+}
+
+// Initialize Today buttons
+todayButton("date");
+todayButton("completed_date");
+
+
+// -----------------------------
+// Set Text via Button
+// -----------------------------
+function setText(inputId, text) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = document.getElementById(inputId + "_button");
+    if (!inputElement || !buttonElement) return;
+
+    buttonElement.addEventListener("click", () => {
+        inputElement.value = text;
+    });
+}
+
+// Example: automatically set Approved By Company
+setText("approved_by_company", "Cardinal Compliance Consultants");
+
+
+// -----------------------------
+// Setup image preview for a file input
+// -----------------------------
+function setupImagePreview(inputId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(inputId + "_preview");
+
+    if (!input || !preview) return;
+
+    input.addEventListener("change", () => {
+        const file = input.files[0];
+        const valid = file ? file.type.startsWith("image/") && /\.(jpg|jpeg|png)$/i.test(file.name) : false;
+
+        if (!file || !valid) {
+            preview.style.display = "none";
+            preview.src = "";
+            return;
+        }
+
+        // Only show preview if valid
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+
+        preview.onload = () => URL.revokeObjectURL(preview.src); // free memory
+    });
+}
+
+setupImagePreview("machine_image");
+
+
+
+// -----------------------------
+// SOURCES ------------------
+// -----------------------------
+
+const  addSourceButton = document.getElementById("addSourceBtn");
+const removeSourceButton = document.getElementById("removeSourceBtn");
+
+addSourceButton.addEventListener("click", function() {
+    console.log("Add source!")
+    addSource()
+});
+removeSourceButton.addEventListener("click", function() {
+    console.log("Remove source!")
+    removeLastSource()
+});
+
+// -----------------------------
+// Sources Dynamic Section
+// -----------------------------
 let sourceCount = 0;
-const MAX_SOURCES = 8;
-
-// Map form IDs to JSON keys
-const fieldMap = {
-    name: "name",
-    description: "description",
-    procedureNumber: "procedure_number",
-    facility: "facility",
-    location: "location",
-    revision: "revision",
-    date: "date",
-    origin: "origin",
-    machineImage: "machine_image",
-    isolationPoints: "isolation_points",
-    notes: "notes",
-    approvedBy: "approved_by",
-    preparedBy: "prepared_by",
-    approvedByCompany: "approved_by_company",
-    completedDate: "completed_date"
+const MAX_SOURCES = 12; // adjust as needed
+const energyData = {
+    "Electric": {
+        "inputs": ["volt"], 
+        "device": ["Main Disconnect", "Circuit Breaker Panel"],
+        "isolation_method": ["Turn off disconnect and apply personal lock and tag."],
+        "verification_method": ["Verify the power has been isolated by pressing the start button on control panel.", "Verify no voltage."]
+    },
+    "Natural Gas": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    },
+    "Steam": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Open drain or bleed of valve.", "Verify pressure on gauge is zero."]
+    },
+    "Chemical": {
+        "inputs": ["psi", "chemical_name"],
+        "device": ["Isolation Valve"],
+        "isolation_method": ["Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge.", "Verify no flow."]
+    },
+    "Hydraulic": {
+        "inputs": ["psi"],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Gravity": {
+        "inputs": ["lbs"],
+        "device": ["Lower component to full down position.", "Use cribbing to support component."],
+        "isolation_method": ["Component in down position.", "Cribbing is in place."],
+        "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
+    },
+    "Thermal": {
+        "inputs": ["temp"],
+        "device": ["Steam Coils", "Hot Water", "Residual Burner Heat", "Electric Element", "Cryogenics"],
+        "isolation_method": ["Source Dependent, allow time to cool if direct contact is expected.", "Source Dependent, allow time to heat if direct contact is expected."],
+        "verification_method": ["Allow sufficient time to cool.", "Verify temp is < 120 °F.", "Verify temp > 35 °F."]
+    },
+    "Refrigerant": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Water": {
+        "inputs": ["psi"],
+        "device": ["Isolation Valve", "Isolation and Bleed Valve"],
+        "isolation_method": ["Component in down position.", "Cribbing is in place.", "Close valves, open bleed valve, apply cover and personal lock and tag."],
+        "verification_method": ["Verify zero pressure by checking the pressure gauge."]
+    },
+    "Pneumatic": {
+        "inputs": ["psi"],
+        "device": ["Ball Valve"],
+        "isolation_method": ["Close valves, apply cover and personal lock and tag."],
+        "verification_method": ["Verify pressure on gauge is zero."]
+    }
 };
 
-// Utility to get input value by ID
-function getVal(id) {
-    const el = document.getElementById(id);
-    if (!el) return "";
-    let val = el.value.trim();
+// Container for sources
+const sourcesContainer = document.getElementById("sources");
 
-    // Default dates to today if empty
-    if ((id === "date" || id === "completedDate") && val === "") {
-        val = formatDateToMDY(new Date());
-    }
-    return val;
-}
-
-// Format date to MM/DD/YYYY
-function formatDateToMDY(date) {
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
-}
-
-// Get just the filename from file input
-function getFileName(input) {
-    if (input.files && input.files.length > 0) {
-        return input.files[0].name;
-    }
-    return "";
-}
-
-// Add a new source
+// -----------------------------
+// Add Source Function
+// -----------------------------
 function addSource() {
     if (sourceCount >= MAX_SOURCES) {
         alert(`Max ${MAX_SOURCES} sources allowed`);
         return;
     }
 
-    const container = document.getElementById("sources");
     const div = document.createElement("div");
     div.className = "source";
+    div.dataset.index = sourceCount;
+
+    const energyOptions = Object.keys(energyData).map(e => `<option value="${e}">${e}</option>`).join("");
     div.innerHTML = `
         <div class="source-header">Source ${sourceCount + 1}</div>
-        <label>Energy Source: <input type="text" class="energy_source" /></label>
-        <label>Chemical Name: <input type="text" class="chemical_name" /></label>
-        <label>Volt: <input type="text" class="volt" /></label>
-        <label>PSI: <input type="text" class="psi" /></label>
-        <label>LBS: <input type="text" class="lbs" /></label>
-        <label>Temp: <input type="text" class="temp" /></label>
-        <label>Device: <input type="text" class="device" /></label>
-        <label>Tag: <input type="text" class="tag" /></label>
-        <label>Description: <input type="text" class="source_description" /></label>
-        <label>Isolation Point: <input type="file" accept="image/*" class="isolation_point" /></label>
-        <label>Isolation Method: <input type="text" class="isolation_method" /></label>
-        <label>Verification Method: <input type="text" class="verification_method" /></label>
-        <label>Verification Device: <input type="file" accept="image/*" class="verification_device" /></label>
+        <label>Energy Source:
+            <select class="energy_source">${energyOptions}</select>
+        </label>
+        <div class="dynamic-inputs"></div>
+        <label>Device:
+            <select class="device"></select>
+        </label>
+        <label>Isolation Method:
+            <select class="isolation_method"></select>
+        </label>
+        <label>Verification Method:
+            <select class="verification_method"></select>
+        </label>
+        <label>Isolation Point:
+            <div class="input-with-preview" id="isolation_point_${sourceCount}_picker">
+                <input type="file" accept="image/*" id="isolation_point_${sourceCount}" class="image-picker" />
+                <img id="isolation_point_${sourceCount}_preview" class="preview_image" />
+            </div>
+        </label>
+        <p class="warning_label" id="isolation_point_${sourceCount}_label"></p>
+        <label>Verification Device:
+            <div class="input-with-preview" id="verification_device_${sourceCount}_picker">
+                <input type="file" accept="image/*" id="verification_device_${sourceCount}" class="image-picker" />
+                <img id="verification_device_${sourceCount}_preview" class="preview_image" />
+            </div>
+        </label>
+        <p class="warning_label" id="verification_device_${sourceCount}_label"></p>
     `;
-    container.appendChild(div);
+
+    sourcesContainer.appendChild(div);
+
+    const energySelect = div.querySelector(".energy_source");
+
+    // Populate dependent dropdowns initially
+    updateSourceDropdowns(div, energySelect.value);
+
+    // Update dropdowns on energy source change
+    energySelect.addEventListener("change", () => updateSourceDropdowns(div, energySelect.value));
+
+    // Validate images and handle previews
+    validateInput({ id: `isolation_point_${sourceCount}`, type: "image" });
+    validateInput({ id: `verification_device_${sourceCount}`, type: "image" });
+
+    // Setup image previews after they exist in DOM
+    setupImagePreview(`verification_device_${sourceCount}`);
+    setupImagePreview(`isolation_point_${sourceCount}`);
+
     sourceCount++;
 }
 
-// Remove the last source
+
+// -----------------------------
+// Remove Last Source Function
+// -----------------------------
 function removeLastSource() {
     if (sourceCount === 0) return;
+    const lastSource = sourcesContainer.lastElementChild;
 
-    const container = document.getElementById("sources");
-    const lastSource = container.lastElementChild;
-
-    if (!lastSource) return;
-
-    // Check if any inputs have value
     const inputs = lastSource.querySelectorAll("input");
     let hasText = false;
     inputs.forEach(input => {
-        if (input.type === "file") {
-            if (getFileName(input) !== "") hasText = true;
-        } else if (input.value.trim() !== "") {
-            hasText = true;
+        if (input.value.trim() !== "") hasText = true;
+
+        // Remove this input from validation tracking
+        if (fieldValidity.hasOwnProperty(input.id)) {
+            delete fieldValidity[input.id];
         }
     });
 
-    if (hasText) {
-        if (!confirm("The last source contains data. Are you sure you want to remove it?")) {
-            return;
-        }
-    }
+    if (hasText && !confirm("The last source contains data. Remove anyway?")) return;
 
     lastSource.remove();
     sourceCount--;
+
+    // Recalculate button enable/disable
+    downloadable = Object.values(fieldValidity).every(Boolean);
+    updateButtons();
 }
 
-// Gather form data
-function gatherData() {
-    const obj = {};
 
-    // Add general fields
-    for (const id in fieldMap) {
-        const key = fieldMap[id];
-        if (key) {
-            const val = getVal(id);
-            if (val !== "") {
-                obj[key] = val;
-            }
-        }
-    }
+// -----------------------------
+// Populate dependent dropdowns
+// -----------------------------
+function updateSourceDropdowns(sourceDiv, energy) {
+    const data = energyData[energy];
+    const device = sourceDiv.querySelector(".device");
+    const isolation = sourceDiv.querySelector(".isolation_method");
+    const verification = sourceDiv.querySelector(".verification_method");
+    const dynamicInputs = sourceDiv.querySelector(".dynamic-inputs");
 
-    // Add sources if they have data
-    const sourceDivs = document.querySelectorAll(".source");
-    const sources = [];
+    // Clear previous
+    device.innerHTML = data.device.map(d => `<option value="${d}">${d}</option>`).join("");
+    isolation.innerHTML = data.isolation_method.map(d => `<option value="${d}">${d}</option>`).join("");
+    verification.innerHTML = data.verification_method.map(d => `<option value="${d}">${d}</option>`).join("");
 
-    sourceDivs.forEach(div => {
-        const s = {};
-        div.querySelectorAll("input").forEach(input => {
-            let val = "";
-            if (input.type === "file") {
-                val = getFileName(input);
-            } else {
-                val = input.value.trim();
-            }
-            if (input.className && val !== "") {
-                s[input.className] = val;
-            }
-        });
-        if (Object.keys(s).length > 0) {
-            sources.push(s);
-        }
+    // Remove old dynamic inputs
+    dynamicInputs.innerHTML = "";
+    data.inputs.forEach(inputName => {
+        const label = document.createElement("label");
+        label.textContent = inputName.toUpperCase() + ": ";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = inputName;
+        input.placeholder = inputName;
+        input.style.width = "100%";
+        label.appendChild(input);
+        dynamicInputs.appendChild(label);
     });
-
-    if (sources.length > 0) {
-        obj.sources = sources;
-    }
-
-    return obj;
 }
-
-// Generate JSON and show in textarea
-function generateJSON() {
-    const obj = gatherData();
-    const output = document.getElementById("output");
-    if (output) output.value = JSON.stringify(obj, null, 2);
-}
-
-// Download JSON file
-function downloadOutput() {
-    const output = document.getElementById("output");
-    const content = output?.value;
-    if (!content) {
-        alert("Generate the JSON first!");
-        return;
-    }
-
-    const filename = getVal("name") || "data";
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-// Attach listeners after DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("addSourceBtn")?.addEventListener("click", addSource);
-    document.getElementById("removeSourceBtn")?.addEventListener("click", removeLastSource);
-    document.getElementById("generateBtn")?.addEventListener("click", generateJSON);
-    document.getElementById("downloadBtn")?.addEventListener("click", downloadOutput);
-});

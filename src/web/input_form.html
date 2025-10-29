@@ -32,7 +32,7 @@
         <label>Machine Image:
             <div class="input-with-preview" id="machine_image_picker">
                 <input type="file" accept="image/*" id="machine_image" class="image-picker" />
-                <img id="machine_preview" class="preview_image" />
+                <img id="machine_image_preview" class="preview_image" />
             </div>
         </label>
         <p class="warning_label" id="machine_image_label"></p>
@@ -71,11 +71,11 @@
 
     <div style="margin-top: 10px;">
         <button type="button" id="generateBtn">Generate JSON</button>
-        <button type="button" id="downloadBtn">Download JSON</button>
+        <button type="button" id="downloadBtn">Download</button>
     </div>
 </main>
 
-<script type="module" src="scripts/input_form_2.js"></script>
+<script type="module" src="scripts/input_form.js"></script>
 <script type="module" src="scripts/json_handlers.js"></script>
 </body>
 </html>
