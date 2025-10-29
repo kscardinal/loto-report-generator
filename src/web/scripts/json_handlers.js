@@ -63,7 +63,7 @@ const outputJSON = document.getElementById("output");
 generateButton.addEventListener("click", function() {
     
     const json = generateJSON();
-    console.log(JSON.stringify(json, null, 4));
+    // console.log(JSON.stringify(json, null, 4));
     outputJSON.value = JSON.stringify(json, null, 4);
 
 });
