@@ -18,6 +18,7 @@
             padding: 20px 0;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative; /* add this */
         }
 
         h1 {
@@ -103,11 +104,31 @@
             margin-top: 40px;
             font-style: italic;
         }
+
+        .add-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            background-color: rgba(0,0,0,0.2);
+            padding: 5px 12px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .add-btn:hover {
+            background-color: rgba(0,0,0,0.35);
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Available PDF Reports</h1>
+        <a href="{{ url_for('create_report') }}" class="add-btn" title="Create New Report">+</a>
     </header>
 
     <main>
