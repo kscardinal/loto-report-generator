@@ -109,18 +109,21 @@
         }
 
         a.download-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 16px;
             background-color: #C32026;
             color: white;
-            text-decoration: none;
+            border: none;
+            padding: 10px 15px;
             border-radius: 6px;
-            transition: background-color 0.2s ease;
+            font-size: 1em;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+            text-decoration: none;
         }
 
         a.download-link:hover {
-            background-color: #a50f14;
+            background-color: #A01D20;
         }
 
         .back-btn {
@@ -139,6 +142,21 @@
 
         .back-btn:hover {
             background-color: rgba(0,0,0,0.35);
+        }
+
+        button {
+            background-color: #C32026;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #A01D20;
         }
 
     </style>
@@ -184,9 +202,51 @@
             </div>
         </div>
 
-        <div class="section download">
-            <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+        <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+                <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" >Download Assets</button>
+            </div>
+            <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
         </div>
     </main>
 </body>
+<script>
+    const downloadButton = document.getElementById("downloadBtn");
+    const deleteButton = document.getElementById("deleteBtn");
+
+    downloadButton.addEventListener("click", async () => {
+        let reportName = downloadButton.dataset.report;
+
+        // Get list of file URLs
+        const res = await fetch(`/download_report_files/${reportName}`);
+        if (!res.ok) return alert("Failed to get file list");
+        const { files } = await res.json();
+
+        // Download each file
+        for (const file of files) {
+            const response = await fetch(file.url);
+            if (!response.ok) continue;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = file.filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    });
+
+    deleteButton.addEventListener("click", async () => {
+    const reportName = deleteButton.dataset.report;
+    if (!confirm(`Are you sure you want to delete report "${reportName}"?`)) return;
+
+    const res = await fetch(`/remove_report/${reportName}`, { method: "POST" });
+    if (res.ok) {
+        window.location.href = "{{ url_for('pdf_list') }}";
+    } else {
+        alert("Failed to delete report.");
+    }
+});
+</script>
 </html>

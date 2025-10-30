@@ -44,7 +44,6 @@ uploadButton.addEventListener("click", async () => {
     ["web"].forEach(tag => formData.append("tags", tag));
     formData.append("notes", "This was uploaded from the web");
 
-    // Send request
     try {
         const response = await fetch("/upload/", {
             method: "POST",
@@ -52,8 +51,13 @@ uploadButton.addEventListener("click", async () => {
         });
 
         const data = await response.json();
+
         if (response.ok) {
             alert(`Upload successful! Report: ${data.report_name}\nFiles: ${data.photos.join(", ")}`);
+
+            // Clear temp files on server after successful upload
+            await fetch("/clear/", { method: "POST" });
+
             window.location.href = "/pdf_list";  // <-- redirects user
         } else {
             alert(`Upload failed: ${data.error || JSON.stringify(data)}`);
@@ -62,6 +66,7 @@ uploadButton.addEventListener("click", async () => {
         console.error(err);
         alert("Upload failed: see console for details.");
     }
+
 });
 
 

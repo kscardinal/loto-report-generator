@@ -372,3 +372,63 @@ async def pdf_list_json():
         report_list.append(doc)
 
     return {"reports": report_list}
+
+
+# -----------------------------
+# Download JSON + all related photos (separately)
+# -----------------------------
+@app.get("/download_report_files/{report_name}", name="download_report_files")
+def download_report_files(report_name: str):
+    """
+    Download the report JSON and all related photos for a given report name.
+    Returns JSON with download URLs for each file.
+    """
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
+
+    # Prepare response structure
+    file_list = []
+
+    # 1️⃣ Create JSON download URL
+    file_list.append({
+        "filename": f"{report_name}.json",
+        "url": f"/download_json/{report_name}"
+    })
+
+    # 2️⃣ Create photo download URLs
+    for photo in doc.get("photos", []):
+        file_list.append({
+            "filename": photo.get("photo_name", f"{photo['photo_id']}.jpg"),
+            "url": f"/download_photo/{photo['photo_id']}"
+        })
+
+    return {"report_name": report_name, "files": file_list}
+
+
+# -----------------------------
+# Download JSON file for a report
+# -----------------------------
+@app.get("/download_json/{report_name}", name="download_json")
+def download_json(report_name: str):
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
+
+    json_bytes = BytesIO(json.dumps(doc["json_data"], indent=2).encode("utf-8"))
+    headers = {"Content-Disposition": f"attachment; filename={report_name}.json"}
+    return StreamingResponse(json_bytes, media_type="application/json", headers=headers)
+
+
+# -----------------------------
+# Download photo by its GridFS ID
+# -----------------------------
+@app.get("/download_photo/{photo_id}", name="download_photo")
+def download_photo(photo_id: str):
+    try:
+        grid_out = fs.get(ObjectId(photo_id))
+    except Exception:
+        return JSONResponse(status_code=404, content={"error": f"Photo '{photo_id}' not found"})
+
+    headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
+    return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
