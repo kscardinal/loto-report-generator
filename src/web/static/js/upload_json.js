@@ -54,6 +54,7 @@ uploadButton.addEventListener("click", async () => {
         const data = await response.json();
         if (response.ok) {
             alert(`Upload successful! Report: ${data.report_name}\nFiles: ${data.photos.join(", ")}`);
+            window.location.href = "/pdf_list";  // <-- redirects user
         } else {
             alert(`Upload failed: ${data.error || JSON.stringify(data)}`);
         }
