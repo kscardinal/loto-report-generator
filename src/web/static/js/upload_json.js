@@ -22,7 +22,11 @@ uploadButton.addEventListener("click", async () => {
         const m = String(today.getMonth() + 1).padStart(2, "0");
         const d = String(today.getDate()).padStart(2, "0");
         reportName = `${y}${m}${d}_untitledReport`;
+    } else {
+        reportName = await getUniqueReportName(nameInput.value.trim());
     }
+
+    console.log(reportName);
 
     // Create FormData
     const formData = new FormData();
@@ -63,3 +67,23 @@ uploadButton.addEventListener("click", async () => {
         alert("Upload failed: see console for details.");
     }
 });
+
+
+// -----------------------------
+// Checks for duplicates and numbers them accordingly
+// -----------------------------
+async function getUniqueReportName(baseName) {
+    let name = baseName;
+    let counter = 1;
+
+    const response = await fetch(`/pdf_list_json`);
+    const data = await response.json();
+    const existingNames = data.reports.map(r => r.report_name);
+
+    while (existingNames.includes(name)) {
+        name = `${baseName}_${counter}`;
+        counter++;
+    }
+
+    return name;
+}
