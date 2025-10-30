@@ -152,8 +152,6 @@
             border-radius: 6px;
             font-size: 1em;
             cursor: pointer;
-            margin-right: 10px;
-            margin-top: 10px;
             transition: background-color 0.2s;
         }
 
@@ -204,14 +202,18 @@
             </div>
         </div>
 
-        <div class="section download">
-            <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
-            <button type="button" id="downloadBtn" data-report="{{ report.report_name }}">Download Assets</button>
+        <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+                <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" >Download Assets</button>
+            </div>
+            <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
         </div>
     </main>
 </body>
 <script>
     const downloadButton = document.getElementById("downloadBtn");
+    const deleteButton = document.getElementById("deleteBtn");
 
     downloadButton.addEventListener("click", async () => {
         let reportName = downloadButton.dataset.report;
@@ -234,5 +236,17 @@
             URL.revokeObjectURL(url);
         }
     });
+
+    deleteButton.addEventListener("click", async () => {
+    const reportName = deleteButton.dataset.report;
+    if (!confirm(`Are you sure you want to delete report "${reportName}"?`)) return;
+
+    const res = await fetch(`/remove_report/${reportName}`, { method: "POST" });
+    if (res.ok) {
+        window.location.href = "{{ url_for('pdf_list') }}";
+    } else {
+        alert("Failed to delete report.");
+    }
+});
 </script>
 </html>
