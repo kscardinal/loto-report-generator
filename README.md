@@ -81,28 +81,39 @@
 ## Project Structure  
 
 - `loto-report-generator/`
-- ├── `.github/workflows` # Includes all the tests run with GitHub Actions
-- ├───── [`tests.yml`](.github/workflows/tests.yml) # Test that runs during pushes and merges to make sure PDF generation works
-- ├── `includes/` # Includes all the assets needed to make the LOTO PDF
-- ├── `src/`
-- ├───── [`api/`](src/api)
-- ├──────── [`main.py`](src/api/main.py) # Server component that receives the requests and handles them
-- ├───── [`database/`](src/database)
-- ├──────── [`db_2.py`](src/database/db_2.py) # Creates the MongoDB database used to store all the files and contains some helper functions
-- ├──────── [`db_template.json`](src/database/db_template.json) # Template for a new entry into the database will all properties and descriptions
-- ├───── [`pdf/`](src/pdf)
-- ├──────── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the PDF file using the server component
-- ├──────── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the PDF with a given JSON file
-- ├───── [`tests/`](src/tests)
-- ├──────── [`test_pdf_scripts.py`](src/tests/test_pdf_scripts.py) # PyTest that checks everything is working before deploying the code
-- ├──────── [`test_data.json`](src/tests/test_data.json) # Main testing data set
-- ├──────── `test_data_....json` # More test data sets to test edge cases of the PDF generation
-- ├───── [`web/`](src/web)
-- ├──────── [`templates/`](src/web/templates)
-- ├─────────── [`view_report.html`](src/web/templates/view_report.html) # Template for webpage that shows a specific report including all the details
-- ├─────────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
-- ├── `temp/`
-- └── [`.env`](.env) # Where the secrets go
+- ├─ `.github/workflows` # Includes all the tests run with GitHub Actions
+- ├─── [`tests.yml`](.github/workflows/tests.yml) # Test that runs during pushes and merges to make sure PDF generation works
+- ├─ `includes/` # Includes all the assets needed to make the LOTO PDF
+- ├─ `src/`
+- ├─── [`api/`](src/api)
+- ├───── [`main.py`](src/api/main.py) # Server component that receives the requests and handles them
+- ├─── [`database/`](src/database)
+- ├───── [`db_2.py`](src/database/db_2.py) # Creates the MongoDB database used to store all the files and contains some helper functions
+- ├───── [`db_template.txt`](src/database/db_template.txt) # Template for a new entry into the database will all properties and descriptions
+- ├─── [`pdf/`](src/pdf)
+- ├───── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the PDF file using the server component
+- ├───── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the PDF with a given JSON file
+- ├─── [`tests/`](src/tests)
+- ├───── [`test_pdf_scripts.py`](src/tests/test_pdf_scripts.py) # PyTest that checks everything is working before deploying the code
+- ├───── [`test_data.json`](src/tests/test_data.json) # Main testing data set
+- ├───── `test_data_....json` # More test data sets to test edge cases of the PDF generation
+- ├─── [`web/`](src/web)
+- ├───── [`static/`](src/web/static)
+- ├──────── [`css/`](src/web/static/css) 
+- ├────────── [`input_form.css`](src/web/static/css/input_form.css) # Styling for the input form
+- ├──────── [`dependencies/`](src/web/static/dependencies) 
+- ├────────── [`energySources.json`](src/web/static/dependencies/energySources.json) # Data related to energy sources for loto and associated dropdown options
+- ├──────── [`includes/`](src/web/static/includes) # Assets used for making the web pages like icons
+- ├──────── [`js/`](src/web/static/js) 
+- ├────────── [`input_form.js`](src/web/static/js/input_form.js) # Scrips specifically for handling the logic of the data input form
+- ├────────── [`json_handlers.js`](src/web/static/js/json_handlers.js) # Script specifically for handling the logic generating and downloading the resulting json and files
+- ├────────── [`upload_json.js`](src/web/static/js/upload_json.js) # Script specifically for handling the logic in uploading the json and photos to the database
+- ├───── [`templates/`](src/web/templates)
+- ├─────── [`input_form.html`](src/web/templates/input_form.html) # Template for webpage that is used for data gathering and inputting into database
+- ├─────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
+- ├─────── [`view_report.html`](src/web/templates/view_report.html) # Template for webpage that shows a specific report including all the details
+- ├─ `temp/`
+- └─ [`.env`](.env) # Where the secrets go
 
 ---
 
@@ -297,17 +308,22 @@ git config --global core.autocrlf
 
 ## API Endpoints
 
-| Endpoint                         | Method | Description                                                                 |
-|----------------------------------|--------|-----------------------------------------------------------------------------|
-| `/upload`                        | POST   | Uploads files (JSON and other types) to the server and stores metadata in DB |
-| `/generate`                      | POST   | Triggers PDF generation from a specified JSON file                          |
-| `/clear`                         | POST   | Clears all temporary files from the server                                 |
-| `/pdf_list`                      | GET    | Displays a webpage listing all PDFs available in the database               |
-| `/view_report/{report_name}`     | GET    | Displays detailed report metadata and associated photos                     |
-| `/download_pdf/{report_name}`    | GET    | Downloads the corresponding generated PDF file                              |
-| `/create_report` | GET | Displays a webpage for creating a PDF with options to down and upload to the database |
-| `/metadata/{report_name}`        | GET    | Returns the stored metadata for a specific report as JSON (for testing/debugging) |
-| `/db_status`                     | GET    | Checks database connection and returns a success message (for tests/health checks) |
+| Endpoint                         | Method(s)      | Description                                                                 |
+|----------------------------------|----------------|-----------------------------------------------------------------------------|
+| `/upload/`                        | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
+| `/generate/`                      | POST           | Triggers PDF generation for a specified report, using JSON and images from DB |
+| `/download_pdf/{report_name}`      | GET            | Downloads/streams the generated PDF file for the specified report          |
+| `/create_report`                   | GET            | Displays a webpage for creating a report with options to download/upload    |
+| `/pdf_list`                        | GET            | Displays a webpage listing all PDFs/reports available in the database      |
+| `/pdf_list_json`                   | GET            | Returns JSON of all reports with metadata only (no JSON data or photos)    |
+| `/view_report/{report_name}`       | GET            | Displays detailed report metadata and associated photos (HTML page)        |
+| `/metadata/{report_name}`          | GET            | Returns stored metadata for a specific report as JSON (excluding JSON data/photos) |
+| `/photo/{photo_id}`                | GET            | Returns an image stored in GridFS by its ID                                 |
+| `/remove_report/{report_name}`     | GET, POST      | Deletes a report from the database (retains shared photos)                  |
+| `/cleanup_orphan_photos`           | GET, POST      | Deletes all photos in GridFS not referenced by any report                   |
+| `/clear/`                         | POST           | Clears all temporary files in the server's temp directory                  |
+| `/db_status`                       | GET            | Checks database connection and returns success or error message             |
+
 
 ---
 
