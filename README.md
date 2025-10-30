@@ -311,7 +311,6 @@ git config --global core.autocrlf
 | Endpoint                         | Method(s)      | Description                                                                 |
 |----------------------------------|----------------|-----------------------------------------------------------------------------|
 | `/upload/`                        | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
-| `/generate/`                      | POST           | Triggers PDF generation for a specified report, using JSON and images from DB |
 | `/download_pdf/{report_name}`      | GET            | Downloads/streams the generated PDF file for the specified report          |
 | `/create_report`                   | GET            | Displays a webpage for creating a report with options to download/upload    |
 | `/pdf_list`                        | GET            | Displays a webpage listing all PDFs/reports available in the database      |
