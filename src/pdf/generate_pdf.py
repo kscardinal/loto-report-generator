@@ -813,7 +813,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
                                   source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),
                                   source.get('volt', blank_text_v))
-        case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Refrigerant':
+        case 'Natural Gas' | 'Steam' | 'Hydraulic' | 'Refrigerant' | 'Water' | 'Pneumatic':
             pdf.drawCentredString(column1_text, text_block_middle_width + (energy_source_line_spacing / 2),
                                   source.get('energy_source', blank_text))
             pdf.drawCentredString(column1_text, text_block_middle_width - (energy_source_line_spacing / 2),

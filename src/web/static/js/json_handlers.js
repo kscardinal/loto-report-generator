@@ -152,7 +152,7 @@ export function generateJSON() {
         let unitValues = {};
 
         (config.inputs || []).forEach(inpObj => {
-            const field = inpObj.filed_name;
+            const field = inpObj.field_name;
             const unit = inpObj.unit_name || "";
             const elIdIndexed = `${field}_${idx}`;
             const elIndexed = div.querySelector(`#${CSS.escape(elIdIndexed)}`);
