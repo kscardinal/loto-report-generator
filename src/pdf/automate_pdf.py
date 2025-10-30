@@ -83,9 +83,11 @@ def upload_files(
 # Trigger PDF generation
 # -------------------------
 def generate_pdf(report_name: str):
-    payload = {"report_name": report_name}
-    res = requests.post(f"{SERVER}/generate/", json=payload)
-    print("Generate response:", res.json())
+    res = requests.get(f"{SERVER}/download_pdf/{report_name}")
+    if res.status_code == 200:
+        print("Generate Reponse: PDF generated successfully")
+    else:
+        print("Generate Reponse: Error generating PDF:", res.status_code)
 
 # -------------------------
 # Download PDF via /download_pdf

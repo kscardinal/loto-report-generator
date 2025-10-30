@@ -142,52 +142,6 @@ async def upload_report(
     return {"report_name": report_name, "photos": [p["photo_name"] for p in photos_data]}
 
 # -----------------------------
-# Trigger PDF generation
-# -----------------------------
-class GenerateRequest(BaseModel):
-    report_name: str
-
-@app.post("/generate/")
-async def generate_pdf_from_db(request: GenerateRequest):
-    """
-    Generate a PDF for the specified report.
-    Pulls JSON + images from DB, writes to temp, calls generate_pdf.py via subprocess.
-    """
-    report_name = request.report_name
-    doc = uploads.find_one({"report_name": report_name})
-    if not doc:
-        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
-
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir_path = Path(tmpdir)
-            json_file_path = tmpdir_path / f"{report_name}.json"
-            with open(json_file_path, "w", encoding="utf-8") as f:
-                json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
-
-            for photo in doc["photos"]:
-                photo_file_path = tmpdir_path / photo["photo_name"]
-                with open(photo_file_path, "wb") as f:
-                    f.write(fs.get(photo["photo_id"]).read())
-
-            subprocess.run(
-                ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-
-            pdf_filename = f"{report_name}.pdf"
-
-    except subprocess.CalledProcessError as e:
-        return JSONResponse(status_code=500, content={"error": "PDF generation failed.", "details": e.stderr or e.stdout})
-    except Exception as e:
-        import traceback
-        return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
-
-    return {"message": "PDF generation triggered successfully.", "pdf_filename": pdf_filename}
-
-# -----------------------------
 # Download PDF (streams PDF directly to client)
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
