@@ -3,8 +3,8 @@ console.log("json_handlers.js");
 // Module Stuff
 const generateButton = document.getElementById("generateBtn");
 const downloadButton = document.getElementById("downloadBtn");
+const outputJSON = document.getElementById("output");
 let energyData = {};
-
 
 // -----------------------------
 // JSON Energy Data

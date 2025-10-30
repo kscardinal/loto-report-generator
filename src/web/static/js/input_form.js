@@ -364,20 +364,30 @@ function updateSourceDropdowns(sourceDiv, energy) {
     const verification = sourceDiv.querySelector(".verification_method");
     const dynamicInputs = sourceDiv.querySelector(".dynamic-inputs");
 
+    // Remove any old custom input fields first
+    sourceDiv.querySelectorAll(".custom-input").forEach(el => el.remove());
+
+    // Clear dynamic inputs & validity tracking
     dynamicInputs.querySelectorAll("input").forEach(input => delete fieldValidity[input.id]);
     dynamicInputs.innerHTML = "";
 
     function populateDropdown(selectElem, items, name) {
-        selectElem.innerHTML = items.map(d => `<option value="${d}">${d}</option>`).join("") + `<option value="__custom__">Other (custom)</option>`;
-        let customInput = document.createElement("input");
+        selectElem.innerHTML = items.map(d => `<option value="${d}">${d}</option>`).join("") +
+            `<option value="__custom__">Other (custom)</option>`;
+
+        // Create the custom input field (hidden by default)
+        const customInput = document.createElement("input");
         customInput.type = "text";
         customInput.className = `${name}_custom custom-input`;
         customInput.placeholder = `Enter custom ${name.replace("_"," ")}...`;
         customInput.style.display = "none";
         customInput.style.marginTop = "5px";
         customInput.style.width = "100%";
-        selectElem.parentElement.appendChild(customInput);
 
+        // Insert custom input *after* dropdown
+        selectElem.insertAdjacentElement("afterend", customInput);
+
+        // Toggle visibility
         selectElem.addEventListener("change", () => {
             customInput.style.display = selectElem.value === "__custom__" ? "block" : "none";
             if (selectElem.value !== "__custom__") customInput.value = "";
