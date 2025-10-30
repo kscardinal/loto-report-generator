@@ -6,6 +6,7 @@ console.log("input_form.js");
 
 const downloadButton = document.getElementById("downloadBtn");
 const generateButton = document.getElementById("generateBtn");
+const uploadButton = document.getElementById("uploadBtn");
 
 let fieldValidity = {};
 let downloadable = false;
@@ -42,6 +43,7 @@ function updateSourceButton(buttonElement, numSources, maxSources) {
 function updateButtons() {
     updateButton(downloadButton);
     updateButton(generateButton);
+    updateButton(uploadButton);
 }
 
 // === Utility: update source buttons ===
