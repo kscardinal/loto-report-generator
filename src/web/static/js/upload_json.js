@@ -1,21 +1,17 @@
 console.log("upload_json.js");
 
+import { generateJSON } from './json_handlers.js';
+
 // -----------------------------
 // Upload JSON + images
 // -----------------------------
 const uploadButton = document.getElementById("uploadBtn");
-const outputJSON = document.getElementById("output");
 
 uploadButton.addEventListener("click", async () => {
-    // Optional confirmation (can remove later)
-    if (!confirm("Are you sure you want to upload this report?")) return;
+    // Always regenerate JSON from the current form
+    const jsonValue = generateJSON(); // returns a stringified JSON
 
-    // Check that JSON exists
-    const jsonValue = outputJSON.value.trim();
-    if (!jsonValue) {
-        alert("JSON is empty! Generate the report first.");
-        return;
-    }
+    console.log("Generated JSON:", jsonValue);
 
     // Determine report name
     const nameInput = document.getElementById("name");
@@ -31,28 +27,26 @@ uploadButton.addEventListener("click", async () => {
     // Create FormData
     const formData = new FormData();
 
-    // Append JSON as a file with proper name
-    const jsonBlob = new Blob([jsonValue], { type: "application/json" });
+    // Append JSON as a file
+    const jsonBlob = new Blob([JSON.stringify(jsonValue)], { type: "application/json" });
     formData.append("files", jsonBlob, `${reportName}.json`);
 
-    // Append all selected images (base filename only)
+    // Append all selected images
     const inputs = document.querySelectorAll('input.image-picker[type="file"]');
     inputs.forEach(input => {
         for (const file of input.files) {
-            formData.append("files", file, file.name); // file.name only
+            formData.append("files", file, file.name);
         }
     });
 
     // Add metadata
     formData.append("uploaded_by", "Web App");
-    //formData.append("tags", "web"); // just "web"
-    const tags = ["web"];
-    tags.forEach(tag => formData.append("tags", tag));
+    ["web"].forEach(tag => formData.append("tags", tag));
     formData.append("notes", "This was uploaded from the web");
 
     // Send request
     try {
-        const response = await fetch("http://localhost:8000/upload/", {
+        const response = await fetch("/upload/", {
             method: "POST",
             body: formData
         });
@@ -60,6 +54,7 @@ uploadButton.addEventListener("click", async () => {
         const data = await response.json();
         if (response.ok) {
             alert(`Upload successful! Report: ${data.report_name}\nFiles: ${data.photos.join(", ")}`);
+            window.location.href = "/pdf_list";  // <-- redirects user
         } else {
             alert(`Upload failed: ${data.error || JSON.stringify(data)}`);
         }

@@ -98,6 +98,30 @@
             max-height: 25px;
         }
 
+        .delete-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            margin-right: 20px;
+            background-color: #dd7c7c; 
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 1.2em;
+            transition: background-color 0.2s;
+            border: none;
+        }
+
+        .delete-btn:hover {
+            background-color: #d65c5c;
+        }
+
+        .delete-btn-symbol {
+            max-width: 25px;
+            max-height: 25px;
+        }
+
         .no-reports {
             text-align: center;
             color: #666;
@@ -139,9 +163,12 @@
                         <a class="report-link" href="{{ url_for('view_report', report_name=name) }}">
                             <span class="report-index">{{ loop.index }}.</span> {{ name }}
                         </a>
-                        <a class="download-btn" href="{{ url_for('download_pdf', report_name=name) }}" target="_blank" title="Download PDF">
+                        <a class="download-btn" href="{{ url_for('download_pdf', report_name=name) }}" title="Download PDF">
                             <img src="{{ url_for('static', path='/includes/downloadSymbol.svg') }}" alt="Download PDF" class="download-btn-symbol">
                         </a>
+                        <button class="delete-btn" data-report="{{ name }}"> 
+                            <img src="{{ url_for('static', path='/includes/trashSymbol.svg') }}" alt="Delete Report" class="delete-btn-symbol">
+                        </button>
                     </li>
                 {% endfor %}
             </ul>
@@ -150,4 +177,30 @@
         {% endif %}
     </main>
 </body>
+<script>
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const reportName = btn.dataset.report;
+
+            if (!confirm(`Are you sure you want to delete "${reportName}"?`)) return;
+
+            try {
+                const response = await fetch(`/remove_report/${reportName}`, {
+                    method: "POST"
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Refresh the page after successful deletion
+                    window.location.reload();
+                } else {
+                    alert(`Error deleting report: ${data.error || JSON.stringify(data)}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to delete report. Check console for details.");
+            }
+        });
+    });
+</script>
 </html>
