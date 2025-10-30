@@ -8,7 +8,7 @@ const outputJSON = document.getElementById("output");
 
 uploadButton.addEventListener("click", async () => {
     // Optional confirmation (can remove later)
-    if (!confirm("Are you sure you want to upload this report?")) return;
+    // if (!confirm("Are you sure you want to upload this report?")) return;
 
     // Check that JSON exists
     const jsonValue = outputJSON.value.trim();

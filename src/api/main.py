@@ -326,8 +326,9 @@ async def db_status():
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
-
-
+# -----------------------------
+# Opens the page to create a report
+# -----------------------------
 @app.get("/create_report", response_class=HTMLResponse)
 async def create_report(request: Request):
     """
@@ -335,3 +336,85 @@ async def create_report(request: Request):
     """
     return templates.TemplateResponse("input_form.html", {"request": request})
 
+# -----------------------------
+# Remove a report from the database
+# -----------------------------
+@app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
+async def remove_report(report_name: str):
+    """
+    Remove a report from the database by name.
+    Does NOT delete photos, since multiple reports can share the same images.
+    Returns the names of photos retained for logging.
+    """
+    # Find the report
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
+
+    # Collect photo names for logging
+    photo_names = [p["photo_name"] for p in doc.get("photos", [])]
+
+    # Delete the report document itself
+    result = uploads.delete_one({"_id": doc["_id"]})
+    if result.deleted_count == 0:
+        return JSONResponse(status_code=500, content={"error": f"Failed to delete report '{report_name}'"})
+
+    return {
+        "message": f"Report '{report_name}' deleted successfully.",
+        "photos_retained": photo_names
+    }
+
+# -----------------------------
+# Cleanup orphaned photos from GridFS
+# -----------------------------
+@app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
+async def cleanup_orphan_photos():
+    """
+    Delete all photos in GridFS that are not referenced by any report.
+    Returns a dictionary of deleted photos with their names and IDs.
+    """
+    deleted_photos = {}
+
+    # Iterate over all files in GridFS
+    for grid_out in fs.find():
+        photo_id = grid_out._id
+        photo_name = grid_out.filename
+
+        # Check if this photo_id exists in any report
+        usage_count = uploads.count_documents({"photos.photo_id": photo_id})
+        if usage_count == 0:
+            # Not used, delete from GridFS
+            fs.delete(photo_id)
+            deleted_photos[photo_name] = str(photo_id)
+
+    return {
+        "message": f"Cleanup complete. {len(deleted_photos)} orphaned photos deleted.",
+        "deleted": deleted_photos
+    }
+
+# -----------------------------
+# Returns a json package of the current reports in the database
+# -----------------------------
+@app.get("/pdf_list_json")
+async def pdf_list_json():
+    """
+    Returns a JSON list of all reports with metadata only (no JSON data or photos).
+    """
+    docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})  # exclude JSON and photos
+    report_list = []
+
+    for doc in docs:
+        # Count number of photos in original report
+        photo_count = len(doc.get("photos", [])) if "photos" in doc else 0
+
+        # Convert datetime fields to ISO format
+        for key in ["date_added", "last_modified", "last_generated"]:
+            if key in doc and isinstance(doc[key], datetime):
+                doc[key] = doc[key].isoformat()
+
+        # Add photo count
+        doc["num_photos"] = photo_count
+
+        report_list.append(doc)
+
+    return {"reports": report_list}
