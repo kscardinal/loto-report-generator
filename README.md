@@ -310,18 +310,22 @@ git config --global core.autocrlf
 
 | Endpoint                         | Method(s)      | Description                                                                 |
 |----------------------------------|----------------|-----------------------------------------------------------------------------|
-| `/upload/`                        | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
-| `/download_pdf/{report_name}`      | GET            | Downloads/streams the generated PDF file for the specified report          |
-| `/create_report`                   | GET            | Displays a webpage for creating a report with options to download/upload    |
-| `/pdf_list`                        | GET            | Displays a webpage listing all PDFs/reports available in the database      |
-| `/pdf_list_json`                   | GET            | Returns JSON of all reports with metadata only (no JSON data or photos)    |
-| `/view_report/{report_name}`       | GET            | Displays detailed report metadata and associated photos (HTML page)        |
-| `/metadata/{report_name}`          | GET            | Returns stored metadata for a specific report as JSON (excluding JSON data/photos) |
-| `/photo/{photo_id}`                | GET            | Returns an image stored in GridFS by its ID                                 |
-| `/remove_report/{report_name}`     | GET, POST      | Deletes a report from the database (retains shared photos)                  |
-| `/cleanup_orphan_photos`           | GET, POST      | Deletes all photos in GridFS not referenced by any report                   |
-| `/clear/`                         | POST           | Clears all temporary files in the server's temp directory                  |
-| `/db_status`                       | GET            | Checks database connection and returns success or error message             |
+| `/upload/`                       | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
+| `/create_report`                 | GET            | Displays a webpage for creating a report with options to download/upload    |
+| `/pdf_list`                      | GET            | Displays a webpage listing all PDFs/reports available in the database       |
+| `/pdf_list_json`                 | GET            | Returns JSON of all reports with metadata only (no JSON data or photos)     |
+| `/view_report/{report_name}`     | GET            | Displays detailed report metadata and associated photos (HTML page)         |
+| `/metadata/{report_name}`        | GET            | Returns stored metadata for a specific report as JSON (excluding JSON data/photos) |
+| `/download_report_files/{report_name}` | GET       | Downloads the report JSON and all related photos for a given report name as URLs |
+| `/download_json/{report_name}`   | GET            | Downloads the JSON file for a specific report                               |
+| `/download_photo/{photo_id}`     | GET            | Downloads an individual photo from GridFS by its ID                          |
+| `/download_pdf/{report_name}`    | GET            | Downloads/streams the generated PDF file for the specified report           |
+| `/photo/{photo_id}`              | GET            | Returns an image stored in GridFS by its ID                                 |
+| `/remove_report/{report_name}`   | GET, POST      | Deletes a report from the database (retains shared photos)                  |
+| `/cleanup_orphan_photos`         | GET, POST      | Deletes all photos in GridFS not referenced by any report                   |
+| `/clear/`                        | POST           | Clears all temporary files in the server's temp directory                   |
+| `/db_status`                     | GET            | Checks database connection and returns success or error message             |
+
 
 
 ---
