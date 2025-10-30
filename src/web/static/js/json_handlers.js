@@ -1,5 +1,11 @@
 console.log("json_handlers.js");
 
+// Module Stuff
+const generateButton = document.getElementById("generateBtn");
+const downloadButton = document.getElementById("downloadBtn");
+let energyData = {};
+
+
 // -----------------------------
 // JSON Energy Data
 // -----------------------------
@@ -21,6 +27,10 @@ fetch("/static/dependencies/energySources.json")
     });
 
 // helpers ---------------------------------------------------------
+
+
+
+
 
 function formatDate(value) {
     if (!value) return "";
@@ -74,7 +84,7 @@ function formatNumberWithCommas(raw) {
 
 // main ------------------------------------------------------------
 
-function generateJSON() {
+export function generateJSON() {
     // static fields to collect (ids in DOM)
     const fields = [
         "description",
