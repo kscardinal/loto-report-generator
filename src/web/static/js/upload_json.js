@@ -11,8 +11,6 @@ uploadButton.addEventListener("click", async () => {
     // Always regenerate JSON from the current form
     const jsonValue = generateJSON(); // returns a stringified JSON
 
-    console.log("Generated JSON:", jsonValue);
-
     // Determine report name
     const nameInput = document.getElementById("name");
     let reportName = nameInput && nameInput.value.trim();
@@ -22,11 +20,9 @@ uploadButton.addEventListener("click", async () => {
         const m = String(today.getMonth() + 1).padStart(2, "0");
         const d = String(today.getDate()).padStart(2, "0");
         reportName = `${y}${m}${d}_untitledReport`;
-    } else {
-        reportName = await getUniqueReportName(nameInput.value.trim());
-    }
-
-    console.log(reportName);
+    } 
+    
+    reportName = await getUniqueReportName(reportName);
 
     // Create FormData
     const formData = new FormData();
