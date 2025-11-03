@@ -55,3 +55,41 @@ function checkDifference(inputID) {
         console.log("Tracked changes:", updatedFields);
     });
 }
+
+
+const updateButton = document.getElementById("updateBtn");
+
+updateButton.addEventListener("click", async () => {
+    if (!window.reportName || !updatedFields || Object.keys(updatedFields).length === 0) {
+        console.log("No changes to update.");
+        return;
+    }
+
+    // Convert updatedFields object to an array of {field, value} objects
+    const updatesArray = Object.entries(updatedFields).map(([field, value]) => ({
+        field,
+        value
+    }));
+
+    try {
+        const res = await fetch("/update_report_json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                report_name: window.reportName,
+                updates: updatesArray
+            })
+        });
+
+        const data = await res.json();
+        console.log("Update response:", data);
+
+        if (res.ok) {
+            // Optionally clear tracked changes after successful update
+            Object.keys(updatedFields).forEach(k => delete updatedFields[k]);
+        }
+
+    } catch (err) {
+        console.error("Failed to update report:", err);
+    }
+});

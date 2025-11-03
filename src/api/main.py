@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 from icecream import ic
 
+from pydantic import BaseModel
 import gridfs
 from bson.objectid import ObjectId
 from fastapi import FastAPI, UploadFile, File, Form, Request, Response, HTTPException
@@ -458,8 +459,8 @@ def reformat_date(date_val: Optional[str]) -> Optional[str]:
     # Could not parse
     return None
 
-@app.get("/update_report/{report_name}", response_class=HTMLResponse)
-async def update_report(request: Request, report_name: str):
+@app.get("/update/{report_name}", response_class=HTMLResponse)
+async def update(request: Request, report_name: str):
     doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
     if not doc:
         return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
@@ -490,3 +491,34 @@ async def get_report_json(report_name: str):
     
     # Return only the json_data field
     return JSONResponse(content=doc.get("json_data", {}))
+
+
+# Schema for update
+class FieldUpdate(BaseModel):
+    field: str
+    value: str
+
+class UpdateReportRequest(BaseModel):
+    report_name: str
+    updates: List[FieldUpdate]
+
+@app.post("/update_report_json")
+async def update_report_json(request: UpdateReportRequest):
+    # Find the report
+    doc = uploads.find_one({"report_name": request.report_name})
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Report '{request.report_name}' not found")
+
+    # Prepare update dictionary
+    update_dict = {}
+    for item in request.updates:
+        update_dict[f"json_data.{item.field}"] = item.value
+
+    if update_dict:
+        result = uploads.update_one(
+            {"report_name": request.report_name},
+            {"$set": update_dict}
+        )
+        return {"message": "Report updated successfully", "modified_count": result.modified_count}
+    else:
+        return JSONResponse(status_code=400, content={"message": "No valid updates provided"})
