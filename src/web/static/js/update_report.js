@@ -33,22 +33,26 @@ function checkDifference(inputID) {
             const [year, month, day] = element.value.split("-");
             const new_date = month + "/" + day + "/" + year;
             if (new_date !== originalValue) {
-            // Store the change
-            updatedFields[inputID] = new_date;
+                // Store the change
+                updatedFields[inputID] = new_date;
+                element.classList.add("updated");
             } else {
                 // Remove the field if reverted to original
                 if (updatedFields.hasOwnProperty(inputID)) {
                     delete updatedFields[inputID];
+                    element.classList.remove("updated");
                 }
             }
         } else {
             if (element.value !== originalValue) {
-            // Store the change
-            updatedFields[inputID] = element.value;
+                // Store the change
+                updatedFields[inputID] = element.value;
+                element.classList.add("updated");
             } else {
                 // Remove the field if reverted to original
                 if (updatedFields.hasOwnProperty(inputID)) {
                     delete updatedFields[inputID];
+                    element.classList.remove("updated");
                 }
             }
         }
@@ -92,4 +96,30 @@ updateButton.addEventListener("click", async () => {
     } catch (err) {
         console.error("Failed to update report:", err);
     }
+
+    window.location.href = "/update/" + window.reportName;
 });
+
+
+// ===============
+// TODAY BUTTON
+// ===============
+
+// === Tool: set input to today ===
+function todayButton(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = document.getElementById(inputId + "_button");
+    if (!inputElement || !buttonElement) return;
+
+    buttonElement.addEventListener("click", () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        inputElement.value = `${yyyy}-${mm}-${dd}`;
+        inputElement.dispatchEvent(new Event('change'));
+    });
+}
+
+todayButton("date");
+todayButton("completed_date");

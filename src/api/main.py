@@ -522,3 +522,4 @@ async def update_report_json(request: UpdateReportRequest):
         return {"message": "Report updated successfully", "modified_count": result.modified_count}
     else:
         return JSONResponse(status_code=400, content={"message": "No valid updates provided"})
+    
