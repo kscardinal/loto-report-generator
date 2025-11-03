@@ -10,7 +10,7 @@ from icecream import ic
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -476,3 +476,17 @@ async def update_report(request: Request, report_name: str):
                 doc["json_data"][key] = reformat_date(doc["json_data"][key])
 
     return templates.TemplateResponse("update_report.html", {"request": request, "report": doc})
+
+
+@app.get("/get_report_json/{report_name}")
+async def get_report_json(report_name: str):
+    """
+    Return only the json_data of a report as JSON.
+    """
+    # Find the report in the database
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Report '{report_name}' not found")
+    
+    # Return only the json_data field
+    return JSONResponse(content=doc.get("json_data", {}))
