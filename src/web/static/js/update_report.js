@@ -123,3 +123,207 @@ function todayButton(inputId) {
 
 todayButton("date");
 todayButton("completed_date");
+
+let fieldValidity = {};
+let updatable = false;
+
+let sourceCount = 0;
+const MAX_SOURCES = 12;
+
+// === Utility: enable/disable a button based on updatable ===
+function updateButton_1(buttonElement) {
+    if (updatable) {
+        buttonElement.disabled = false;
+        buttonElement.style.cursor = "pointer";
+        buttonElement.classList.remove("button-disabled");
+    } else {
+        buttonElement.disabled = true;
+        buttonElement.style.cursor = "not-allowed";
+        buttonElement.classList.add("button-disabled");
+    }
+}
+
+// === Utility: enable/disable source add/remove buttons ===
+function updateSourceButton(buttonElement, numSources, maxSources) {
+    if (buttonElement === removeSourceButton) {
+        buttonElement.disabled = numSources <= 0;
+        buttonElement.style.cursor = numSources > 0 ? "pointer" : "not-allowed";
+        buttonElement.classList.toggle("button-disabled", numSources <= 0);
+    } else if (buttonElement === addSourceButton) {
+        buttonElement.disabled = numSources >= maxSources;
+        buttonElement.style.cursor = numSources < maxSources ? "pointer" : "not-allowed";
+        buttonElement.classList.toggle("button-disabled", numSources >= maxSources);
+    } else {
+        console.log("ERROR");
+    }
+}
+
+// === Utility: update main buttons ===
+function updateButtons() {
+    updateButton_1(updateButton);
+}
+
+
+
+// ===============
+// VALIDATION HELPERS
+// ===============
+
+// === Tool: check if file is valid image ===
+function isImageFile(file) {
+    const validTypes = ["image/jpg", "image/jpeg", "image/png"];
+    const validExt = /\.(jpg|jpeg|png)$/i;
+    const match = file.name.toLowerCase().match(/\.([a-z0-9]+)$/);
+    const extension = match ? match[1] : null;
+    const isValid = validTypes.includes(file.type) && validExt.test(file.name);
+    return { isValid, extension };
+}
+
+
+// ===============
+// UNIFIED INPUT VALIDATION
+// ===============
+
+// === Tool: validate a specific input field ===
+function validateInput({ id, type }) {
+    const input = document.getElementById(id);
+    const label = document.getElementById(id + "_label");
+    if (!input || !label) return;
+
+    fieldValidity[id] = true;
+
+    if (type === "number") {
+        input.addEventListener("input", () => {
+            const val = input.value;
+            const isValid = val.length === 0 || /^\d+$/.test(val);
+            if (!isValid) {
+                label.style.display = "block";
+                label.textContent = " ❌ Must only be a number";
+                input.classList.add("error");
+            } else {
+                label.style.display = "none";
+                input.classList.remove("error");
+            }
+            fieldValidity[id] = isValid;
+            updatable = Object.values(fieldValidity).every(Boolean);
+            updateButtons();
+        });
+    } else if (type === "image") {
+        const picker = document.getElementById(id + "_picker");
+        const preview = document.getElementById(id + "_preview");
+        const button = document.getElementById(id + "_button");
+        if (!picker || !preview) return;
+
+        input.addEventListener("change", () => {
+            const file = input.files[0];
+            const { isValid, extension } = file ? isImageFile(file) : { isValid: true };
+            if (!file) {
+                label.style.display = "none";
+                picker.classList.remove("error");
+                preview.style.display = "none";
+                fieldValidity[id] = true;
+                button.style.display = "none";
+            } else if (!isValid) {
+                label.style.display = "block";
+                label.textContent = ` ❌ ${extension || "File"} not supported. Only jpg, jpeg, png`;
+                picker.classList.add("error");
+                preview.style.display = "none";
+                fieldValidity[id] = false;
+                button.style.display = "block";
+            } else {
+                label.style.display = "none";
+                picker.classList.remove("error");
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+                preview.onload = () => URL.revokeObjectURL(preview.src);
+                fieldValidity[id] = true;
+                button.style.display = "block";
+            }
+            updatable = Object.values(fieldValidity).every(Boolean);
+            updateButtons();
+        });
+    }
+}
+
+// === Initialize validation for static fields ===
+validateInput({ id: "procedure_number", type: "number" });
+validateInput({ id: "revision", type: "number" });
+validateInput({ id: "origin", type: "number" });
+validateInput({ id: "isolation_points", type: "number" });
+validateInput({ id: "machine_image", type: "image" });
+updatable = Object.values(fieldValidity).every(Boolean);
+updateButtons();
+
+// ===============
+// IMAGE UTILS
+// ===============
+
+// === Tool: clear a photo input ===
+function clearPhoto(inputId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(inputId + "_preview");
+    const label = document.getElementById(inputId + "_label");
+    const button = document.getElementById(inputId + "_button");
+    const picker = document.getElementById(inputId + "_picker");
+    if (!input || !preview || !label || !button) return;
+
+    input.value = "";
+    preview.src = "";
+    preview.style.display = "none";
+    button.style.display = "none";
+    label.style.display = "none";
+    label.textContent = "";
+    if (picker) picker.classList.remove("error");
+    fieldValidity[inputId] = true;
+
+    updatable = Object.values(fieldValidity).every(Boolean);
+    updateButtons();
+}
+
+// === Tool: setup image preview and clear button ===
+function setupImagePreview(inputId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(inputId + "_preview");
+    const button = document.getElementById(inputId + "_button");
+    const label = document.getElementById(inputId + "_label");
+    const picker = document.getElementById(inputId + "_picker");
+    if (!input || !preview || !button || !label) return;
+
+    input.addEventListener("change", () => {
+        const file = input.files[0];
+        const valid = file ? file.type.startsWith("image/") && /\.(jpg|jpeg|png)$/i.test(file.name) : false;
+
+        if (!file) {
+            preview.style.display = "none";
+            preview.src = "";
+            button.style.display = "none";
+            label.style.display = "none";
+            if (picker) picker.classList.remove("error");
+            fieldValidity[inputId] = true;
+        } else if (!valid) {
+            preview.style.display = "none";
+            preview.src = "";
+            button.style.display = "inline-block";
+            label.style.display = "block";
+            label.textContent = " ❌ File not supported. Only jpg, jpeg, png";
+            if (picker) picker.classList.add("error");
+            fieldValidity[inputId] = false;
+        } else {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = "block";
+            button.style.display = "inline-block";
+            label.style.display = "none";
+            if (picker) picker.classList.remove("error");
+            fieldValidity[inputId] = true;
+
+            preview.onload = () => URL.revokeObjectURL(preview.src);
+        }
+
+        updatable = Object.values(fieldValidity).every(Boolean);
+        updateButtons();
+    });
+
+    button.addEventListener("click", () => clearPhoto(inputId));
+}
+
+setupImagePreview("machine_image");
