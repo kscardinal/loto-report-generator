@@ -327,3 +327,52 @@ function setupImagePreview(inputId) {
 }
 
 setupImagePreview("machine_image");
+
+
+const renameButton = document.getElementById("renameBtn");
+const nameField = document.getElementById("name");
+
+renameButton.addEventListener("click", async () => {
+    if (renameButton.textContent.toLowerCase() === "rename") {
+        renameButton.textContent = "Save";
+        nameField.disabled = false;
+    } else {
+        renameButton.textContent = "Rename";
+        nameField.disabled = true;
+
+        const newName = document.getElementById("name").value.trim();
+
+        if (!newName) {
+            alert("Please enter a new report name.");
+            return;
+        }
+
+        if (newName === window.reportName) {
+            return
+        }
+
+        try {
+            const res = await fetch("/rename_report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    old_name: window.reportName, // this is the current report
+                    new_name: newName
+                })
+            });
+
+            const data = await res.json();
+            console.log("Rename response:", data);
+
+            if (res.ok) {
+                window.location.href = "/update/" + newName
+            } else {
+                alert(`Error: ${data.detail || "Rename failed"}`);
+            }
+
+        } catch (err) {
+            console.error("Rename error:", err);
+        }
+
+    }
+});

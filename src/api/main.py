@@ -523,3 +523,34 @@ async def update_report_json(request: UpdateReportRequest):
     else:
         return JSONResponse(status_code=400, content={"message": "No valid updates provided"})
     
+
+@app.post("/rename_report")
+async def rename_report(request: Request):
+    """
+    Rename a report in the database.
+    Expects JSON like: { "old_name": "OldReport", "new_name": "NewReport" }
+    """
+    try:
+        data = await request.json()
+        old_name = data.get("old_name")
+        new_name = data.get("new_name")
+
+        if not old_name or not new_name:
+            raise HTTPException(status_code=400, detail="Missing old_name or new_name")
+
+        # Find the existing report
+        doc = uploads.find_one({"report_name": old_name})
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Report '{old_name}' not found")
+
+        # Check if new name already exists
+        if uploads.find_one({"report_name": new_name}):
+            raise HTTPException(status_code=400, detail=f"Report name '{new_name}' already exists")
+
+        # Update the report name
+        uploads.update_one({"report_name": old_name}, {"$set": {"report_name": new_name}})
+
+        return JSONResponse({"message": f"Renamed '{old_name}' to '{new_name}'"}, status_code=200)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -20,7 +20,12 @@
 <main>
     <div class="section">
         <h2>General Information</h2>
-        <label>Report Name: <input type="text" id="name" placeholder="air compressor" value="{{ report.report_name }}" disabled/></label>
+        <label>Report Name: 
+            <div class="inline-button-wrapper">
+                <input type="text" id="name" placeholder="air compressor" value="{{ report.report_name }}" disabled/></label>
+                <button type="button" id="renameBtn">Rename</button>
+            </div>
+        </label>
         <label>Description:
             <div class="inline-button-wrapper">
                 <input type="text" id="description" value="{{ report.json_data.description }}" />

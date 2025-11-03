@@ -160,7 +160,7 @@
             <ul class="report-list">
                 {% for name in report_names %}
                     <li class="report-item">
-                        <a class="report-link" href="{{ url_for('view_report', report_name=name) }}">
+                        <a class="report-link" href="{{ url_for('update', report_name=name) }}">
                             <span class="report-index">{{ loop.index }}.</span> {{ name }}
                         </a>
                         <a class="download-btn" href="{{ url_for('download_pdf', report_name=name) }}" title="Download PDF">
