@@ -282,6 +282,29 @@ ssh-add ~/.ssh/id_ed25519
 ```
 - Enter passphrase and it should stop bugging you
 
+3. Add this to the `.bashrc` or `.zshrc` file
+```bashrc
+SSH_ENV="$HOME/.ssh/agent-environment"
+
+function start_agent {
+    echo "Starting ssh-agent..."
+    ssh-agent -s > "$SSH_ENV"
+    source "$SSH_ENV" > /dev/null
+    ssh-add -t 8h ~/.ssh/id_ed25519
+}
+
+# Source ssh-agent environment file if exists
+if [ -f "$SSH_ENV" ]; then
+    source "$SSH_ENV" > /dev/null
+    # Check if agent is still running
+    ps -p $SSH_AGENT_PID > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
+```
+
 ---
 
 ### Misc
