@@ -5,7 +5,8 @@ import tempfile
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+from icecream import ic
 
 import gridfs
 from bson.objectid import ObjectId
@@ -432,3 +433,46 @@ def download_photo(photo_id: str):
 
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
+
+
+
+# -----------------------------
+# Upload new report to database
+# -----------------------------
+def reformat_date(date_val: Optional[str]) -> Optional[str]:
+    """
+    Convert a date string from 'dd/MM/yyyy' or 'dd-MM-yyyy' to 'yyyy-MM-dd'.
+    Returns None if input is empty or invalid.
+    """
+    if not date_val or not isinstance(date_val, str):
+        return None
+
+    # Try to parse common formats
+    for fmt in ("%m/%d/%Y", "%m-%d-%Y"):
+        try:
+            dt = datetime.strptime(date_val.strip(), fmt)
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+
+    # Could not parse
+    return None
+
+@app.get("/update_report/{report_name}", response_class=HTMLResponse)
+async def update_report(request: Request, report_name: str):
+    doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
+    if not doc:
+        return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
+
+    # Format datetime fields
+    for key in ["date_added", "last_modified", "last_generated"]:
+        if key in doc and isinstance(doc[key], datetime):
+            doc[key] = format_datetime_with_ordinal(doc[key])
+
+    # Format report dates to yyyy-MM-dd inside json_data
+    if "json_data" in doc:
+        for key in ["date", "completed_date"]:
+            if key in doc["json_data"]:
+                doc["json_data"][key] = reformat_date(doc["json_data"][key])
+
+    return templates.TemplateResponse("update_report.html", {"request": request, "report": doc})
