@@ -246,7 +246,7 @@ pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 ```
 - `-q` is optional to reduce more of the unnecessary text in the test
 
-5Check the results
+5. Check the results
 <pre style="color:green;">
 ============= ___ passed in ___s =============
 </pre>
@@ -256,13 +256,13 @@ pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 
 ## Web Interface
 
-1. Get TypeScipt running
+1. Get TypeScript running
 ```bash
 npm install -D typescript
 npx tsc --init
 ```
 
-2. Compile TypeScipt to JavaScript
+2. Compile TypeScript to JavaScript
 ```bash
 npx tsc src/web/scripts/input_form_3.ts --outDir src/web/scripts
 ```
@@ -280,7 +280,7 @@ eval "$(ssh-agent -s)"
 ```bash
 ssh-add ~/.ssh/id_ed25519
 ```
-- Enter passpharse and it should stop bugging you
+- Enter passphrase and it should stop bugging you
 
 ---
 
