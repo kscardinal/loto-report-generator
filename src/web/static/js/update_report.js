@@ -334,7 +334,7 @@ const nameField = document.getElementById("name");
 
 renameButton.addEventListener("click", async () => {
     if (renameButton.textContent.toLowerCase() === "rename") {
-        renameButton.textContent = "Save";
+        renameButton.textContent = "Cancel";
         nameField.disabled = false;
     } else {
         renameButton.textContent = "Rename";
@@ -376,3 +376,13 @@ renameButton.addEventListener("click", async () => {
 
     }
 });
+
+nameField.addEventListener("change", async function() {
+    if (nameField.value !== window.reportName) {
+        nameField.classList.add("updated");
+        renameButton.textContent = "Save";
+    } else {
+        nameField.classList.remove("updated");
+        renameButton.textContent = "Cancel";
+    }
+})
