@@ -9,7 +9,7 @@ from typing import List
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -432,3 +432,51 @@ def download_photo(photo_id: str):
 
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
+
+
+
+
+
+@app.get("/update_report/{report_name}", response_class=HTMLResponse)
+async def update_report(request: Request, report_name: str):
+    doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
+    if not doc:
+        return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
+
+    return templates.TemplateResponse("update_report.html", {"request": request, "report": doc})
+
+
+@app.get("/get_report_json/{report_name}")
+async def get_report_json(report_name: str):
+    """
+    Return only the json_data of a report as JSON.
+    """
+    # Find the report in the database
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Report '{report_name}' not found")
+    
+    # Return only the json_data field
+    return JSONResponse(content=doc.get("json_data", {}))
+
+
+@app.get("/photo_by_name/{photo_name}")
+async def get_photo_by_name(photo_name: str):
+    """
+    Retrieve a photo from GridFS by its filename (photo_name).
+    Returns the image as a stream.
+    """
+    try:
+        # Look up the photo in GridFS
+        grid_out = fs.find_one({"filename": photo_name})
+        if not grid_out:
+            raise HTTPException(status_code=404, detail=f"Photo '{photo_name}' not found in GridFS.")
+
+        # Read the photo bytes
+        image_bytes = grid_out.read()
+        content_type = grid_out.content_type or "image/jpeg"  # default to jpeg
+
+        return StreamingResponse(BytesIO(image_bytes), media_type=content_type)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving photo: {str(e)}")
