@@ -111,21 +111,49 @@ async function setSourceData_photo(elementID, dataID, data) {
     });
 }
 
+async function setSourceData_dropdown(elementID, dataID, data) {
+    const element = document.getElementById(elementID);
+    const element_value = data[dataID];
+    if (!element_value) { return };
+    if (dataID === "energy_source") { 
+        element.value = data["energy_source"];
+        return
+    }
+
+    const custom = energyData[data["energy_source"]][dataID].includes(data[dataID]);
+
+    if (!custom) {
+        console.log("Custom value detected:", dataID, "=", data[dataID]);
+        element.value = "__custom__";
+    } else {
+        element.value = element_value;
+    }
+
+}
+
 async function setData_source(sourceNum, data) {
     const sourceElement = document.querySelector(`.source#source_${sourceNum + 1}`);
+    const divElement = document.getElementById(`source_${sourceNum + 1}`)
+    const dropdownIds = Array.from(sourceElement.querySelectorAll('select')).map(input => input.id);
+    for (const id of dropdownIds) {
+        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
+        updateSourceDropdowns(divElement, data.sources[sourceNum]["energy_source"]);
+        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
+    }
     const textInputIds = Array.from(sourceElement.querySelectorAll('input[type="text"]')).map(input => input.id);
     for (const id of textInputIds) {
-        setSourceData_text(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum])
+        setSourceData_text(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
     }
     const photoInputIds = Array.from(sourceElement.querySelectorAll('input[type="file"]')).map(input => input.id);
     for (const id of photoInputIds) {
-        setSourceData_photo(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum])
+        setSourceData_photo(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
     }
     document.getElementById(`source_${sourceNum + 1}`).style.display = "block";
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
   try {
+    activateDropdowns();
     setName();
     const data = await loadData();
     const textInputIds = Array.from(document.querySelectorAll('input[type="text"]')).map(input => input.id);
@@ -148,20 +176,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 });
 
-const MAX_SOURCES = Math.max(
-  ...Array.from(document.querySelectorAll('[id^="source_"]'))
-    .map(el => parseInt(el.id.replace('source_', '')) || 0)
-);
+let MAX_SOURCES = 0;
 let energyData = {};
 
-// Load data from JSON file
-fetch("/static/dependencies/energySources.json")
-  .then(res => res.ok ? res.json() : Promise.reject("Failed to load"))
-  .then(data => {
-    energyData = data;
-    populateAllSources();
-  })
-  .catch(err => console.error("Error loading energy sources:", err));
+async function activateDropdowns() {
+    MAX_SOURCES = Math.max(
+    ...Array.from(document.querySelectorAll('[id^="source_"]'))
+        .map(el => parseInt(el.id.replace('source_', '')) || 0)
+    );
+
+    // Load data from JSON file
+    fetch("/static/dependencies/energySources.json")
+    .then(res => res.ok ? res.json() : Promise.reject("Failed to load"))
+    .then(data => {
+        energyData = data;
+        populateAllSources();
+    })
+    .catch(err => console.error("Error loading energy sources:", err));
+}
 
 function populateAllSources() {
   for (let i = 1; i <= MAX_SOURCES; i++) {
@@ -181,9 +213,6 @@ function populateAllSources() {
     const initialEnergy = energySelect.value || Object.keys(energyData)[0];
     energySelect.value = initialEnergy;
     updateSourceDropdowns(sourceDiv, initialEnergy);
-
-    // Show source div if hidden (style display none)
-    sourceDiv.style.display = "block";
 
     // Update dependent dropdowns on energy source change
     energySelect.addEventListener("change", () => {
