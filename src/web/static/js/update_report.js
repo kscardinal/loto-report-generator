@@ -111,22 +111,22 @@ async function setSourceData_photo(elementID, dataID, data) {
     });
 }
 
-async function setSourceData_dropdown(elementID, dataID, data) {
+async function setSourceData_dropdown(elementID, dataID, data, sourceNum) {
     const element = document.getElementById(elementID);
     const element_value = data[dataID];
     if (!element_value) { return };
     if (dataID === "energy_source") { 
-        element.value = data["energy_source"];
-        return
+      element.value = data["energy_source"];
+      return
     }
 
     const custom = energyData[data["energy_source"]][dataID].includes(data[dataID]);
 
     if (!custom) {
-        console.log("Custom value detected:", dataID, "=", data[dataID]);
-        element.value = "__custom__";
+      console.log("Custom value detected:", dataID, `(${sourceNum + 1})`, "=", data[dataID]);
+      element.value = "__custom__";
     } else {
-        element.value = element_value;
+      element.value = element_value;
     }
 
 }
@@ -136,9 +136,9 @@ async function setData_source(sourceNum, data) {
     const divElement = document.getElementById(`source_${sourceNum + 1}`)
     const dropdownIds = Array.from(sourceElement.querySelectorAll('select')).map(input => input.id);
     for (const id of dropdownIds) {
-        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
+        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum], sourceNum);
         updateSourceDropdowns(divElement, data.sources[sourceNum]["energy_source"]);
-        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum]);
+        setSourceData_dropdown(id, id.replace(/[^a-zA-Z_]/g, '').replace(/_+$/g, ''), data.sources[sourceNum], sourceNum);
     }
     const textInputIds = Array.from(sourceElement.querySelectorAll('input[type="text"]')).map(input => input.id);
     for (const id of textInputIds) {
