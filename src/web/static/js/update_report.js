@@ -147,3 +147,112 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.error('Error:', error);
   }
 });
+
+const MAX_SOURCES = Math.max(
+  ...Array.from(document.querySelectorAll('[id^="source_"]'))
+    .map(el => parseInt(el.id.replace('source_', '')) || 0)
+);
+let energyData = {};
+
+// Load data from JSON file
+fetch("/static/dependencies/energySources.json")
+  .then(res => res.ok ? res.json() : Promise.reject("Failed to load"))
+  .then(data => {
+    energyData = data;
+    populateAllSources();
+  })
+  .catch(err => console.error("Error loading energy sources:", err));
+
+function populateAllSources() {
+  for (let i = 1; i <= MAX_SOURCES; i++) {
+    const sourceDiv = document.getElementById(`source_${i}`);
+    if (!sourceDiv) continue;
+
+    const energySelect = sourceDiv.querySelector(".energy_source");
+    if (!energySelect) continue;
+
+    // Populate energy_source dropdown options
+    const energyOptions = Object.keys(energyData).map(e =>
+      `<option value="${e}">${e}</option>`
+    ).join("");
+    energySelect.innerHTML = energyOptions;
+
+    // Set initial selection and populate dependent dropdowns
+    const initialEnergy = energySelect.value || Object.keys(energyData)[0];
+    energySelect.value = initialEnergy;
+    updateSourceDropdowns(sourceDiv, initialEnergy);
+
+    // Show source div if hidden (style display none)
+    sourceDiv.style.display = "block";
+
+    // Update dependent dropdowns on energy source change
+    energySelect.addEventListener("change", () => {
+      updateSourceDropdowns(sourceDiv, energySelect.value);
+    });
+  }
+}
+
+function updateSourceDropdowns(sourceDiv, energy) {
+  const data = energyData[energy];
+  if (!data) return;
+
+  const device = sourceDiv.querySelector(".device");
+  const isolation = sourceDiv.querySelector(".isolation_method");
+  const verification = sourceDiv.querySelector(".verification_method");
+  const dynamicInputs = sourceDiv.querySelector(".dynamic-inputs");
+
+  // Clear previous custom inputs and dynamic inputs
+  sourceDiv.querySelectorAll(".custom-input").forEach(el => el.remove());
+  dynamicInputs.innerHTML = "";
+
+  function populateDropdown(selectElem, items, name) {
+    selectElem.innerHTML = items.map(d =>
+      `<option value="${d}">${d}</option>`).join("") +
+      `<option value="__custom__">Other (custom)</option>`;
+
+    // Add hidden custom input field next to dropdown
+    const customInput = document.createElement("input");
+    customInput.type = "text";
+    customInput.className = `${name}_custom custom-input`;
+    customInput.placeholder = `Enter custom ${name.replace("_", " ")}...`;
+    customInput.style.display = "none";
+    customInput.style.marginTop = "5px";
+    customInput.style.width = "100%";
+    selectElem.insertAdjacentElement("afterend", customInput);
+
+    // Show custom input when "Other (custom)" selected
+    selectElem.addEventListener("change", () => {
+      if (selectElem.value === "__custom__") {
+        customInput.style.display = "block";
+      } else {
+        customInput.style.display = "none";
+        customInput.value = "";
+      }
+    });
+  }
+
+  populateDropdown(device, data.device, "device");
+  populateDropdown(isolation, data.isolation_method, "isolation_method");
+  populateDropdown(verification, data.verification_method, "verification_method");
+
+  // Add dynamic text inputs as per data.inputs array
+  data.inputs.forEach(inputObj => {
+    const { field_name, unit_name, title_name } = inputObj;
+    const inputId = `${field_name}_${sourceDiv.id.split('_')[1]}`;
+
+    const label = document.createElement("label");
+    label.textContent = title_name + ": ";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = inputId;
+    input.placeholder = unit_name;
+    input.style.width = "100%";
+    const warning = document.createElement("p");
+    warning.className = "warning_label";
+    warning.id = inputId + "_label";
+
+    label.appendChild(input);
+    dynamicInputs.appendChild(label);
+    dynamicInputs.appendChild(warning);
+  });
+}
