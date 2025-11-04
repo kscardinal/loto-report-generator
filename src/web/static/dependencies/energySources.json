@@ -33,7 +33,7 @@
         "inputs": [{"field_name": "lbs", "unit_name": "lbs", "title_name": "Weight"}],
         "device": ["Lower component to full down position.", "Use cribbing to support component."],
         "isolation_method": ["Component in down position.", "Cribbing is in place."],
-        "verification_method": ["Verify equipment is in the down position,", "Verify integrity of cribbing supports."]
+        "verification_method": ["Verify equipment is in the down position.", "Verify integrity of cribbing supports."]
     },
     "Thermal": {
         "inputs": [{"field_name": "temp", "unit_name": "temperature (°F)", "title_name": "Temperature"}],
