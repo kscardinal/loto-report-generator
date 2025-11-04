@@ -476,7 +476,7 @@ async def update(request: Request, report_name: str):
             if key in doc["json_data"]:
                 doc["json_data"][key] = reformat_date(doc["json_data"][key])
 
-    return templates.TemplateResponse("update_report.html", {"request": request, "report": doc})
+    return templates.TemplateResponse("update_report_2.html", {"request": request, "report": doc})
 
 
 @app.get("/get_report_json/{report_name}")
