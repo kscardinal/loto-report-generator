@@ -331,6 +331,11 @@ git config --global core.autocrlf
 
 ## API Endpoints
 
+```
+http://localhost:8000/docs
+```
+- For more info on each endpoint
+
 | Endpoint                               | Method(s)      | Description                                                                             |
 |----------------------------------------|----------------|-----------------------------------------------------------------------------------------|
 | `/upload/`                             | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
