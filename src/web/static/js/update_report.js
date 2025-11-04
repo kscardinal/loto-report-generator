@@ -386,3 +386,14 @@ nameField.addEventListener("change", async function() {
         renameButton.textContent = "Cancel";
     }
 })
+
+const backButton = document.getElementById("backBtn");
+backButton.addEventListener("click", function() {
+    if (Object.keys(updatedFields).length === 0) {
+        window.location.href = "/pdf_list"
+    } else {
+        if (confirm("Changes won't be save. Are you sure you want to leave? ")) {
+            window.location.href = "/pdf_list"
+        }
+    }
+});
