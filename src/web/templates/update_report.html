@@ -81,11 +81,357 @@
 
     <div class="section">
         <h2>Energy Sources</h2>
+        <button type="button" id="addSourceBtn">Add Source</button>
         <div id="sources"></div>
-        <div class="source-buttons">
-            <button type="button" id="addSourceBtn">Add Source</button>
-            <button type="button" id="removeSourceBtn">Remove Source</button>
+        <div class="source" id="source_1" style="display: none;">
+            <div class="source-header">Source 1</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_1"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_1" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_1" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_1_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_1" class="image-picker" />
+                    <button type="button" id="isolation_point_1_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_1_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_1_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_1_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_1" class="image-picker" />
+                    <button type="button" id="verification_device_1_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_1_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_1_label"></p>
         </div>
+
+        <div class="source" id="source_2" style="display: none;">
+            <div class="source-header">Source 2</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_2"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_2" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_2" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_2_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_2" class="image-picker" />
+                    <button type="button" id="isolation_point_2_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_2_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_2_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_2_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_2" class="image-picker" />
+                    <button type="button" id="verification_device_2_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_2_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_2_label"></p>
+        </div>
+
+        <div class="source" id="source_3" style="display: none;">
+            <div class="source-header">Source 3</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_3"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_3" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_3" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_3_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_3" class="image-picker" />
+                    <button type="button" id="isolation_point_3_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_3_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_3_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_3_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_3" class="image-picker" />
+                    <button type="button" id="verification_device_3_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_3_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_3_label"></p>
+        </div>
+
+        <div class="source" id="source_4" style="display: none;">
+            <div class="source-header">Source 4</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_4"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_4" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_4" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_4_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_4" class="image-picker" />
+                    <button type="button" id="isolation_point_4_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_4_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_4_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_4_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_4" class="image-picker" />
+                    <button type="button" id="verification_device_4_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_4_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_4_label"></p>
+        </div>
+
+        <div class="source" id="source_5" style="display: none;">
+            <div class="source-header">Source 5</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_5"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_5" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_5" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_5_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_5" class="image-picker" />
+                    <button type="button" id="isolation_point_5_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_5_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}"/>
+            </div>
+            <p class="warning_label" id="isolation_point_5_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_5_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_5" class="image-picker" />
+                    <button type="button" id="verification_device_5_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_5_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_5_label"></p>
+        </div>
+
+        <div class="source" id="source_6" style="display: none;">
+            <div class="source-header">Source 6</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_6"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_6" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_6" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_6_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_6" class="image-picker" />
+                    <button type="button" id="isolation_point_6_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_6_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_6_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_6_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_6" class="image-picker" />
+                    <button type="button" id="verification_device_6_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_6_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_6_label"></p>
+        </div>
+
+        <div class="source" id="source_7" style="display: none;">
+            <div class="source-header">Source 7</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_7"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_7" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_7" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_7_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_7" class="image-picker" />
+                    <button type="button" id="isolation_point_7_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_7_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_7_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_7_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_7" class="image-picker" />
+                    <button type="button" id="verification_device_7_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_7_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_7_label"></p>
+        </div>
+
+        <div class="source" id="source_8" style="display: none;">
+            <div class="source-header">Source 8</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_8"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_8" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_8" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_8_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_8" class="image-picker" />
+                    <button type="button" id="isolation_point_8_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_8_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_8_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_8_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_8" class="image-picker" />
+                    <button type="button" id="verification_device_8_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_8_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_8_label"></p>
+        </div>
+
+        <div class="source" id="source_9" style="display: none;">
+            <div class="source-header">Source 9</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_9"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_9" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_9" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_9_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_9" class="image-picker" />
+                    <button type="button" id="isolation_point_9_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_9_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_9_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_9_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_9" class="image-picker" />
+                    <button type="button" id="verification_device_9_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_9_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_9_label"></p>
+        </div>
+
+        <div class="source" id="source_10" style="display: none;">
+            <div class="source-header">Source 10</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_10"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_10" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_10" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_10_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_10" class="image-picker" />
+                    <button type="button" id="isolation_point_10_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_10_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_10_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_10_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_10" class="image-picker" />
+                    <button type="button" id="verification_device_10_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_10_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_10_label"></p>
+        </div>
+
+        <div class="source" id="source_11" style="display: none;">
+            <div class="source-header">Source 11</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_11"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_11" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_11" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_11_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_11" class="image-picker" />
+                    <button type="button" id="isolation_point_11_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_11_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_11_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_11_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_11" class="image-picker" />
+                    <button type="button" id="verification_device_11_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_11_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_11_label"></p>
+        </div>
+
+        <div class="source" id="source_12" style="display: none;">
+            <div class="source-header">Source 12</div>
+            <label>Energy Source: <select class="energy_source" id="energy_source_12"></select></label>
+            <div class="dynamic-inputs"></div>
+            <label>Device: <select class="device"></select></label>
+            <label>Tag: <input type="text" id="tag_12" placeholder="0001" /></label>
+            <label>Description: <input type="text" id="source_description_12" /></label>
+            <label>Isolation Point: </label>
+            <div class="input-with-preview" id="isolation_point_12_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="isolation_point_12" class="image-picker" />
+                    <button type="button" id="isolation_point_12_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="isolation_point_12_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="isolation_point_12_label"></p>
+            <label>Isolation Method: <select class="isolation_method"></select></label>
+            <label>Verification Method: <select class="verification_method"></select></label>
+            <label>Verification Device: </label>
+            <div class="input-with-preview" id="verification_device_12_picker">
+                <div class="inline-button-wrapper">
+                    <input type="file" accept="image/*" id="verification_device_12" class="image-picker" />
+                    <button type="button" id="verification_device_12_button" class="clear-photo-button">Clear</button>
+                </div>
+                <img id="verification_device_12_preview" class="preview_image" src="{{ url_for('static', path='includes/imageNotFound.jpg') }}" />
+            </div>
+            <p class="warning_label" id="verification_device_12_label"></p>
+        </div>
+
+        
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center;" class="section">
