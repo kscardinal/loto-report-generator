@@ -81,40 +81,58 @@
 
 ## Project Structure  
 
-- `loto-report-generator/`
-- ├─ `.github/workflows` # Includes all the tests run with GitHub Actions
-- ├─── [`tests.yml`](.github/workflows/tests.yml) # Test that runs during pushes and merges to make sure PDF generation works
-- ├─ `includes/` # Includes all the assets needed to make the LOTO PDF
-- ├─ `src/`
-- ├─── [`api/`](src/api)
-- ├───── [`main.py`](src/api/main.py) # Server component that receives the requests and handles them
-- ├─── [`database/`](src/database)
-- ├───── [`db_2.py`](src/database/db_2.py) # Creates the MongoDB database used to store all the files and contains some helper functions
-- ├───── [`db_template.txt`](src/database/db_template.txt) # Template for a new entry into the database will all properties and descriptions
-- ├─── [`pdf/`](src/pdf)
-- ├───── [`automate_pdf.py`](src/pdf/automate_pdf.py) # Automates the creation of the PDF file using the server component
-- ├───── [`generate_pdf.py`](src/pdf/generate_pdf.py) # Generates the PDF with a given JSON file
-- ├─── [`tests/`](src/tests)
-- ├───── [`test_pdf_scripts.py`](src/tests/test_pdf_scripts.py) # PyTest that checks everything is working before deploying the code
-- ├───── [`test_data.json`](src/tests/test_data.json) # Main testing data set
-- ├───── `test_data_....json` # More test data sets to test edge cases of the PDF generation
-- ├─── [`web/`](src/web)
-- ├───── [`static/`](src/web/static)
-- ├──────── [`css/`](src/web/static/css) 
-- ├────────── [`input_form.css`](src/web/static/css/input_form.css) # Styling for the input form
-- ├──────── [`dependencies/`](src/web/static/dependencies) 
-- ├────────── [`energySources.json`](src/web/static/dependencies/energySources.json) # Data related to energy sources for loto and associated dropdown options
-- ├──────── [`includes/`](src/web/static/includes) # Assets used for making the web pages like icons
-- ├──────── [`js/`](src/web/static/js) 
-- ├────────── [`input_form.js`](src/web/static/js/input_form.js) # Scrips specifically for handling the logic of the data input form
-- ├────────── [`json_handlers.js`](src/web/static/js/json_handlers.js) # Script specifically for handling the logic generating and downloading the resulting json and files
-- ├────────── [`upload_json.js`](src/web/static/js/upload_json.js) # Script specifically for handling the logic in uploading the json and photos to the database
-- ├───── [`templates/`](src/web/templates)
-- ├─────── [`input_form.html`](src/web/templates/input_form.html) # Template for webpage that is used for data gathering and inputting into database
-- ├─────── [`pdf_list.html`](src/web/templates/pdf_list.html) # Template for webpage that shows all current files in the database
-- ├─────── [`view_report.html`](src/web/templates/view_report.html) # Template for webpage that shows a specific report including all the details
-- ├─ `temp/`
-- └─ [`.env`](.env) # Where the secrets go
+```
+loto-report-generator/
+├─ .env                                 # Stores environment variables and secrets (not committed to Git)
+├─ .github/
+│  └── workflows/                       # GitHub Actions workflows for automated testing and CI/CD
+│      └── tests.yml                    # Runs pytest on pushes/merges to verify PDF generation works
+├─ .pre-commit-config.yaml              # Pre-commit hook configuration (runs pytest before pushing)
+├─ Dockerfile                           # Defines the custom Python Docker image used by the app
+├─ docker-compose.yml                   # Sets up and links containers for FastAPI, MongoDB, and Nginx
+├─ includes/                            # Static assets and resources used in LOTO PDF generation
+├─ logs/                                # Directory for runtime and application logs
+├─ mongod.conf                          # MongoDB configuration file
+├─ nginx.conf                           # Nginx reverse proxy configuration for serving the FastAPI app
+├─ readme_helper.py                     # Script to generate or update the directory structure readme
+├─ src/
+│  ├── api/
+│  │   ├── endpoints.json               # Metadata or route definitions for available API endpoints
+│  │   ├── logging_config.py            # Centralized logging configuration for the FastAPI app
+│  │   └── main.py                      # FastAPI server entry point; handles API requests and routing
+│  ├── database/
+│  │   ├── clear_db.py                  # Utility script to clear or reset the MongoDB database
+│  │   ├── db.py                        # Handles database initialization and connections
+│  │   ├── db_2.py                      # Contains MongoDB helper functions for data management
+│  │   ├── db_template.txt              # Template describing schema and properties for new database entries
+│  │   └── decode.py                    # Functions to decode data (e.g., images or base64-encoded files)
+│  ├── pdf/
+│  │   ├── automate_pdf.py              # Automates PDF generation from test data or API triggers
+│  │   └── generate_pdf.py              # Core script that builds PDFs from JSON input data
+│  ├── tests/
+│  │   ├── test_pdf_scripts.py          # Main pytest suite verifying PDF generation and app logic
+│  │   ├── test_data.json               # Primary dataset used for PDF testing
+│  │   ├── test_data_2.json             # Additional dataset for secondary test case
+│  │   ├── test_data_3.json             # Additional dataset for tertiary test case
+│  │   └── test_data_....json           # Placeholder for other test datasets covering edge cases
+│  └── web/
+│      ├── main.html                    # Entry HTML page for the web interface
+│      ├── static/
+│      │   ├── css/
+│      │   │   └── input_form.css       # Stylesheet for the main data input form
+│      │   ├── dependencies/
+│      │   │   └── energySources.json   # Defines available energy sources and dropdown options
+│      │   ├── includes/                # Images, icons, and shared frontend assets
+│      │   └── js/
+│      │       ├── input_form.js        # Frontend logic for user data input handling
+│      │       ├── json_handlers.js     # Manages JSON generation, download, and data processing
+│      │       └── upload_json.js       # Handles JSON and photo uploads to the backend/database
+│      └── templates/
+│          ├── input_form.html          # Jinja2 template for the data entry form page
+│          ├── pdf_list.html            # Jinja2 template displaying all reports stored in the database
+│          └── view_report.html         # Jinja2 template for viewing a specific report in detail
+└─ temp/                                # Temporary storage for generated files or cached data
+```
 
 ---
 
