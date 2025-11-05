@@ -161,6 +161,53 @@ SERVER_IP = your.server.ip.address
 
 ---
 
+### Docker / Server
+
+1. Clone the repo
+```bash
+git clone <your-repo-url>
+cd loto-report-generator
+```
+
+2. Create the `.env` file
+```bash
+vi .env
+```
+- add the following
+```text
+# Mongo Credentials
+MONGO_USER=...
+MONGO_PASSWORD=...
+MONGO_HOST=...
+MONGO_PORT=...
+MONGO_DB=...
+
+# App Config (dev = auto-reload, production = no auto-reload)
+APP_ENV=production
+
+# Server IP (used by PDF scripts)
+SERVER_IP=http://<your-server-domain-or-ip>/api
+TEST_SERVER_IP=http://backend:8000
+```
+
+3. Start Docker
+```bash
+docker-compose up -d --build
+```
+- remove `-d` if you want to see everything behind the covers
+
+4. Test Connection
+```bash
+docker logs -f fastapi_app
+docker logs -f mongo_db
+curl http://<server-ip>/api/docs
+```
+- The first 2 should open logs for both `uvicron` and `mongo`
+- The last should return the FastAPI docs page if Nginx is configured correctly
+
+
+---
+
 ## PDF Generation
 
 1. Start server
