@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List
 import os
 from icecream import ic
+import shutil
 
 import gridfs
 from bson.objectid import ObjectId
@@ -186,6 +187,14 @@ def download_pdf(report_name: str):
         )
 
         pdf_bytes = pdf_file_path.read_bytes()
+
+        # Clear TEMP_DIR
+        for item in TEMP_DIR.iterdir():
+            if item.is_file():
+                item.unlink()        # delete files
+            elif item.is_dir():
+                shutil.rmtree(item)  # delete subfolders
+
         return StreamingResponse(
             BytesIO(pdf_bytes),
             media_type="application/pdf",

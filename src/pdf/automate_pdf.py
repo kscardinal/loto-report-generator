@@ -107,9 +107,9 @@ def download_pdf(report_name: str, output_dir: Path):
 # -------------------------
 # Clear temp folder
 # -------------------------
-#def clear_temp():
-#    res = requests.post(f"{SERVER}/clear/")
-#    print("Clear response:", res.json())
+def clear_temp():
+    res = requests.post(f"{SERVER}/clear/")
+    print("Clear response:", res.json())
 
 # -------------------------
 # Main automation
@@ -145,7 +145,7 @@ def main(json_path: Path | str = None):
     )
     generate_pdf(report_name)
     output_pdf_path = download_pdf(report_name, BASE_DIR)
-#    clear_temp()
+    clear_temp()
 
     return output_pdf_path
 
