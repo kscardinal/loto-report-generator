@@ -9,6 +9,7 @@ from typing import List
 import os
 from icecream import ic
 import shutil
+from .logging_config import logger, log_requests_json
 
 import gridfs
 from bson.objectid import ObjectId
@@ -31,6 +32,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Logging
+app.middleware("http")(log_requests_json)
+logger.info("FastAPI app starting...")
 
 # -----------------------------
 # Project paths
