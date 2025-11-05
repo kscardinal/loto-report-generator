@@ -4,8 +4,8 @@ from icecream import ic
 # --- CONFIG ---
 ROOT_DIR = "."  # Root directory to start from
 EXCLUDE = {".git", "__pycache__", ".DS_Store", ".pytest_cache", ".venv", "node_modules",
-           "__init__.py", ".pdf_cache", "automated_pdfs", "generated_pdfs", "package-lock.json", "package.json", "pyproject.toml", "uv.lock", "README.md", "LICENSE.md", ".python-version", ".gitignore"}  # Files/folders to exclude
-EXCLUDE_EXT = {".jpg", ".png", ".exe", ".ini", ".ttf", ".svg"}  # file extensions to exclude
+           "__init__.py", ".pdf_cache", "automated_pdfs", "generated_pdfs", "package-lock.json", "package.json", "pyproject.toml", "uv.lock", "README.md", "LICENSE.md", ".python-version", ".gitignore", "mongo", ".idea", "comparison"}  # Files/folders to exclude
+EXCLUDE_EXT = {".jpg", ".png", ".exe", ".ini", ".ttf", ".svg", ".log", ".1", ".2", ".3", ".4", ".5"}  # file extensions to exclude
 OUTPUT_FILE = "readme_directory_structure.md"
 
 # --- FUNCTION TO FIND LAST ITEM ---

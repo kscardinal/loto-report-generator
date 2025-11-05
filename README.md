@@ -358,6 +358,7 @@ fi
 1. Count lines of code
 ```bash
 git ls-files src | xargs wc -l
+find . -type f -print0 | xargs -0 wc -l
 ```
 
 2. Git file endings
