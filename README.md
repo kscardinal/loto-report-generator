@@ -44,6 +44,7 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup](#setup)
+- [Docker](#docker)
 - [PDF Generation](#pdf-generation)
 - [Database Management](#database-management)
 - [PyTest](#pytest)
@@ -182,7 +183,7 @@ SERVER_IP = your.server.ip.address
 
 ---
 
-### Docker / Server
+### Docker
 
 1. Clone the repo
 ```bash
