@@ -12,7 +12,7 @@ load_dotenv()
 # -------------------------
 # CONFIGURATION
 # -------------------------
-SERVER = os.getenv("SERVER_IP") + "/api"
+SERVER = os.getenv("SERVER_IP")
 BASE_DIR = Path(__file__).parent.parent.parent
 TEMP_DIR = BASE_DIR / "temp"
 

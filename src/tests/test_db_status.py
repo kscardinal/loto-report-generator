@@ -21,7 +21,7 @@ def test_db_status_endpoint_responds_ok():
     This test prints short, emoji-prefixed status lines so it's easy to follow in
     the pytest output (mirrors the style used in `test_pdf_scripts.py`).
     """
-    url = TEST_SERVER.rstrip("/") + "/api/db_status"
+    url = TEST_SERVER.rstrip("/") + "/db_status"
     print("\n\n🔎 DB status check\n")
     print(f"➡️  Requesting: {url}")
 
