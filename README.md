@@ -3,8 +3,6 @@
 	<p align="center"><code>loto-report-generator</code>is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments.</p>
 </div>
 
----
-
 <div style="text-align: center;">
 	<p align="center">
 		<img src="https://img.shields.io/github/license/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub License">
@@ -12,9 +10,28 @@
 		<img src="https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Commit Activity">
 		<img src="https://img.shields.io/github/last-commit/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Last Commit">
 		<img src="https://img.shields.io/github/contributors/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Contributors">
+		<img src="https://img.shields.io/github/repo-size/kscardinal/loto-report-generator?style=for-the-badge&color=0080ff">
+	</p>
+</div>
+
+<div style="text-align: center; padding-top: 0px">
+	<p align="center">
+		<img src="https://img.shields.io/github/issues/kscardinal/loto-report-generator?style=for-the-badge&color=4CAF50">
+		<img src="https://img.shields.io/github/issues-pr/kscardinal/loto-report-generator?style=for-the-badge&color=4CAF50">
 		<img src="https://img.shields.io/github/actions/workflow/status/kscardinal/loto-report-generator/tests.yml?label=PDF%20Generation&style=for-the-badge&logo=github&logoColor=white&color=4CAF50" alt="GitHub Actions Workflow Status">
 	</p>
 </div>
+
+<div style="text-align: center; padding-top: 0px">
+	<p align="center">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/1?style=for-the-badge&color=0080ff">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/2?style=for-the-badge&color=0080ff">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/3?style=for-the-badge&color=0080ff">
+	</p>
+</div>
+
+---
+
 <div style="text-align: center; padding-top: 30px">
 	<p align="center">
 		<img src="https://img.shields.io/badge/python-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge">
@@ -31,6 +48,7 @@
 		<img src="https://img.shields.io/badge/.env-ECD53F.svg?style=for-the-badge&logo=.env&logoColor=white" alt=".ENV Badge">
 		<img src="https://img.shields.io/badge/YAML-CB171E.svg?style=for-the-badge&logo=YAML&logoColor=white" alt="YAML Badge">
 		<img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?style=for-the-badge&logo=Pytest&logoColor=white" alt="Pytest Badge">
+	  	<img src="https://img.shields.io/badge/node.js-5FA04E.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js Badge">
 		<img src="https://img.shields.io/badge/UV-DE5FE9.svg?style=for-the-badge&logo=UV&logoColor=white" alt="UV Badge">
 		<img src="https://img.shields.io/badge/docker-2496ED.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Badge">
 	</p>
