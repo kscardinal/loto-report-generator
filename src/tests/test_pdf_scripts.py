@@ -239,12 +239,20 @@ def _ensure_dir(p: Path) -> None:
 def render_pdf_images_cached(pdf: Path, dpi: int):
     """
     Render a PDF to images, using a persistent on-disk cache for speed.
+    Limits cache size to 10 documents by removing the oldest cached directories.
     Returns a list of PIL Images.
     """
     _ensure_dir(PDF_CACHE_DIR)
     print(f"\n👓 Checking cache for {pdf.name} ({pdf.parent.name}/, dpi={dpi})")
     key = _pdf_cache_key(pdf, dpi)
     cache_dir = PDF_CACHE_DIR / key
+
+    # Clean cache if it has more than 10 cached documents
+    cached_dirs = sorted([d for d in PDF_CACHE_DIR.iterdir() if d.is_dir()], key=lambda d: d.stat().st_mtime)
+    if len(cached_dirs) >= 10 and cache_dir not in cached_dirs:
+        oldest_dir = cached_dirs[0]
+        print(f"🗑️ Cache limit reached, removing oldest cache: {oldest_dir.name}")
+        shutil.rmtree(oldest_dir)
 
     # If cached, load PNGs from disk
     if cache_dir.exists():
