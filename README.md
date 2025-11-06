@@ -3,8 +3,6 @@
 	<p align="center"><code>loto-report-generator</code>is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments.</p>
 </div>
 
----
-
 <div style="text-align: center;">
 	<p align="center">
 		<img src="https://img.shields.io/github/license/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub License">
@@ -12,9 +10,27 @@
 		<img src="https://img.shields.io/github/commit-activity/t/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Commit Activity">
 		<img src="https://img.shields.io/github/last-commit/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Last Commit">
 		<img src="https://img.shields.io/github/contributors/kscardinal/loto-report-generator?style=for-the-badge&logo=git&logoColor=white&color=0080ff" alt="GitHub Contributors">
+	</p>
+</div>
+
+<div style="text-align: center; padding-top: 0px">
+	<p align="center">
+		<img src="https://img.shields.io/github/issues/kscardinal/loto-report-generator?style=for-the-badge">
+		<img src="https://img.shields.io/github/issues-pr/kscardinal/loto-report-generator?style=for-the-badge">
 		<img src="https://img.shields.io/github/actions/workflow/status/kscardinal/loto-report-generator/tests.yml?label=PDF%20Generation&style=for-the-badge&logo=github&logoColor=white&color=4CAF50" alt="GitHub Actions Workflow Status">
 	</p>
 </div>
+
+<div style="text-align: center; padding-top: 0px">
+	<p align="center">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/1?style=for-the-badge">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/2?style=for-the-badge">
+		<img src="https://img.shields.io/github/milestones/progress/kscardinal/loto-report-generator/3?style=for-the-badge">
+	</p>
+</div>
+
+---
+
 <div style="text-align: center; padding-top: 30px">
 	<p align="center">
 		<img src="https://img.shields.io/badge/python-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge">
