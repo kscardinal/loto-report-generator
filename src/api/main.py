@@ -170,6 +170,7 @@ async def upload_report(
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(report_name: str):
+    print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -202,6 +203,7 @@ def download_pdf(report_name: str):
             elif item.is_dir():
                 shutil.rmtree(item)  # delete subfolders
 
+        print(f"DEBUG: Returning StreamingResponse")
         return StreamingResponse(
             BytesIO(pdf_bytes),
             media_type="application/pdf",
