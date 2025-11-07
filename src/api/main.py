@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pymongo import MongoClient
 
 app = FastAPI()
@@ -33,6 +34,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
 # Logging
 app.middleware("http")(log_requests_json)
 logger.info("FastAPI app starting...")
@@ -45,19 +48,18 @@ sys.path.append(str(PROJECT_ROOT))
 
 from src.database.db_2 import get_report_entry
 
-BASE_DIR = Path(__file__).parent.parent.parent
-TEMP_DIR = BASE_DIR / "temp"
-PROCESS_DIR = BASE_DIR / "src" / "pdf"
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "web" / "static"
+TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
+TEMP_DIR = BASE_DIR.parent / "temp"
+PROCESS_DIR = BASE_DIR / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
 
-templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Ensure TEMP_DIR exists
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
-
-# Mount files
-app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
-
 
 # -----------------------------
 # MongoDB Connection
@@ -168,6 +170,7 @@ async def upload_report(
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(report_name: str):
+    print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -200,6 +203,7 @@ def download_pdf(report_name: str):
             elif item.is_dir():
                 shutil.rmtree(item)  # delete subfolders
 
+        print(f"DEBUG: Returning StreamingResponse")
         return StreamingResponse(
             BytesIO(pdf_bytes),
             media_type="application/pdf",
