@@ -45,19 +45,18 @@ sys.path.append(str(PROJECT_ROOT))
 
 from src.database.db_2 import get_report_entry
 
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "web" / "static"
+TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
 TEMP_DIR = BASE_DIR / "temp"
 PROCESS_DIR = BASE_DIR / "src" / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
 
-templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Ensure TEMP_DIR exists
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
-
-# Mount files
-app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
-
 
 # -----------------------------
 # MongoDB Connection
