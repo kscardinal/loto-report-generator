@@ -51,7 +51,7 @@ from src.database.db_2 import get_report_entry
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "web" / "static"
 TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
-TEMP_DIR = BASE_DIR / "temp"
+TEMP_DIR = BASE_DIR.parent / "temp"
 PROCESS_DIR = BASE_DIR / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
 
