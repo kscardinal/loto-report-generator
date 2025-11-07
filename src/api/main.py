@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pymongo import MongoClient
 
 app = FastAPI()
@@ -32,6 +33,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
 # Logging
 app.middleware("http")(log_requests_json)
