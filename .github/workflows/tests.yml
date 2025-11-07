@@ -56,7 +56,7 @@ jobs:
 
       # 8️⃣ Run tests
       - name: Run pytest
-        run: uv run pytest -q src/tests/test_db_status.py
+        run: uv run pytest -q
 
       # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)
