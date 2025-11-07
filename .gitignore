@@ -112,6 +112,7 @@ temp
 generated_pdfs/
 automated_pdfs/
 .pdf_cache/
+logs/
 
 # node
 node_modules

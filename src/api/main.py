@@ -6,6 +6,10 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import List
+import os
+from icecream import ic
+import shutil
+from .logging_config import logger, log_requests_json
 
 import gridfs
 from bson.objectid import ObjectId
@@ -14,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pymongo import MongoClient
 
 app = FastAPI()
@@ -29,6 +34,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
+# Logging
+app.middleware("http")(log_requests_json)
+logger.info("FastAPI app starting...")
+
 # -----------------------------
 # Project paths
 # -----------------------------
@@ -37,28 +48,41 @@ sys.path.append(str(PROJECT_ROOT))
 
 from src.database.db_2 import get_report_entry
 
-BASE_DIR = Path(__file__).parent.parent.parent
-TEMP_DIR = BASE_DIR / "temp"
-PROCESS_DIR = BASE_DIR / "src" / "pdf"
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "web" / "static"
+TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
+TEMP_DIR = BASE_DIR.parent / "temp"
+PROCESS_DIR = BASE_DIR / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
 
-templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "web" / "templates"))
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Ensure TEMP_DIR exists
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-# Mount files
-app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
-
-
 # -----------------------------
 # MongoDB Connection
 # -----------------------------
-MONGO_URI = "mongodb://localhost:27017/"
+# Environment variables from .env
+MONGO_USER = os.getenv("MONGO_USER", "")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "")
+MONGO_HOST = os.getenv("MONGO_HOST", "mongo")
+MONGO_PORT = os.getenv("MONGO_PORT", "27017")
+MONGO_DB = os.getenv("MONGO_DB", "loto_pdf")
+
+# Build URI
+if MONGO_USER and MONGO_PASSWORD:
+    MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}"
+else:
+    MONGO_URI = f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
+
 client = MongoClient(MONGO_URI)
-db = client['loto_pdf']
-uploads = db['reports']        # collection for metadata + JSON
-fs = gridfs.GridFS(db)         # GridFS for storing photos
+db = client[MONGO_DB]
+
+# Collections
+uploads = db['reports']    # collection for metadata + JSON
+fs = gridfs.GridFS(db)     # GridFS for storing photos
 
 # -----------------------------
 # Upload JSON + images
@@ -146,42 +170,52 @@ async def upload_report(
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(report_name: str):
-    """
-    Stream the generated PDF for a report back to the client.
-    """
+    print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
 
     try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir_path = Path(tmpdir)
-            json_file_path = tmpdir_path / f"{report_name}.json"
-            with open(json_file_path, "w", encoding="utf-8") as f:
-                json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
+        TEMP_DIR.mkdir(exist_ok=True)  # ensure the mounted folder exists
 
-            for photo in doc["photos"]:
-                photo_file_path = tmpdir_path / photo["photo_name"]
-                with open(photo_file_path, "wb") as f:
-                    f.write(fs.get(photo["photo_id"]).read())
+        json_file_path = TEMP_DIR / f"{report_name}.json"
+        with open(json_file_path, "w", encoding="utf-8") as f:
+            json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
 
-            pdf_file_path = tmpdir_path / f"{report_name}.pdf"
-            subprocess.run(
-                ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
-                check=True
-            )
+        # Write all photos to TEMP_DIR
+        for photo in doc["photos"]:
+            photo_file_path = TEMP_DIR / photo["photo_name"]
+            with open(photo_file_path, "wb") as f:
+                f.write(fs.get(photo["photo_id"]).read())
 
-            pdf_bytes = pdf_file_path.read_bytes()
-            return StreamingResponse(
-                BytesIO(pdf_bytes),
-                media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename={report_name}.pdf"}
-            )
+        pdf_file_path = TEMP_DIR / f"{report_name}.pdf"
+        subprocess.run(
+            ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
+            check=True
+        )
+
+        pdf_bytes = pdf_file_path.read_bytes()
+
+        # Clear TEMP_DIR
+        for item in TEMP_DIR.iterdir():
+            if item.is_file():
+                item.unlink()        # delete files
+            elif item.is_dir():
+                shutil.rmtree(item)  # delete subfolders
+
+        print(f"DEBUG: Returning StreamingResponse")
+        return StreamingResponse(
+            BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={report_name}.pdf"}
+        )
+
     except subprocess.CalledProcessError as e:
         return JSONResponse(status_code=500, content={"error": "PDF generation failed.", "details": e.stderr})
     except Exception as e:
         import traceback
         return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
+
 
 # -----------------------------
 # Clear temp folder
