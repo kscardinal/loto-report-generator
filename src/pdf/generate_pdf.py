@@ -132,7 +132,7 @@ def resolve_image_file(filename: str) -> str:
     #elif include_file.is_file():
         #return str(include_file)
     else:
-        ic(f"[Warning] Image '{filename}' not found in TEMP_DIR or INCLUDES_DIR. Using default image.")
+        ic(f"[Warning] Image '{filename}' not found in TEMP_DIR or INCLUDES_DIR ({temp_file}). Using default image.")
         return DEFAULT_IMAGE
 
 
@@ -516,7 +516,7 @@ def add_machine_info(import_bottom: float = PAGE_MARGIN) -> float:
 
     # Machine Image Formatting Options
     machine_image_file = resolve_image_file(data.get('machine_image', DEFAULT_IMAGE))
-    ic(f"Machine_image_file: f{machine_image_file}")
+    ic(f"Machine_image_file: {machine_image_file}")
 
     h_line1 = import_bottom - DEFAULT_ROW_SPACING
     h_line2 = h_line1 - row_spacing
@@ -927,7 +927,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     # Isolation Point File
     isolation_point_file = resolve_image_file(source.get('isolation_point', DEFAULT_IMAGE))
-    ic(f"Isolation_point_file: f{isolation_point_file}")
+    ic(f"Isolation_point_file: {isolation_point_file}")
 
     # Isolation Point
     isolation_point_height, isolation_point_width = resize_image(isolation_point_file,
@@ -938,7 +938,7 @@ def add_source(source: dict, import_bottom: float, import_height: float) -> floa
 
     # Verification Device File
     verification_device_file = resolve_image_file(source.get('verification_device', DEFAULT_IMAGE))
-    ic(f"Verification_device_file: f{verification_device_file}")
+    ic(f"Verification_device_file: {verification_device_file}")
 
     # Verification Device
     verification_device_height, verification_device_width = resize_image(
