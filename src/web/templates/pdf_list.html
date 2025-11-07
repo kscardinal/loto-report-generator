@@ -164,10 +164,10 @@
                             <span class="report-index">{{ loop.index }}.</span> {{ name }}
                         </a>
                         <a class="download-btn" href="{{ url_for('download_pdf', report_name=name) }}" title="Download PDF">
-                            <img src="{{ url_for('static', path='/includes/downloadSymbol.svg') }}" alt="Download PDF" class="download-btn-symbol">
+                            <img src="{{ url_for('static', path='includes/downloadSymbol.svg') }}" alt="Download PDF" class="download-btn-symbol">
                         </a>
                         <button class="delete-btn" data-report="{{ name }}"> 
-                            <img src="{{ url_for('static', path='/includes/trashSymbol.svg') }}" alt="Delete Report" class="delete-btn-symbol">
+                            <img src="{{ url_for('static', path='includes/trashSymbol.svg') }}" alt="Delete Report" class="delete-btn-symbol">
                         </button>
                     </li>
                 {% endfor %}

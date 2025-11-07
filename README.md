@@ -62,6 +62,7 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup](#setup)
+- [Docker](#docker)
 - [PDF Generation](#pdf-generation)
 - [Database Management](#database-management)
 - [PyTest](#pytest)
@@ -197,6 +198,52 @@ uv pip install -e .
 SERVER_IP = your.server.ip.address
 ```
 - Should start with http:// (ex. SERVER_IP=http://127.0.0.1:8000)
+
+---
+
+### Docker
+
+1. Clone the repo
+```bash
+git clone <your-repo-url>
+cd loto-report-generator
+```
+
+2. Create the `.env` file
+```bash
+vi .env
+```
+- add the following
+```text
+# Mongo Credentials
+MONGO_USER=...
+MONGO_PASSWORD=...
+MONGO_HOST=...
+MONGO_PORT=...
+MONGO_DB=...
+
+# App Config (dev = auto-reload, production = no auto-reload)
+APP_ENV=dev
+
+# Server IP (used by PDF scripts)
+SERVER_IP=http://<your-server-domain-or-ip>
+TEST_SERVER_IP=http://backend:8000
+```
+
+3. Start Docker
+```bash
+docker-compose up -d --build
+```
+- remove `-d` if you want to see everything behind the covers
+
+4. Test Connection
+```bash
+docker logs -f fastapi_app
+docker logs -f mongo_db
+curl http://<server-ip>/api/docs
+```
+- The first 2 should open logs for both `uvicron` and `mongo`
+- The last should return the FastAPI docs page if Nginx is configured correctly
 
 ---
 
@@ -351,6 +398,7 @@ fi
 1. Count lines of code
 ```bash
 git ls-files src | xargs wc -l
+find . -type f -print0 | xargs -0 wc -l
 ```
 
 2. Git file endings

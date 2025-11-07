@@ -143,7 +143,6 @@ def main(json_path: Path | str = None):
         tags=["tests", "automation"],      # any tags you want
         notes="This report was uploaded via a test automation" # sample note
     )
-    generate_pdf(report_name)
     output_pdf_path = download_pdf(report_name, BASE_DIR)
     clear_temp()
 
