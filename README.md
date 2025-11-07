@@ -204,10 +204,10 @@ MONGO_PORT=...
 MONGO_DB=...
 
 # App Config (dev = auto-reload, production = no auto-reload)
-APP_ENV=production
+APP_ENV=dev
 
 # Server IP (used by PDF scripts)
-SERVER_IP=http://<your-server-domain-or-ip>/api
+SERVER_IP=http://<your-server-domain-or-ip>
 TEST_SERVER_IP=http://backend:8000
 ```
 
