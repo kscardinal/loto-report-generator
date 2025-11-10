@@ -245,6 +245,11 @@ curl http://<server-ip>/api/docs
 - The first 2 should open logs for both `uvicron` and `mongo`
 - The last should return the FastAPI docs page if Nginx is configured correctly
 
+5. Run a test docker container locally
+```bash
+docker-compose --env-file .env.dev up --build
+```
+
 ---
 
 ## PDF Generation

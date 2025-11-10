@@ -9,19 +9,24 @@ from typing import List
 import os
 from icecream import ic
 import shutil
+import jwt
+from dotenv import load_dotenv
+
 from .logging_config import logger, log_requests_json
+from .auth_utils import create_access_token, verify_token
 
 import gridfs
 from bson.objectid import ObjectId
 from fastapi import FastAPI, UploadFile, File, Form, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pymongo import MongoClient
 
 app = FastAPI()
+load_dotenv()
 
 # -----------------------------
 # CORS Configuration
@@ -90,6 +95,11 @@ db = client[MONGO_DB]
 # Collections
 uploads = db['reports']    # collection for metadata + JSON
 fs = gridfs.GridFS(db)     # GridFS for storing photos
+
+# JWT
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY not set in .env")
 
 # -----------------------------
 # Upload JSON + images
@@ -473,3 +483,36 @@ def download_photo(photo_id: str):
 
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
+
+
+# -----------------------------
+# Login Page
+# -----------------------------
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_action(request: Request, username: str = Form(...), password: str = Form(...)):
+    # simple username/password check
+    if username == "Admin" and password == "adminpass":
+        token = create_access_token({"sub": username})
+        response = RedirectResponse(url="/jwt_test", status_code=302)
+        response.set_cookie(key="access_token", value=token, httponly=True)
+        return response
+    else:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
+
+@app.get("/jwt_test")
+async def jwt_test(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse("/login")
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        username = payload.get("sub")
+    except Exception:
+        return RedirectResponse("/login")
+
+    return {"message": f"Hello {username}, you are authenticated via JWT!"}
