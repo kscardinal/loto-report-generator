@@ -2,7 +2,7 @@ import json
 import subprocess
 import sys
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from typing import List
@@ -299,11 +299,16 @@ def ordinal(n: int) -> str:
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
     return f"{n}{suffix}"
 
-def format_datetime_with_ordinal(dt: datetime) -> str:
-    """Format datetime with full weekday, month, day with ordinal, year, and 12-hour time"""
+def format_datetime_with_ordinal(dt: datetime, tz_offset: int = 0) -> str:
+    """
+    Format datetime with ordinal, weekday, month, year, and 12-hour time.
+    tz_offset: integer, hours to offset from UTC (can be negative)
+    """
+    if tz_offset != 0:
+        dt = dt + timedelta(hours=tz_offset)
     day_with_suffix = ordinal(dt.day)
-    # %I is hour (12-hour), %M minutes, %S seconds, %p AM/PM
-    return dt.strftime(f"%A, %B {day_with_suffix}, %Y at %I:%M:%S %p").lstrip("0").replace("AM","am").replace("PM","pm")
+    return dt.strftime(f"%A, %B {day_with_suffix}, %Y at %I:%M:%S %p")\
+             .lstrip("0").replace("AM","am").replace("PM","pm")
 
 # -----------------------------
 # View single report (HTML)
@@ -312,7 +317,8 @@ def format_datetime_with_ordinal(dt: datetime) -> str:
 async def view_report(
     request: Request,
     report_name: str,
-    username: str = Depends(get_current_user)
+    username: str = Depends(get_current_user),
+    tz_offset: int = 0   # default no offset    
 ):
     if isinstance(username, RedirectResponse):
         return username
@@ -324,7 +330,7 @@ async def view_report(
     # Format datetime fields
     for key in ["date_added", "last_modified", "last_generated"]:
         if key in doc and isinstance(doc[key], datetime):
-            doc[key] = format_datetime_with_ordinal(doc[key])
+            doc[key] = format_datetime_with_ordinal(doc[key], tz_offset)
 
     return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
 
@@ -522,25 +528,27 @@ async def jwt_test(request: Request, username: str = Depends(get_current_user)):
 
 
 
+# -----------------------------
+# Users List Page
+# -----------------------------
+@app.get("/users", response_class=HTMLResponse)
+async def users_page_2(request: Request, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username  # redirect for web if not authenticated
+    return templates.TemplateResponse("user_list.html", {"request": request, "error": None})
+
 @app.get("/users_json")
 async def users_json(username: str = Depends(get_current_user)):
     """
     Returns all users in the database as JSON.
-    Works for both web (cookies) and mobile (Authorization header).
     """
-    # Redirect web users if not authenticated
-    #if isinstance(username, RedirectResponse):
-    #    return username
-
-    # Fetch all users, exclude Mongo _id
     users_cursor = users.find({}, {"_id": 0})
     user_list = []
 
     for doc in users_cursor:
-        # Convert any datetime fields to ISO strings
         for key, value in doc.items():
             if isinstance(value, datetime):
-                doc[key] = value.isoformat()
+                doc[key] = value.isoformat() + "Z"  # send as UTC ISO string
         user_list.append(doc)
 
     return {"users": user_list}
