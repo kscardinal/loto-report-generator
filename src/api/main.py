@@ -501,7 +501,7 @@ async def login_action(request: Request, username: str = Form(...), password: st
     # simple username/password check
     if username == "Admin" and password == "adminpass":
         token = create_access_token({"sub": username})
-        response = RedirectResponse(url="/jwt_test", status_code=302)
+        response = RedirectResponse(url="/pdf_list", status_code=302)
         response.set_cookie(key="access_token", value=token, httponly=True)
         return response
     else:
