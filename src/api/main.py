@@ -2,7 +2,8 @@ import json
 import subprocess
 import sys
 import tempfile
-from datetime import datetime
+import jwt
+from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import List
@@ -13,9 +14,9 @@ from .logging_config import logger, log_requests_json
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -241,13 +242,17 @@ async def clear_temp_folders():
 # View all PDFs (HTML)
 # -----------------------------
 @app.get("/pdf_list", response_class=HTMLResponse)
-async def pdf_list(request: Request):
-    """
-    Render HTML listing of all reports in the DB.
-    """
+async def pdf_list(request: Request, token: str = Query(...)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return HTMLResponse("Token expired", status_code=401)
+    except jwt.InvalidTokenError:
+        return HTMLResponse("Invalid token", status_code=401)
+
     docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
-    return templates.TemplateResponse("pdf_list.html", {"request": request, "report_names": report_names})
+    return templates.TemplateResponse("pdf_list.html", {"request": request, "report_names": report_names, "user": payload["sub"]})
 
 # -----------------------------
 # View single report (HTML)
@@ -473,3 +478,27 @@ def download_photo(photo_id: str):
 
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
+
+
+
+
+SECRET_KEY = "your-secret-key"
+
+@app.get("/login")
+def login_get(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+
+@app.post("/login")
+def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == "kyle" and password == "adminpass":
+        # Create JWT token
+        payload = {
+            "sub": username,
+            "exp": datetime.utcnow() + timedelta(hours=1)
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        # Redirect to pdf_list with token as query param (for testing)
+        response = RedirectResponse(url=f"/pdf_list?token={token}", status_code=302)
+        return response
+    else:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"})
