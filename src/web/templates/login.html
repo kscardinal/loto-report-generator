@@ -16,15 +16,18 @@
         <h3>Login</h3>
         <div class="padding"></div>
         <form method="post" id="loginForm" action="/login">
-            <input type="text" name="username" id="username" placeholder="Username or Email" required>
-            <p class="check" id ="emailCheck">❌ Invalid Email Address</p>
-            <input type="password" name="password" id="password" placeholder="Password" required>
-            <p class="check" id ="passwordCheck">❌ Password must be 12 characters minimum</p>
+            <input type="text" name="username" id="username" placeholder="Username or Email" autocomplete="username" required>
+            <p class="check" id="emailCheck">❌ Invalid Email Address</p>
+
+            <input type="password" name="password" id="password" placeholder="Password" autocomplete="current-password" required>
+            <p class="check" id="passwordCheck">❌ Password must be 12 characters minimum</p>
+
             <button type="submit">Login</button>
         </form>
         <a href="">Create Account</a>
         <a href="">Forgot Password?</a>
     </div>
 </main>
+<script type="module" src="/static/js/login.js"></script>
 </body>
 </html>

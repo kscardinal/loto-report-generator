@@ -553,31 +553,27 @@ async def users_json(username: str = Depends(get_current_user)):
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_action(request: Request, username: str = Form(...), password: str = Form(...)):
-    # Find user by username OR email
-    user = users.find_one({"$or": [{"username": username}, {"email": username}]})
+@app.post("/login")
+async def login_endpoint(data: dict):
+    username_or_email = data.get("username_or_email")
+    password = data.get("password")
+
+    # Check if user exists by username OR email
+    user = users.find_one({"$or": [{"username": username_or_email}, {"email": username_or_email}]})
     
     if not user:
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid username or email"}
-        )
+        return JSONResponse({"message": "User not found"}, status_code=404)
 
-    # Verify password
     try:
-        ph.verify(user["password"], password)
-    except (VerifyMismatchError, VerificationError):
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Incorrect password"}
-        )
-
-    # Create JWT token and set as cookie
-    token = create_access_token({"sub": user["username"]})
-    response = RedirectResponse(url="/pdf_list", status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="access_token", value=token, httponly=True)
-    return response
+        ph.verify(user["password"], password)  # hash verification
+        # If using JWT for session/cookie:
+        token = create_access_token({"sub": user["username"]})
+        response = JSONResponse({"message": "Login successful"}, status_code=200)
+        # response = RedirectResponse(url="/pdf_list", status_code=302)
+        response.set_cookie(key="access_token", value=token, httponly=True)
+        return response
+    except Exception:  # password mismatch
+        return JSONResponse({"message": "Wrong password"}, status_code=401)
 
 
 # -----------------------------
