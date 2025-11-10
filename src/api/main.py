@@ -26,15 +26,22 @@ app = FastAPI()
 # -----------------------------
 # CORS Configuration
 # -----------------------------
+origins = [
+    "https://lotogenerator.app",   # your main website
+    "http://localhost",            # optional: for local browser development
+    "http://127.0.0.1",            # optional: for local browser development
+    # Add any specific IPs or URLs of your own machines as needed
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all origins
+    allow_origins=origins,  # allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["lotogenerator.app", "localhost", "127.0.0.1"])
 
 # Logging
 app.middleware("http")(log_requests_json)
