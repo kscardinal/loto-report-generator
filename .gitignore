@@ -116,3 +116,6 @@ logs/
 
 # node
 node_modules
+
+# Wireguard
+wireguard/
