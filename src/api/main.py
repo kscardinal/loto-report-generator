@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, verify_token
+from .auth_utils import create_user, verify_user
 
 import gridfs
 from bson.objectid import ObjectId
@@ -94,12 +95,14 @@ db = client[MONGO_DB]
 
 # Collections
 uploads = db['reports']    # collection for metadata + JSON
+users = db['users']        # collection for users + metadata 
 fs = gridfs.GridFS(db)     # GridFS for storing photos
 
 # JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY not set in .env")
+
 
 # -----------------------------
 # Upload JSON + images
