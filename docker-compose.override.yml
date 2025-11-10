@@ -1,0 +1,14 @@
+services:
+  nginx:
+    ports:
+      - "8080:80"  # map local HTTP port
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./src/web/static:/app/static:ro
+      - ./src/web/templates:/app/templates:ro
+    depends_on:
+      - backend
+
+  certbot:
+    # disable certbot locally
+    scale: 0
