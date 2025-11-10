@@ -29,25 +29,29 @@ def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MIN
 
 def get_current_user(request: Request):
     token = None
+
+    # 1️⃣ Check Authorization header first (mobile)
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
 
+    # 2️⃣ If no header, check cookie (web)
     if not token:
         token = request.cookies.get("access_token")
 
+    # 3️⃣ If still no token → not authenticated
     if not token:
         if "text/html" in request.headers.get("accept", ""):
-            # Encode the original path so we can redirect after login
-            return RedirectResponse(f"/login?next={quote(str(request.url.path))}")
+            return RedirectResponse("/login")
         else:
             raise HTTPException(status_code=401, detail="Not authenticated")
 
+    # 4️⃣ Decode JWT
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload.get("sub")
+        return payload.get("sub")  # return username
     except jwt.PyJWTError:
         if "text/html" in request.headers.get("accept", ""):
-            return RedirectResponse(f"/login?next={quote(str(request.url.path))}")
+            return RedirectResponse("/login")
         else:
             raise HTTPException(status_code=401, detail="Invalid token")
