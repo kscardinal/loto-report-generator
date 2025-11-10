@@ -558,22 +558,46 @@ async def login_endpoint(data: dict):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
 
-    # Check if user exists by username OR email
+    # Find user by username or email
     user = users.find_one({"$or": [{"username": username_or_email}, {"email": username_or_email}]})
     
     if not user:
         return JSONResponse({"message": "User not found"}, status_code=404)
 
     try:
-        ph.verify(user["password"], password)  # hash verification
-        # If using JWT for session/cookie:
-        token = create_access_token({"sub": user["username"]})
-        response = JSONResponse({"message": "Login successful"}, status_code=200)
-        # response = RedirectResponse(url="/pdf_list", status_code=302)
-        response.set_cookie(key="access_token", value=token, httponly=True)
-        return response
+        ph.verify(user["password"], password)  # Verify hashed password
     except Exception:  # password mismatch
         return JSONResponse({"message": "Wrong password"}, status_code=401)
+
+    # Password correct → update last_accessed and reset login_attempts
+    users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"last_accessed": datetime.utcnow(), "login_attempts": 0}}
+    )
+
+    # Create JWT token and return
+    token = create_access_token({"sub": user["username"]})
+    response = JSONResponse({"message": "Login successful"}, status_code=200)
+    response.set_cookie(key="access_token", value=token, httponly=True)
+    return response
+
+
+# -----------------------------
+# Update login attempts endpoint
+# -----------------------------
+@app.post("/update-login-attempts")
+async def update_login_attempts(
+    data: dict,
+    username: str = Depends(get_current_user)  # JWT-protected
+):
+    attempts = data.get("login_attempts", 0)
+
+    users.update_one(
+        {"username": username},
+        {"$set": {"login_attempts": attempts}}
+    )
+
+    return JSONResponse({"message": "Login attempts updated"}, status_code=200)
 
 
 # -----------------------------
@@ -601,17 +625,25 @@ def create_account(
     if users.find_one({"$or": [{"username": username}, {"email": email}]}):
         return templates.TemplateResponse("create_account.html", {"request": request, "error": "Username or email already exists"})
 
-    # Hash the password
+    # Hash password
     hashed_password = ph.hash(password)
 
-    # Insert into users collection
+    # Insert new user with all additional fields
     users.insert_one({
         "first_name": first_name,
         "last_name": last_name,
         "email": email,
         "username": username,
-        "password": hashed_password
+        "password": hashed_password,
+        "date_created": datetime.utcnow(),
+        "last_accessed": None,
+        "is_active": 1,
+        "role": "user",
+        "backup_code": None,
+        "login_attempts": 0,
+        "latest_reset": None,
+        "password_resets": 0,
+        "verification_attempts": 0
     })
 
-    # Redirect to login after successful account creation
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)

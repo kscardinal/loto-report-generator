@@ -24,6 +24,15 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             // Success
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
+
+            // Example call when password is wrong
+            await fetch("/update-login-attempts", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                credentials: "include",
+                body: JSON.stringify({ login_attempts: login_attempts })
+            });
+
             window.location.href = "/pdf_list";
         } else if (response.status === 404) {
             // User not found
