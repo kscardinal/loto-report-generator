@@ -1,10 +1,12 @@
 import jwt
 from datetime import datetime, timedelta
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 import os
 from dotenv import load_dotenv
 from argon2 import PasswordHasher
+from urllib.parse import quote
 
 ph = PasswordHasher()
 
@@ -25,34 +27,27 @@ def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MIN
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
+def get_current_user(request: Request):
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+
+    if not token:
+        token = request.cookies.get("access_token")
+
+    if not token:
+        if "text/html" in request.headers.get("accept", ""):
+            # Encode the original path so we can redirect after login
+            return RedirectResponse(f"/login?next={quote(str(request.url.path))}")
+        else:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return username
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload.get("sub")
     except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-def create_user(users_collection, username: str, password: str):
-    password_hash = ph.hash(password)
-    user_doc = {
-        "username": username,
-        "password_hash": password_hash,
-        "created_at": datetime.utcnow()
-    }
-    users_collection.insert_one(user_doc)
-
-def verify_user(users_collection, username: str, password: str) -> bool:
-    user = users_collection.find_one({"username": username})
-    if not user:
-        return False
-    try:
-        ph.verify(user["password_hash"], password)
-        return True
-    except:
-        return False
+        if "text/html" in request.headers.get("accept", ""):
+            return RedirectResponse(f"/login?next={quote(str(request.url.path))}")
+        else:
+            raise HTTPException(status_code=401, detail="Invalid token")
