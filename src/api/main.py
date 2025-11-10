@@ -486,6 +486,8 @@ SECRET_KEY = "your-secret-key"
 
 @app.get("/login")
 def login_get(request: Request):
+    print(jwt.__file__)
+    print(jwt.__version__)
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 @app.post("/login")
