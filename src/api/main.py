@@ -490,7 +490,7 @@ def login_get(request: Request):
 
 @app.post("/login")
 def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
-    if username == "kyle" and password == "adminpass":
+    if username != "" and password != "":
         # Create JWT token
         payload = {
             "sub": username,
