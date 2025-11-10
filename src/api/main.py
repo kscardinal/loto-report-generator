@@ -11,13 +11,17 @@ from icecream import ic
 import shutil
 import jwt
 from dotenv import load_dotenv
+from argon2 import PasswordHasher
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError
+import secrets
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -101,6 +105,9 @@ fs = gridfs.GridFS(db)     # GridFS for storing photos
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY not set in .env")
+
+# Hashing Passwords
+ph = PasswordHasher(time_cost=4, memory_cost=102400, parallelism=8, hash_len=32)
 
 
 # -----------------------------
@@ -489,23 +496,7 @@ def download_photo(photo_id: str, username: str = Depends(get_current_user)):
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
 
-# -----------------------------
-# Login Page
-# -----------------------------
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_action(request: Request, username: str = Form(...), password: str = Form(...)):
-    # simple username/password check
-    if username == "Admin" and password == "adminpass":
-        token = create_access_token({"sub": username})
-        response = RedirectResponse(url="/pdf_list", status_code=302)
-        response.set_cookie(key="access_token", value=token, httponly=True)
-        return response
-    else:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
 # -----------------------------
 # JWT Test Page
@@ -521,3 +512,110 @@ async def jwt_test(request: Request, username: str = Depends(get_current_user)):
 
     # If mobile or logged in web user
     return JSONResponse({"message": f"JWT verified successfully! Welcome {username}"})
+
+
+
+
+
+
+
+
+
+
+@app.get("/users_json")
+async def users_json(username: str = Depends(get_current_user)):
+    """
+    Returns all users in the database as JSON.
+    Works for both web (cookies) and mobile (Authorization header).
+    """
+    # Redirect web users if not authenticated
+    #if isinstance(username, RedirectResponse):
+    #    return username
+
+    # Fetch all users, exclude Mongo _id
+    users_cursor = users.find({}, {"_id": 0})
+    user_list = []
+
+    for doc in users_cursor:
+        # Convert any datetime fields to ISO strings
+        for key, value in doc.items():
+            if isinstance(value, datetime):
+                doc[key] = value.isoformat()
+        user_list.append(doc)
+
+    return {"users": user_list}
+
+
+# -----------------------------
+# Login Page
+# -----------------------------
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_action(request: Request, username: str = Form(...), password: str = Form(...)):
+    # Find user by username OR email
+    user = users.find_one({"$or": [{"username": username}, {"email": username}]})
+    
+    if not user:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Invalid username or email"}
+        )
+
+    # Verify password
+    try:
+        ph.verify(user["password"], password)
+    except (VerifyMismatchError, VerificationError):
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Incorrect password"}
+        )
+
+    # Create JWT token and set as cookie
+    token = create_access_token({"sub": user["username"]})
+    response = RedirectResponse(url="/pdf_list", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=token, httponly=True)
+    return response
+
+
+# -----------------------------
+# Create Account Page
+# -----------------------------
+@app.get("/create-account")
+def create_account_form(request: Request):
+    return templates.TemplateResponse("create_account.html", {"request": request})
+
+@app.post("/create-account")
+def create_account(
+    request: Request,
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    email: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...)
+):
+    # Password confirmation
+    if password != confirm_password:
+        return templates.TemplateResponse("create_account.html", {"request": request, "error": "Passwords do not match"})
+
+    # Check if username/email already exists
+    if users.find_one({"$or": [{"username": username}, {"email": email}]}):
+        return templates.TemplateResponse("create_account.html", {"request": request, "error": "Username or email already exists"})
+
+    # Hash the password
+    hashed_password = ph.hash(password)
+
+    # Insert into users collection
+    users.insert_one({
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "username": username,
+        "password": hashed_password
+    })
+
+    # Redirect to login after successful account creation
+    return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
