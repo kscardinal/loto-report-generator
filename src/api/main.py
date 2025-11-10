@@ -13,12 +13,11 @@ import jwt
 from dotenv import load_dotenv
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, verify_token
-from .auth_utils import create_user, verify_user
+from .auth_utils import create_access_token, get_current_user
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -254,13 +253,26 @@ async def clear_temp_folders():
 # View all PDFs (HTML)
 # -----------------------------
 @app.get("/pdf_list", response_class=HTMLResponse)
-async def pdf_list(request: Request):
+async def pdf_list(
+    request: Request,
+    username: str = Depends(get_current_user)  # ✅ requires JWT
+):
     """
     Render HTML listing of all reports in the DB.
+    Works for both web (cookies) and mobile (Authorization header).
     """
+    # If the dependency returned a RedirectResponse (for web), return it
+    if isinstance(username, RedirectResponse):
+        return username
+
+    # Fetch report names
     docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
-    return templates.TemplateResponse("pdf_list.html", {"request": request, "report_names": report_names})
+
+    return templates.TemplateResponse(
+        "pdf_list.html",
+        {"request": request, "report_names": report_names}
+    )
 
 # -----------------------------
 # View single report (HTML)
@@ -506,16 +518,14 @@ async def login_action(request: Request, username: str = Form(...), password: st
     else:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
-@app.get("/jwt_test")
-async def jwt_test(request: Request):
-    token = request.cookies.get("access_token")
-    if not token:
-        return RedirectResponse("/login")
-    
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        username = payload.get("sub")
-    except Exception:
-        return RedirectResponse("/login")
+@app.get("/jwt_test", response_class=HTMLResponse)
+async def jwt_test(request: Request, username: str = Depends(get_current_user)):
+    """
+    A test endpoint to verify JWT authentication.
+    Works for both web and mobile clients.
+    """
+    if isinstance(username, RedirectResponse):
+        return username  # redirect for web if not authenticated
 
-    return {"message": f"Hello {username}, you are authenticated via JWT!"}
+    # If mobile or logged in web user
+    return JSONResponse({"message": f"JWT verified successfully! Welcome {username}"})
