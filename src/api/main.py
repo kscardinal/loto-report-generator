@@ -108,15 +108,16 @@ if not SECRET_KEY:
 # -----------------------------
 @app.post("/upload/")
 async def upload_report(
+    request: Request,
+    username: str = Depends(get_current_user),
     files: List[UploadFile] = File(...),
     uploaded_by: str = Form("anonymous"),
     tags: List[str] = Form([]),
     notes: str = Form("")
 ):
-    """
-    Upload a JSON report along with any image files.
-    Saves files to temp, checks duplicates in GridFS, and updates/inserts metadata.
-    """
+    if isinstance(username, RedirectResponse):
+        return username
+    
     json_file = None
     include_files = []
 
@@ -188,7 +189,13 @@ async def upload_report(
 # Download PDF (streams PDF directly to client)
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
-def download_pdf(report_name: str):
+def download_pdf(
+    report_name: str,
+    username: str = Depends(get_current_user)
+):
+    if isinstance(username, RedirectResponse):
+        return username
+    
     print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
@@ -240,10 +247,10 @@ def download_pdf(report_name: str):
 # Clear temp folder
 # -----------------------------
 @app.post("/clear/")
-async def clear_temp_folders():
-    """
-    Clear all files in TEMP_DIR.
-    """
+async def clear_temp_folders(username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     for file in TEMP_DIR.iterdir():
         if file.is_file():
             file.unlink()
@@ -291,8 +298,18 @@ def format_datetime_with_ordinal(dt: datetime) -> str:
     # %I is hour (12-hour), %M minutes, %S seconds, %p AM/PM
     return dt.strftime(f"%A, %B {day_with_suffix}, %Y at %I:%M:%S %p").lstrip("0").replace("AM","am").replace("PM","pm")
 
+# -----------------------------
+# View single report (HTML)
+# -----------------------------
 @app.get("/view_report/{report_name}", response_class=HTMLResponse)
-async def view_report(request: Request, report_name: str):
+async def view_report(
+    request: Request,
+    report_name: str,
+    username: str = Depends(get_current_user)
+):
+    if isinstance(username, RedirectResponse):
+        return username
+
     doc = get_report_entry(uploads, fs, report_name, fetch_photos=True)
     if not doc:
         return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
@@ -308,10 +325,10 @@ async def view_report(request: Request, report_name: str):
 # Fetch individual photo
 # -----------------------------
 @app.get("/photo/{photo_id}")
-def get_photo(photo_id: str):
-    """
-    Return an image stored in GridFS by ID.
-    """
+def get_photo(photo_id: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     photo = fs.get(ObjectId(photo_id))
     return Response(photo.read(), media_type="image/jpeg")
 
@@ -319,19 +336,21 @@ def get_photo(photo_id: str):
 # Fetch metadata for a given report
 # -----------------------------
 @app.get("/metadata/{report_name}")
-async def get_metadata(report_name: str):
+async def get_metadata(report_name: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     doc = uploads.find_one(
         {"report_name": report_name},
-        {"_id": 0, "json_data": 0, "photos": 0}  # exclude JSON and photos
+        {"_id": 0, "json_data": 0, "photos": 0}
     )
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
-    
-    # Convert all datetime objects to ISO strings
+
     for key in ["date_added", "last_modified", "last_generated"]:
         if key in doc and isinstance(doc[key], datetime):
             doc[key] = doc[key].strftime("%A, %B %d, %Y, %I:%M:%S %p")
-    
+
     return JSONResponse(content=doc)
 
 # -----------------------------
@@ -350,31 +369,25 @@ async def db_status():
 # Opens the page to create a report
 # -----------------------------
 @app.get("/create_report", response_class=HTMLResponse)
-async def create_report(request: Request):
-    """
-    Serves the input_form.html page for creating a new report.
-    """
+async def create_report(request: Request, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     return templates.TemplateResponse("input_form.html", {"request": request})
 
 # -----------------------------
 # Remove a report from the database
 # -----------------------------
 @app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
-async def remove_report(report_name: str):
-    """
-    Remove a report from the database by name.
-    Does NOT delete photos, since multiple reports can share the same images.
-    Returns the names of photos retained for logging.
-    """
-    # Find the report
+async def remove_report(report_name: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
 
-    # Collect photo names for logging
     photo_names = [p["photo_name"] for p in doc.get("photos", [])]
-
-    # Delete the report document itself
     result = uploads.delete_one({"_id": doc["_id"]})
     if result.deleted_count == 0:
         return JSONResponse(status_code=500, content={"error": f"Failed to delete report '{report_name}'"})
@@ -388,22 +401,16 @@ async def remove_report(report_name: str):
 # Cleanup orphaned photos from GridFS
 # -----------------------------
 @app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
-async def cleanup_orphan_photos():
-    """
-    Delete all photos in GridFS that are not referenced by any report.
-    Returns a dictionary of deleted photos with their names and IDs.
-    """
-    deleted_photos = {}
+async def cleanup_orphan_photos(username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
 
-    # Iterate over all files in GridFS
+    deleted_photos = {}
     for grid_out in fs.find():
         photo_id = grid_out._id
         photo_name = grid_out.filename
-
-        # Check if this photo_id exists in any report
         usage_count = uploads.count_documents({"photos.photo_id": photo_id})
         if usage_count == 0:
-            # Not used, delete from GridFS
             fs.delete(photo_id)
             deleted_photos[photo_name] = str(photo_id)
 
@@ -413,70 +420,51 @@ async def cleanup_orphan_photos():
     }
 
 # -----------------------------
-# Returns a json package of the current reports in the database
+# JSON endpoints
 # -----------------------------
 @app.get("/pdf_list_json")
-async def pdf_list_json():
-    """
-    Returns a JSON list of all reports with metadata only (no JSON data or photos).
-    """
-    docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})  # exclude JSON and photos
+async def pdf_list_json(username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
+    docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
     report_list = []
-
     for doc in docs:
-        # Count number of photos in original report
         photo_count = len(doc.get("photos", [])) if "photos" in doc else 0
-
-        # Convert datetime fields to ISO format
         for key in ["date_added", "last_modified", "last_generated"]:
             if key in doc and isinstance(doc[key], datetime):
                 doc[key] = doc[key].isoformat()
-
-        # Add photo count
         doc["num_photos"] = photo_count
-
         report_list.append(doc)
 
     return {"reports": report_list}
-
 
 # -----------------------------
 # Download JSON + all related photos (separately)
 # -----------------------------
 @app.get("/download_report_files/{report_name}", name="download_report_files")
-def download_report_files(report_name: str):
-    """
-    Download the report JSON and all related photos for a given report name.
-    Returns JSON with download URLs for each file.
-    """
+def download_report_files(report_name: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
 
-    # Prepare response structure
-    file_list = []
-
-    # 1️⃣ Create JSON download URL
-    file_list.append({
-        "filename": f"{report_name}.json",
-        "url": f"/download_json/{report_name}"
-    })
-
-    # 2️⃣ Create photo download URLs
+    file_list = [{"filename": f"{report_name}.json", "url": f"/download_json/{report_name}"}]
     for photo in doc.get("photos", []):
-        file_list.append({
-            "filename": photo.get("photo_name", f"{photo['photo_id']}.jpg"),
-            "url": f"/download_photo/{photo['photo_id']}"
-        })
+        file_list.append({"filename": photo.get("photo_name", f"{photo['photo_id']}.jpg"), "url": f"/download_photo/{photo['photo_id']}"})
 
     return {"report_name": report_name, "files": file_list}
-
 
 # -----------------------------
 # Download JSON file for a report
 # -----------------------------
 @app.get("/download_json/{report_name}", name="download_json")
-def download_json(report_name: str):
+def download_json(report_name: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -485,12 +473,14 @@ def download_json(report_name: str):
     headers = {"Content-Disposition": f"attachment; filename={report_name}.json"}
     return StreamingResponse(json_bytes, media_type="application/json", headers=headers)
 
-
 # -----------------------------
 # Download photo by its GridFS ID
 # -----------------------------
 @app.get("/download_photo/{photo_id}", name="download_photo")
-def download_photo(photo_id: str):
+def download_photo(photo_id: str, username: str = Depends(get_current_user)):
+    if isinstance(username, RedirectResponse):
+        return username
+
     try:
         grid_out = fs.get(ObjectId(photo_id))
     except Exception:
@@ -498,7 +488,6 @@ def download_photo(photo_id: str):
 
     headers = {"Content-Disposition": f"attachment; filename={grid_out.filename}"}
     return StreamingResponse(grid_out, media_type="image/jpeg", headers=headers)
-
 
 # -----------------------------
 # Login Page
@@ -518,6 +507,9 @@ async def login_action(request: Request, username: str = Form(...), password: st
     else:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
 
+# -----------------------------
+# JWT Test Page
+# -----------------------------
 @app.get("/jwt_test", response_class=HTMLResponse)
 async def jwt_test(request: Request, username: str = Depends(get_current_user)):
     """
