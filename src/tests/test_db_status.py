@@ -1,31 +1,56 @@
 import os
 import pytest
+from ..api.auth_utils import create_access_token
 
 try:
     import requests
-except Exception:  # pragma: no cover - defensive import for environments without requests
+except Exception:  # pragma: no cover
     requests = None
 
-# Skip the entire module if TEST_SERVER_IP is not configured (same pattern as other tests)
-TEST_SERVER = os.getenv("SERVER_IP")
+# Determine which server to use based on environment
+APP_ENV = os.getenv("APP_ENV", "dev").lower()
+
+if APP_ENV == "dev":
+    TEST_SERVER = os.getenv("TEST_SERVER_IP")
+else:
+    TEST_SERVER = os.getenv("SERVER_IP")
+
+# Skip tests if no server or requests not available
 if not TEST_SERVER or not requests:
     reason = (
-        "Skipping db_status tests: SERVER_IP is not configured or 'requests' not available"
+        f"Skipping db_status tests: SERVER_IP not configured or 'requests' not available "
+        f"(APP_ENV={APP_ENV})"
     )
     pytest.skip(reason, allow_module_level=True)
 
+# -----------------------------
+# JWT setup
+# -----------------------------
+TEST_USERNAME = "testuser"
+TEST_TOKEN = create_access_token({"sub": TEST_USERNAME})
+
+# Headers for mobile/API endpoints
+HEADERS = {"Authorization": f"Bearer {TEST_TOKEN}"}
+
+# Cookies for web endpoints
+COOKIES = {"access_token": TEST_TOKEN}
+
 
 def test_db_status_endpoint_responds_ok():
-    """Call /db_status on the configured SERVER_IP and assert the DB reports 'ok'.
+    """Call /db_status on the configured SERVER_IP with JWT and assert DB reports 'ok'."""
 
-    This test prints short, emoji-prefixed status lines so it's easy to follow in
-    the pytest output (mirrors the style used in `test_pdf_scripts.py`).
-    """
     url = TEST_SERVER.rstrip("/") + "/db_status"
     print("\n\n🔎 DB status check\n")
     print(f"➡️  Requesting: {url}")
 
-    resp = requests.get(url, timeout=10)
+    # Try mobile/API approach first
+    resp = requests.get(url, headers=HEADERS, timeout=10)
+
+    # If unauthorized, try web/cookie approach
+    if resp.status_code in (401, 403):
+        print("⚠️  Mobile/API JWT unauthorized, trying web cookie method")
+        resp = requests.get(url, cookies=COOKIES, timeout=10)
+
     print(f"⬇️  Response code: {resp.status_code}")
 
     try:
@@ -39,4 +64,3 @@ def test_db_status_endpoint_responds_ok():
     assert data.get("status") == "ok", f"DB status unexpected: {data}"
 
     print("✅ Database connection reported 'ok'\n")
-
