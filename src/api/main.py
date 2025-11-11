@@ -789,3 +789,39 @@ async def delete_user(
 
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
 
+# -----------------------------
+# Audit Logs Page (Owner Only)
+# -----------------------------
+@app.get("/audit_logs", response_class=HTMLResponse)
+async def audit_logs_page(request: Request, current_user: dict = Depends(get_current_user)):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    return templates.TemplateResponse("audit_logs.html", {
+        "request": request,
+        "current_user": current_user
+    })
+
+@app.get("/audit_logs_json")
+async def audit_logs_json(current_user: dict = Depends(get_current_user_no_redirect)):
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    logs_cursor = audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(500)
+    log_list = []
+
+    for doc in logs_cursor:
+        # Convert datetime to ISO string
+        if isinstance(doc.get("timestamp"), datetime):
+            doc["timestamp"] = doc["timestamp"].isoformat() + "Z"
+        log_list.append(doc)
+
+    return {"logs": log_list}
+
