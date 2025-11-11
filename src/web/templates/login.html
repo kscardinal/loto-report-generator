@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LOTO Generator Login</title>
+<link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+<main>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <div class="login-container">
+        <h2>LOTO Generator</h2>
+        <h3>Login</h3>
+        <div class="padding"></div>
+        <form method="post" id="loginForm" action="/login">
+            <input type="text" name="username" id="username" placeholder="Username or Email" autocomplete="username" required>
+            <p class="check" id="emailCheck">❌ Invalid Email Address</p>
+
+            <input type="password" name="password" id="password" placeholder="Password" autocomplete="current-password" required>
+            <p class="check" id="passwordCheck">❌ Password must be 12 characters minimum</p>
+            <p class="check" id="activationCheck">❌ Your account has not been activated yet</p>
+
+            <button type="submit">Login</button>
+        </form>
+        <a href="/create-account">Create Account</a>
+        <a href="">Forgot Password?</a>
+    </div>
+</main>
+<script type="module" src="/static/js/login.js"></script>
+</body>
+</html>

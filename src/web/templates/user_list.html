@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>All Users - Admin</title>
+<link rel="stylesheet" href="/static/css/user_list.css">
+<style>
+    .action-buttons {
+        margin-top: 10px;
+        display: flex;
+        justify-content: space-between; /* left vs right */
+        align-items: center;
+    }
+
+    .action-buttons .left-buttons,
+    .action-buttons .right-buttons {
+        display: flex;
+        gap: 10px; /* spacing between buttons */
+    }
+
+    .btn {
+        padding: 6px 12px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .btn-activate { background-color: #28a745; color: white; }
+    .btn-deactivate { background-color: #dc3545; color: white; }
+    .btn-promote { background-color: #007bff; color: white; }
+    .btn-demote { background-color: #dc3545; color: white; }
+    .btn-delete { background-color: #dc3545; color: white; }
+
+
+    /* Modal */
+    #confirmModal {
+        display: none; 
+        position: fixed; 
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+    }
+    #confirmBox {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        max-width: 400px;
+        text-align: center;
+    }
+    #confirmBox button {
+        margin-top: 10px;
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+    }
+    #confirmYes { background-color: #28a745; color: white; }
+    #confirmNo { background-color: #dc3545; color: white; margin-left: 10px; }
+
+    .current-user {
+        font-size: 0.9em;
+        color: white;
+        margin-top: 5px;
+    }
+
+    /* inside your <style> block or CSS file */
+    .user-card.current {
+        background-color: #ffebec; /* pastel/muted red */
+        border: 1px solid #f5c2c7; /* optional border */
+    }
+
+    .btn-delete {
+        padding: 6px 12px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+
+
+</style>
+</head>
+
+<body>
+<header>
+    <h1>All Users</h1>
+    {% if current_user %}
+        <p class="current-user">
+            Logged in as: {{ current_user.username }} ({{ current_user.role|capitalize }})
+        </p>
+    {% endif %}
+</header>
+
+<main>
+    <div id="userList">
+        <!-- JS will populate user cards here -->
+    </div>
+</main>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal">
+    <div id="confirmBox">
+        <p id="confirmText"></p>
+        <button id="confirmYes">Yes</button>
+        <button id="confirmNo">Cancel</button>
+    </div>
+</div>
+
+<script>
+let pendingAction = null;   // holds a function to execute after confirmation
+
+/** ----------------------------
+ *   Fetch and Render Users
+ * ---------------------------- */
+async function fetchUsers() {
+    const response = await fetch("/users_json", { credentials: "include" });
+    const data = await response.json();
+    const container = document.getElementById("userList");
+    container.innerHTML = "";
+
+    data.users.forEach(user => {
+        const div = document.createElement("div");
+        div.classList.add("user-card");
+
+        // Highlight the current logged-in user
+        if (user.username === "{{ current_user.username }}") {
+            div.classList.add("current"); // applies pastel red background
+        }
+
+        const options = {
+            timeZone: "America/New_York",
+            year: "numeric", month: "long", day: "numeric",
+            hour: "numeric", minute: "numeric", second: "numeric",
+            hour12: true
+        };
+
+        const dateCreatedEST = user.date_created ? new Date(user.date_created).toLocaleString("en-US", options) : "N/A";
+        const lastAccessedEST = user.last_accessed ? new Date(user.last_accessed).toLocaleString("en-US", options) : "N/A";
+        const latestResetEST = user.latest_reset ? new Date(user.latest_reset).toLocaleString("en-US", options) : "N/A";
+
+        let actionButtonsHTML = "";
+
+        // Only show buttons if user is not owner
+        if (user.role !== "owner") {
+            // Left side buttons
+            let leftButtons = "";
+
+            // Activate / Deactivate
+            leftButtons += user.is_active 
+                ? `<button class="btn btn-deactivate" onclick="confirmAction('Deactivate', '${user.username}', ${user.is_active}, changeActive)">Deactivate</button>`
+                : `<button class="btn btn-activate" onclick="confirmAction('Activate', '${user.username}', ${user.is_active}, changeActive)">Activate</button>`;
+
+            // Promote / Demote
+            if (user.role === "user") {
+                leftButtons += `<button class="btn btn-promote" onclick="confirmAction('Promote to Admin', '${user.username}', 'admin', changeRole)">Promote</button>`;
+            } else if (user.role === "admin") {
+                leftButtons += `<button class="btn btn-demote" onclick="confirmAction('Demote to User', '${user.username}', 'user', changeRole)">Demote</button>`;
+            }
+
+            // Right side button
+            let rightButton = `<button class="btn btn-delete" onclick="confirmAction('Delete', '${user.username}', null, deleteUser)">Delete</button>`;
+
+            // Combine into flex container
+            actionButtonsHTML = `
+                <div class="action-buttons">
+                    <div class="left-buttons">
+                        ${leftButtons}
+                    </div>
+                    <div class="right-buttons">
+                        ${rightButton}
+                    </div>
+                </div>
+            `;
+
+        }
+
+
+        div.innerHTML = `
+            <h3>${user.display_username || user.username} ${user.role ? "(" + user.role + ")" : ""}</h3>
+            <p><span>First Name:</span> ${user.first_name}</p>
+            <p><span>Last Name:</span> ${user.last_name}</p>
+            <p><span>Display Name:</span> ${user.display_username || ""}</p>
+            <p><span>Username:</span> ${user.username}</p>
+            <p><span>Email:</span> ${user.email}</p>
+            <p><span>Date Created:</span> ${dateCreatedEST}</p>
+            <p><span>Last Accessed:</span> ${lastAccessedEST}</p>
+            <p><span>Active:</span> ${user.is_active ? "Active" : "Inactive"}</p>
+            <p><span>Login Attempts:</span> ${user.login_attempts || 0}</p>
+            <p><span>Backup Code:</span> ${user.backup_code || "None"}</p>
+            <p><span>Password Resets:</span> ${user.password_resets || 0}</p>
+            <p><span>Latest Reset:</span> ${latestResetEST}</p>
+            <p><span>Verification Attempts:</span> ${user.verification_attempts || 0}</p>
+
+            <div>
+                ${actionButtonsHTML}
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+/** ----------------------------
+ *   Confirmation Modal Logic
+ * ---------------------------- */
+function confirmAction(actionText, username, state, callbackFn) {
+    const modal = document.getElementById("confirmModal");
+    const text = document.getElementById("confirmText");
+
+    text.textContent = `Are you sure you want to ${actionText} ${username}?`;
+
+    modal.style.display = "flex";
+
+    // Store the function to run after confirmation
+    pendingAction = () => callbackFn(username, state);
+}
+
+document.getElementById("confirmNo").onclick = () => {
+    pendingAction = null;
+    document.getElementById("confirmModal").style.display = "none";
+};
+
+document.getElementById("confirmYes").onclick = async () => {
+    if (pendingAction) await pendingAction();
+    document.getElementById("confirmModal").style.display = "none";
+    pendingAction = null;
+    fetchUsers(); // Refresh user list
+};
+
+/** ----------------------------
+ *   Backend Calls
+ * ---------------------------- */
+
+// Change active status
+async function changeActive(username, state) {
+    const newState = state ? 0 : 1; // toggle
+    await fetch("/change_status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, is_active: newState })
+    });
+}
+
+// Change role
+async function changeRole(username, newRole) {
+    const response = await fetch("/update_role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username: username, role: newRole })
+    });
+}
+
+// Delete User
+async function deleteUser(username) {
+    const response = await fetch("/delete_user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username })
+    });
+
+    if (response.ok) {
+        fetchUsers();
+    } else {
+        const data = await response.json();
+        alert(`Failed to delete user: ${data.detail || JSON.stringify(data)}`);
+    }
+}
+
+fetchUsers();
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ from typing import Dict, Optional, Callable, Literal, List
 import pytest
 from pdf2image import convert_from_path
 from PIL import Image, ImageChops
+import jwt
 
 # === Resolve project paths ===
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -211,7 +212,7 @@ def _run_pdf_batch(
         # suppress stdout, capture stderr for debugging
         with open(os.devnull, "w") as fnull, contextlib.redirect_stdout(fnull):
             result = subprocess.run(
-                ["python", str(script_path), str(json_file)],
+                [sys.executable, str(script_path), str(json_file)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
                 text=True,
