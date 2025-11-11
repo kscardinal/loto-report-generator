@@ -90,10 +90,26 @@ def require_role(required_role: str):
         return None  # No error
     return wrapper
 
-def log_action(audit_logs_collection, username: str, action: str, details=None):
+def log_action(request, audit_logs_collection, username: str, action: str, details=None):
+    client_ip = get_client_ip(request)
+
     audit_logs_collection.insert_one({
+        "ip_address": client_ip,
         "username": username,
         "action": action,
         "details": details or {},
         "timestamp": datetime.utcnow()
     })
+
+def get_client_ip(request: Request) -> str:
+    """
+    Get the client IP from request headers. Handles proxies if present.
+    """
+    # X-Forwarded-For is standard for proxies; may contain multiple IPs
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    client_ip = request.client.host
+    if x_forwarded_for:
+        # First IP is usually the real client
+        return x_forwarded_for.split(",")[0].strip()
+    return client_ip
+

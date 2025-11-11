@@ -17,7 +17,7 @@ from argon2.exceptions import VerifyMismatchError, VerificationError
 import secrets
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip
 
 import gridfs
 from bson.objectid import ObjectId
@@ -574,6 +574,17 @@ async def login_endpoint(request: Request, data: dict):
     response = JSONResponse({"message": "Login successful", "return_url": return_url}, status_code=200)
     response.set_cookie(key="access_token", value=token, httponly=True)
     response.delete_cookie("return_url")  # clean up after reading
+
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=user["username"],
+        action="login",
+        details={"target": user["username"]}
+    )
+
+
     return response
 
 
@@ -658,6 +669,7 @@ def create_account(
 
 @app.post("/change_status")
 async def change_status(
+    request: Request,
     data: dict,
     current_user: dict = Depends(get_current_user_no_redirect)
 ):
@@ -695,10 +707,11 @@ async def change_status(
     )
 
     log_action(
-        audit_logs,
-        current_user["username"],
-        "change_status",
-        {"target": target_username, "is_active": new_status_int}
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="change_status",
+        details={"target": target_username, "is_active": new_status_int}
     )
 
     return {
@@ -709,6 +722,7 @@ async def change_status(
 
 @app.post("/update_role")
 async def update_role(
+    request: Request,
     data: dict,
     current_user: dict = Depends(get_current_user_no_redirect)
 ):
@@ -732,16 +746,21 @@ async def update_role(
     )
 
     log_action(
-        audit_logs,
-        current_user["username"],
-        "update_role",
-        {"target": target_username, "new_role": new_role}
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="update_role",
+        details={"target": target_username, "new_role": new_role}
     )
 
     return {"message": f"Updated role for {target_username} to {new_role}"}
 
 @app.post("/delete_user")
-async def delete_user(data: dict, current_user: dict = Depends(get_current_user_no_redirect)):
+async def delete_user(
+    request: Request,
+    data: dict, 
+    current_user: dict = Depends(get_current_user_no_redirect)
+):
     # Only owner can delete users
     error = require_role("owner")(current_user)
     if error:
@@ -761,10 +780,12 @@ async def delete_user(data: dict, current_user: dict = Depends(get_current_user_
     users.delete_one({"username": target_username.lower()})
 
     log_action(
-        audit_logs,
-        current_user["username"],
-        "delete_user",
-        {"target": target_username, "deleted": True}
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="delete_user",
+        details={"target": target_username, "deleted": True}
     )
 
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
+
