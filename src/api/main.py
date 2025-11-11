@@ -17,7 +17,7 @@ from argon2.exceptions import VerifyMismatchError, VerificationError
 import secrets
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action
 
 import gridfs
 from bson.objectid import ObjectId
@@ -99,6 +99,7 @@ db = client[MONGO_DB]
 # Collections
 uploads = db['reports']    # collection for metadata + JSON
 users = db['users']        # collection for users + metadata 
+audit_logs = db["audit_logs"]
 fs = gridfs.GridFS(db)     # GridFS for storing photos
 
 # JWT
@@ -693,6 +694,13 @@ async def change_status(
         {"$set": {"is_active": new_status_int}}
     )
 
+    log_action(
+        audit_logs,
+        current_user["username"],
+        "change_status",
+        {"target": target_username, "is_active": new_status_int}
+    )
+
     return {
         "message": f"User '{target_username}' status updated",
         "is_active": new_status_int
@@ -723,6 +731,13 @@ async def update_role(
         {"$set": {"role": new_role}}
     )
 
+    log_action(
+        audit_logs,
+        current_user["username"],
+        "update_role",
+        {"target": target_username, "new_role": new_role}
+    )
+
     return {"message": f"Updated role for {target_username} to {new_role}"}
 
 @app.post("/delete_user")
@@ -744,4 +759,12 @@ async def delete_user(data: dict, current_user: dict = Depends(get_current_user_
         raise HTTPException(status_code=403, detail="Cannot delete owner")
 
     users.delete_one({"username": target_username.lower()})
+
+    log_action(
+        audit_logs,
+        current_user["username"],
+        "delete_user",
+        {"target": target_username, "deleted": True}
+    )
+
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
