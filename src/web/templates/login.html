@@ -12,7 +12,7 @@
     {% endif %}
 
     <div class="login-container">
-        <h2>Sonnaz Group</h2>
+        <h2>LOTO Generator</h2>
         <h3>Login</h3>
         <div class="padding"></div>
         <form method="post" id="loginForm" action="/login">
@@ -21,6 +21,7 @@
 
             <input type="password" name="password" id="password" placeholder="Password" autocomplete="current-password" required>
             <p class="check" id="passwordCheck">❌ Password must be 12 characters minimum</p>
+            <p class="check" id="activationCheck">❌ Your account has not been activated yet</p>
 
             <button type="submit">Login</button>
         </form>

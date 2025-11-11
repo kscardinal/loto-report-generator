@@ -17,7 +17,7 @@ from argon2.exceptions import VerifyMismatchError, VerificationError
 import secrets
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user
+from .auth_utils import create_access_token, get_current_user, require_role
 
 import gridfs
 from bson.objectid import ObjectId
@@ -532,10 +532,20 @@ async def jwt_test(request: Request, username: str = Depends(get_current_user)):
 # Users List Page
 # -----------------------------
 @app.get("/users", response_class=HTMLResponse)
-async def users_page_2(request: Request, username: str = Depends(get_current_user)):
-    if isinstance(username, RedirectResponse):
-        return username  # redirect for web if not authenticated
-    return templates.TemplateResponse("user_list.html", {"request": request, "error": None})
+async def users_page_2(request: Request, current_user: dict = Depends(get_current_user)):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    return templates.TemplateResponse("user_list.html", {
+        "request": request,
+        "current_user": current_user
+    })
+
 
 @app.get("/users_json")
 async def users_json(username: str = Depends(get_current_user)):
@@ -566,28 +576,44 @@ async def login_endpoint(data: dict):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
 
-    # Find user by username or email
-    user = users.find_one({"$or": [{"username": username_or_email}, {"email": username_or_email}]})
-    
+    user = users.find_one({
+        "$or": [
+            {"username": username_or_email},
+            {"email": username_or_email}
+        ]
+    })
+
     if not user:
         return JSONResponse({"message": "User not found"}, status_code=404)
 
+    # Verify password
     try:
-        ph.verify(user["password"], password)  # Verify hashed password
-    except Exception:  # password mismatch
+        ph.verify(user["password"], password)
+    except Exception:
         return JSONResponse({"message": "Wrong password"}, status_code=401)
 
-    # Password correct → update last_accessed and reset login_attempts
+    # Reject inactive accounts
+    if user.get("is_active") != 1:
+        return JSONResponse({"message": "Account is not active"}, status_code=403)
+
+    # Update last accessed
     users.update_one(
         {"_id": user["_id"]},
         {"$set": {"last_accessed": datetime.utcnow(), "login_attempts": 0}}
     )
 
-    # Create JWT token and return
-    token = create_access_token({"sub": user["username"]})
+    # Include role in JWT
+    token_data = {
+        "sub": user["username"],
+        "role": user.get("role", "user")
+    }
+
+    token = create_access_token(token_data)
+
     response = JSONResponse({"message": "Login successful"}, status_code=200)
     response.set_cookie(key="access_token", value=token, httponly=True)
     return response
+
 
 
 # -----------------------------
@@ -645,7 +671,7 @@ def create_account(
         "password": hashed_password,
         "date_created": datetime.utcnow(),
         "last_accessed": None,
-        "is_active": 1,
+        "is_active": 0,
         "role": "user",
         "backup_code": None,
         "login_attempts": 0,
@@ -655,3 +681,55 @@ def create_account(
     })
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/activate_user")
+async def activate_user(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    # Only owner or admin can activate accounts
+    error = require_role("admin")(current_user)
+    if error:
+        return error
+
+    target_username = data.get("username")
+    active_state = data.get("is_active")
+
+    if target_username is None or active_state is None:
+        raise HTTPException(status_code=400, detail="Missing username or is_active")
+
+    users.update_one(
+        {"username": target_username},
+        {"$set": {"is_active": int(active_state)}}
+    )
+
+    return {"message": "User updated successfully"}
+
+
+
+@app.post("/update_role")
+async def update_role(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    # Only owner can update roles
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    target_username = data.get("username")
+    new_role = data.get("role")
+
+    if new_role == "owner":
+        raise HTTPException(status_code=403, detail="Cannot assign owner role")
+
+    if new_role not in ["admin", "user"]:
+        raise HTTPException(status_code=400, detail="Invalid role value")
+
+    users.update_one(
+        {"username": target_username},
+        {"$set": {"role": new_role}}
+    )
+
+    return {"message": f"Updated role for {target_username} to {new_role}"}
