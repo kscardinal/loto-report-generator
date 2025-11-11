@@ -17,7 +17,7 @@ from argon2.exceptions import VerifyMismatchError, VerificationError
 import secrets
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, require_role
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role
 
 import gridfs
 from bson.objectid import ObjectId
@@ -116,7 +116,7 @@ ph = PasswordHasher(time_cost=4, memory_cost=102400, parallelism=8, hash_len=32)
 @app.post("/upload/")
 async def upload_report(
     request: Request,
-    username: str = Depends(get_current_user),
+    username: str = Depends(get_current_user_no_redirect),
     files: List[UploadFile] = File(...),
     uploaded_by: str = Form("anonymous"),
     tags: List[str] = Form([]),
@@ -198,7 +198,7 @@ async def upload_report(
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(
     report_name: str,
-    username: str = Depends(get_current_user)
+    username: str = Depends(get_current_user_no_redirect)
 ):
     if isinstance(username, RedirectResponse):
         return username
@@ -254,7 +254,7 @@ def download_pdf(
 # Clear temp folder
 # -----------------------------
 @app.post("/clear/")
-async def clear_temp_folders(username: str = Depends(get_current_user)):
+async def clear_temp_folders(username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -333,7 +333,7 @@ async def view_report(
 # Fetch individual photo
 # -----------------------------
 @app.get("/photo/{photo_id}")
-def get_photo(photo_id: str, username: str = Depends(get_current_user)):
+def get_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -344,7 +344,7 @@ def get_photo(photo_id: str, username: str = Depends(get_current_user)):
 # Fetch metadata for a given report
 # -----------------------------
 @app.get("/metadata/{report_name}")
-async def get_metadata(report_name: str, username: str = Depends(get_current_user)):
+async def get_metadata(report_name: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -365,7 +365,14 @@ async def get_metadata(report_name: str, username: str = Depends(get_current_use
 # Check status of database
 # -----------------------------
 @app.get("/db_status")
-async def db_status():
+async def db_status(
+    current_user: dict = Depends(get_current_user_no_redirect)
+):
+    # Ensure only admins can modify
+    error = require_role("admin")(current_user)
+    if error:
+        return error
+    
     try:
         # Try a lightweight operation
         client.admin.command("ping")
@@ -387,7 +394,7 @@ async def create_report(request: Request, username: str = Depends(get_current_us
 # Remove a report from the database
 # -----------------------------
 @app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
-async def remove_report(report_name: str, username: str = Depends(get_current_user)):
+async def remove_report(report_name: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -409,7 +416,7 @@ async def remove_report(report_name: str, username: str = Depends(get_current_us
 # Cleanup orphaned photos from GridFS
 # -----------------------------
 @app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
-async def cleanup_orphan_photos(username: str = Depends(get_current_user)):
+async def cleanup_orphan_photos(username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -431,7 +438,7 @@ async def cleanup_orphan_photos(username: str = Depends(get_current_user)):
 # JSON endpoints
 # -----------------------------
 @app.get("/pdf_list_json")
-async def pdf_list_json(username: str = Depends(get_current_user)):
+async def pdf_list_json(username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -451,7 +458,7 @@ async def pdf_list_json(username: str = Depends(get_current_user)):
 # Download JSON + all related photos (separately)
 # -----------------------------
 @app.get("/download_report_files/{report_name}", name="download_report_files")
-def download_report_files(report_name: str, username: str = Depends(get_current_user)):
+def download_report_files(report_name: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -469,7 +476,7 @@ def download_report_files(report_name: str, username: str = Depends(get_current_
 # Download JSON file for a report
 # -----------------------------
 @app.get("/download_json/{report_name}", name="download_json")
-def download_json(report_name: str, username: str = Depends(get_current_user)):
+def download_json(report_name: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -485,7 +492,7 @@ def download_json(report_name: str, username: str = Depends(get_current_user)):
 # Download photo by its GridFS ID
 # -----------------------------
 @app.get("/download_photo/{photo_id}", name="download_photo")
-def download_photo(photo_id: str, username: str = Depends(get_current_user)):
+def download_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
     if isinstance(username, RedirectResponse):
         return username
 
@@ -503,7 +510,7 @@ def download_photo(photo_id: str, username: str = Depends(get_current_user)):
 # JWT Test Page
 # -----------------------------
 @app.get("/jwt_test", response_class=HTMLResponse)
-async def jwt_test(request: Request, username: str = Depends(get_current_user)):
+async def jwt_test(request: Request, username: str = Depends(get_current_user_no_redirect)):
     """
     A test endpoint to verify JWT authentication.
     Works for both web and mobile clients.
@@ -543,7 +550,7 @@ async def users_page(request: Request, current_user: dict = Depends(get_current_
 
 
 @app.get("/users_json")
-async def users_json(current_user: dict = Depends(get_current_user)):
+async def users_json(current_user: dict = Depends(get_current_user_no_redirect)):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
@@ -623,7 +630,7 @@ async def login_endpoint(data: dict):
 @app.post("/update-login-attempts")
 async def update_login_attempts(
     data: dict,
-    current_user: dict = Depends(get_current_user)  # JWT-protected
+    current_user: dict = Depends(get_current_user_no_redirect)  # JWT-protected
 ):
     target_username = data.get("username")
     attempts = data.get("login_attempts")
@@ -699,7 +706,7 @@ def create_account(
 @app.post("/change_status")
 async def change_status(
     data: dict,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_no_redirect)
 ):
     """
     Change a user's active status (activate or deactivate).
@@ -743,7 +750,7 @@ async def change_status(
 @app.post("/update_role")
 async def update_role(
     data: dict,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_no_redirect)
 ):
     # Only owner can update roles
     error = require_role("owner")(current_user)
@@ -767,7 +774,7 @@ async def update_role(
     return {"message": f"Updated role for {target_username} to {new_role}"}
 
 @app.post("/delete_user")
-async def delete_user(data: dict, current_user: dict = Depends(get_current_user)):
+async def delete_user(data: dict, current_user: dict = Depends(get_current_user_no_redirect)):
     # Only owner can delete users
     error = require_role("owner")(current_user)
     if error:

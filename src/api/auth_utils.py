@@ -27,7 +27,7 @@ def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MIN
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(request: Request):
+def get_current_user(request: Request, redirect: bool = True):
     token = None
 
     # 1️⃣ Check Authorization header first (mobile)
@@ -41,7 +41,7 @@ def get_current_user(request: Request):
 
     # 3️⃣ If still no token → not authenticated
     if not token:
-        if "text/html" in request.headers.get("accept", ""):
+        if redirect and "text/html" in request.headers.get("accept", ""):
             return RedirectResponse("/login")
         raise HTTPException(status_code=401, detail="Not authenticated")
 
@@ -56,10 +56,15 @@ def get_current_user(request: Request):
         }
 
     except jwt.PyJWTError:
-        if "text/html" in request.headers.get("accept", ""):
+        if redirect and "text/html" in request.headers.get("accept", ""):
             return RedirectResponse("/login")
         raise HTTPException(status_code=401, detail="Invalid token")
-
+    
+def get_current_user_no_redirect(request: Request):
+    user = get_current_user(request, redirect=False)
+    if not user:
+        raise HTTPException(status_code=403, detail="Forbidden: Not authenticated")
+    return user
 
 def require_role(required_role: str):
     def wrapper(user):
