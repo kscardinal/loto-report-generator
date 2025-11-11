@@ -268,16 +268,11 @@ async def clear_temp_folders(username: str = Depends(get_current_user)):
 # -----------------------------
 @app.get("/pdf_list", response_class=HTMLResponse)
 async def pdf_list(
-    request: Request,
-    username: str = Depends(get_current_user)  # ✅ requires JWT
+    request: Request, 
+    current_user: dict = Depends(get_current_user)
 ):
-    """
-    Render HTML listing of all reports in the DB.
-    Works for both web (cookies) and mobile (Authorization header).
-    """
-    # If the dependency returned a RedirectResponse (for web), return it
-    if isinstance(username, RedirectResponse):
-        return username
+    if isinstance(current_user, RedirectResponse):
+        return current_user
 
     # Fetch report names
     docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
@@ -285,7 +280,7 @@ async def pdf_list(
 
     return templates.TemplateResponse(
         "pdf_list.html",
-        {"request": request, "report_names": report_names}
+        {"request": request, "report_names": report_names, "current_user": current_user}
     )
 
 # -----------------------------
@@ -532,7 +527,7 @@ async def jwt_test(request: Request, username: str = Depends(get_current_user)):
 # Users List Page
 # -----------------------------
 @app.get("/users", response_class=HTMLResponse)
-async def users_page_2(request: Request, current_user: dict = Depends(get_current_user)):
+async def users_page(request: Request, current_user: dict = Depends(get_current_user)):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
@@ -548,10 +543,15 @@ async def users_page_2(request: Request, current_user: dict = Depends(get_curren
 
 
 @app.get("/users_json")
-async def users_json(username: str = Depends(get_current_user)):
-    """
-    Returns all users in the database as JSON.
-    """
+async def users_json(current_user: dict = Depends(get_current_user)):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+    
     users_cursor = users.find({}, {"_id": 0})
     user_list = []
 
@@ -576,10 +576,12 @@ async def login_endpoint(data: dict):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
 
+    username_or_email_lower = username_or_email.lower()
+
     user = users.find_one({
         "$or": [
-            {"username": username_or_email},
-            {"email": username_or_email}
+            {"username": username_or_email_lower},
+            {"email": username_or_email}  # email stays as-is (usually case-insensitive anyway)
         ]
     })
 
@@ -655,19 +657,25 @@ def create_account(
     if password != confirm_password:
         return templates.TemplateResponse("create_account.html", {"request": request, "error": "Passwords do not match"})
 
-    # Check if username/email already exists
-    if users.find_one({"$or": [{"username": username}, {"email": email}]}):
-        return templates.TemplateResponse("create_account.html", {"request": request, "error": "Username or email already exists"})
+    username_lower = username.lower()
 
+    # Check if username/email already exists (use lowercase for username)
+    if users.find_one({"$or": [{"username": username_lower}, {"email": email}]}):
+        return templates.TemplateResponse(
+            "create_account.html",
+            {"request": request, "error": "Username or email already exists"}
+        )
+    
     # Hash password
     hashed_password = ph.hash(password)
 
-    # Insert new user with all additional fields
+    # Insert user
     users.insert_one({
         "first_name": first_name,
         "last_name": last_name,
         "email": email,
-        "username": username,
+        "username": username_lower,  # store lowercase for login
+        "display_username": username,  # optional: keep original for display
         "password": hashed_password,
         "date_created": datetime.utcnow(),
         "last_accessed": None,
@@ -725,8 +733,6 @@ async def change_status(
         "message": f"User '{target_username}' status updated",
         "is_active": new_status_int
     }
-
-
 
 
 @app.post("/update_role")
