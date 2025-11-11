@@ -122,9 +122,6 @@ async def upload_report(
     tags: List[str] = Form([]),
     notes: str = Form("")
 ):
-    if isinstance(username, RedirectResponse):
-        return username
-    
     json_file = None
     include_files = []
 
@@ -200,9 +197,6 @@ def download_pdf(
     report_name: str,
     username: str = Depends(get_current_user_no_redirect)
 ):
-    if isinstance(username, RedirectResponse):
-        return username
-    
     print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
@@ -255,9 +249,6 @@ def download_pdf(
 # -----------------------------
 @app.post("/clear/")
 async def clear_temp_folders(username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     for file in TEMP_DIR.iterdir():
         if file.is_file():
             file.unlink()
@@ -334,9 +325,6 @@ async def view_report(
 # -----------------------------
 @app.get("/photo/{photo_id}")
 def get_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     photo = fs.get(ObjectId(photo_id))
     return Response(photo.read(), media_type="image/jpeg")
 
@@ -345,9 +333,6 @@ def get_photo(photo_id: str, username: str = Depends(get_current_user_no_redirec
 # -----------------------------
 @app.get("/metadata/{report_name}")
 async def get_metadata(report_name: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     doc = uploads.find_one(
         {"report_name": report_name},
         {"_id": 0, "json_data": 0, "photos": 0}
@@ -395,9 +380,6 @@ async def create_report(request: Request, username: str = Depends(get_current_us
 # -----------------------------
 @app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
 async def remove_report(report_name: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -417,9 +399,6 @@ async def remove_report(report_name: str, username: str = Depends(get_current_us
 # -----------------------------
 @app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
 async def cleanup_orphan_photos(username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     deleted_photos = {}
     for grid_out in fs.find():
         photo_id = grid_out._id
@@ -439,9 +418,6 @@ async def cleanup_orphan_photos(username: str = Depends(get_current_user_no_redi
 # -----------------------------
 @app.get("/pdf_list_json")
 async def pdf_list_json(username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
     report_list = []
     for doc in docs:
@@ -459,9 +435,6 @@ async def pdf_list_json(username: str = Depends(get_current_user_no_redirect)):
 # -----------------------------
 @app.get("/download_report_files/{report_name}", name="download_report_files")
 def download_report_files(report_name: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -477,9 +450,6 @@ def download_report_files(report_name: str, username: str = Depends(get_current_
 # -----------------------------
 @app.get("/download_json/{report_name}", name="download_json")
 def download_json(report_name: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -493,9 +463,6 @@ def download_json(report_name: str, username: str = Depends(get_current_user_no_
 # -----------------------------
 @app.get("/download_photo/{photo_id}", name="download_photo")
 def download_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
-    if isinstance(username, RedirectResponse):
-        return username
-
     try:
         grid_out = fs.get(ObjectId(photo_id))
     except Exception:
@@ -511,10 +478,6 @@ def download_photo(photo_id: str, username: str = Depends(get_current_user_no_re
 # -----------------------------
 @app.get("/jwt_test", response_class=HTMLResponse)
 async def jwt_test(request: Request, username: str = Depends(get_current_user_no_redirect)):
-    """
-    A test endpoint to verify JWT authentication.
-    Works for both web and mobile clients.
-    """
     if isinstance(username, RedirectResponse):
         return username  # redirect for web if not authenticated
 
@@ -551,9 +514,6 @@ async def users_page(request: Request, current_user: dict = Depends(get_current_
 
 @app.get("/users_json")
 async def users_json(current_user: dict = Depends(get_current_user_no_redirect)):
-    if isinstance(current_user, RedirectResponse):
-        return current_user
-
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
@@ -710,10 +670,10 @@ async def change_status(
 ):
     """
     Change a user's active status (activate or deactivate).
-    Only admin users may use this endpoint.
+    Only owners users may use this endpoint.
     """
-    # Ensure only admins can modify
-    error = require_role("admin")(current_user)
+    # Ensure only owner can modify
+    error = require_role("owner")(current_user)
     if error:
         return error
 
