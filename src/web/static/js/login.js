@@ -5,7 +5,7 @@ const emailCheck = document.getElementById("emailCheck");
 const passwordCheck = document.getElementById("passwordCheck");
 const activationCheck = document.getElementById("activationCheck");
 
-let login_attempts = 0;
+let current_login_attempts = 0;
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -26,12 +26,14 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
 
-            // Example call when password is wrong
-            await fetch("/update-login-attempts", {
+            const response = await fetch("/update-login-attempts", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ login_attempts: login_attempts })
+                body: JSON.stringify({ 
+                    username: usernameInput.value.toLowerCase(), 
+                    login_attempts: current_login_attempts 
+                })
             });
 
             window.location.href = "/pdf_list";
@@ -45,8 +47,8 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             emailCheck.style.display = "none";
             passwordCheck.textContent = "❌ Wrong password";
             passwordCheck.style.display = "block";
-            login_attempts += 1;
-            console.log("Login attempts:", login_attempts);
+            current_login_attempts += 1;
+            console.log("Login attempts:", current_login_attempts);
         } else if (response.status === 403) {
             // Account not activated
             emailCheck.style.display = "none";

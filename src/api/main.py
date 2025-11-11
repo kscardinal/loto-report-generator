@@ -601,7 +601,7 @@ async def login_endpoint(data: dict):
     # Update last accessed
     users.update_one(
         {"_id": user["_id"]},
-        {"$set": {"last_accessed": datetime.utcnow(), "login_attempts": 0}}
+        {"$set": {"last_accessed": datetime.utcnow()}}
     )
 
     # Include role in JWT
@@ -617,23 +617,28 @@ async def login_endpoint(data: dict):
     return response
 
 
-
 # -----------------------------
 # Update login attempts endpoint
 # -----------------------------
 @app.post("/update-login-attempts")
 async def update_login_attempts(
     data: dict,
-    username: str = Depends(get_current_user)  # JWT-protected
+    current_user: dict = Depends(get_current_user)  # JWT-protected
 ):
-    attempts = data.get("login_attempts", 0)
+    target_username = data.get("username")
+    attempts = data.get("login_attempts")
 
+    if not target_username or attempts is None:
+        raise HTTPException(status_code=400, detail="Missing 'username' or 'login_attempts' in request")
+
+    # Normalize username to lowercase for consistency
     users.update_one(
-        {"username": username},
-        {"$set": {"login_attempts": attempts}}
+        {"username": target_username.lower()},
+        {"$set": {"login_attempts": int(attempts)}}
     )
 
-    return JSONResponse({"message": "Login attempts updated"}, status_code=200)
+    return JSONResponse({"message": f"Updated login attempts for {target_username} to {attempts}"}, status_code=200)
+
 
 
 # -----------------------------
