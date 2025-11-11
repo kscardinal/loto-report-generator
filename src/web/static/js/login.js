@@ -42,11 +42,15 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             passwordCheck.style.display = "none";
             emailCheck.textContent = "❌ User does not exist";
             emailCheck.style.display = "block";
+            usernameInput.focus();
+            usernameInput.select();
         } else if (response.status === 401) {
             // Wrong password
             emailCheck.style.display = "none";
             passwordCheck.textContent = "❌ Wrong password";
             passwordCheck.style.display = "block";
+            passwordInput.focus();
+            passwordInput.select();
             current_login_attempts += 1;
             console.log("Login attempts:", current_login_attempts);
         } else if (response.status === 403) {
@@ -55,6 +59,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             passwordCheck.style.display = "none";
             activationCheck.textContent = "❌ Your account has not been activated yet";
             activationCheck.style.display = "block";
+            passwordInput.blur();
         } else {
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
@@ -70,9 +75,11 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 // Hide alert when user edits the username/email
 usernameInput.addEventListener("input", () => {
     emailCheck.style.display = "none";
+    activationCheck.style.display = "none";
 });
 
 // Hide alert when user edits the password
 passwordInput.addEventListener("input", () => {
     passwordCheck.style.display = "none";
+    activationCheck.style.display = "none";
 });
