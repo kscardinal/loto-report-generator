@@ -765,3 +765,24 @@ async def update_role(
     )
 
     return {"message": f"Updated role for {target_username} to {new_role}"}
+
+@app.post("/delete_user")
+async def delete_user(data: dict, current_user: dict = Depends(get_current_user)):
+    # Only owner can delete users
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    target_username = data.get("username")
+    if not target_username:
+        raise HTTPException(status_code=400, detail="Missing 'username' in request")
+
+    # Prevent deleting owner
+    target_user = users.find_one({"username": target_username.lower()})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target_user.get("role") == "owner":
+        raise HTTPException(status_code=403, detail="Cannot delete owner")
+
+    users.delete_one({"username": target_username.lower()})
+    return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
