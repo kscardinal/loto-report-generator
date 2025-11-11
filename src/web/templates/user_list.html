@@ -8,8 +8,16 @@
     .action-buttons {
         margin-top: 10px;
         display: flex;
-        gap: 10px;
+        justify-content: space-between; /* left vs right */
+        align-items: center;
     }
+
+    .action-buttons .left-buttons,
+    .action-buttons .right-buttons {
+        display: flex;
+        gap: 10px; /* spacing between buttons */
+    }
+
     .btn {
         padding: 6px 12px;
         border: none;
@@ -17,22 +25,13 @@
         border-radius: 4px;
         font-size: 14px;
     }
-    .btn-activate {
-        background-color: #28a745;
-        color: white;
-    }
-    .btn-deactivate {
-        background-color: #dc3545;
-        color: white;
-    }
-    .btn-promote {
-        background-color: #007bff;
-        color: white;
-    }
-    .btn-demote {
-        background-color: #dc3545;
-        color: white;
-    }
+
+    .btn-activate { background-color: #28a745; color: white; }
+    .btn-deactivate { background-color: #dc3545; color: white; }
+    .btn-promote { background-color: #007bff; color: white; }
+    .btn-demote { background-color: #dc3545; color: white; }
+    .btn-delete { background-color: #dc3545; color: white; }
+
 
     /* Modal */
     #confirmModal {
@@ -72,6 +71,15 @@
         background-color: #ffebec; /* pastel/muted red */
         border: 1px solid #f5c2c7; /* optional border */
     }
+
+    .btn-delete {
+        padding: 6px 12px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
 
 
 </style>
@@ -138,18 +146,38 @@ async function fetchUsers() {
 
         // Only show buttons if user is not owner
         if (user.role !== "owner") {
+            // Left side buttons
+            let leftButtons = "";
+
             // Activate / Deactivate
-            actionButtonsHTML += user.is_active 
+            leftButtons += user.is_active 
                 ? `<button class="btn btn-deactivate" onclick="confirmAction('Deactivate', '${user.username}', ${user.is_active}, changeActive)">Deactivate</button>`
                 : `<button class="btn btn-activate" onclick="confirmAction('Activate', '${user.username}', ${user.is_active}, changeActive)">Activate</button>`;
 
             // Promote / Demote
             if (user.role === "user") {
-                actionButtonsHTML += `<button class="btn btn-promote" onclick="confirmAction('Promote to Admin', '${user.username}', 'admin', changeRole)">Promote</button>`;
+                leftButtons += `<button class="btn btn-promote" onclick="confirmAction('Promote to Admin', '${user.username}', 'admin', changeRole)">Promote</button>`;
             } else if (user.role === "admin") {
-                actionButtonsHTML += `<button class="btn btn-demote" onclick="confirmAction('Demote to User', '${user.username}', 'user', changeRole)">Demote</button>`;
+                leftButtons += `<button class="btn btn-demote" onclick="confirmAction('Demote to User', '${user.username}', 'user', changeRole)">Demote</button>`;
             }
+
+            // Right side button
+            let rightButton = `<button class="btn btn-delete" onclick="confirmAction('Delete', '${user.username}', null, deleteUser)">Delete</button>`;
+
+            // Combine into flex container
+            actionButtonsHTML = `
+                <div class="action-buttons">
+                    <div class="left-buttons">
+                        ${leftButtons}
+                    </div>
+                    <div class="right-buttons">
+                        ${rightButton}
+                    </div>
+                </div>
+            `;
+
         }
+
 
         div.innerHTML = `
             <h3>${user.display_username || user.username} ${user.role ? "(" + user.role + ")" : ""}</h3>
@@ -167,7 +195,7 @@ async function fetchUsers() {
             <p><span>Latest Reset:</span> ${latestResetEST}</p>
             <p><span>Verification Attempts:</span> ${user.verification_attempts || 0}</p>
 
-            <div class="action-buttons">
+            <div>
                 ${actionButtonsHTML}
             </div>
         `;
@@ -226,6 +254,23 @@ async function changeRole(username, newRole) {
         credentials: "include",
         body: JSON.stringify({ username: username, role: newRole })
     });
+}
+
+// Delete User
+async function deleteUser(username) {
+    const response = await fetch("/delete_user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username })
+    });
+
+    if (response.ok) {
+        fetchUsers();
+    } else {
+        const data = await response.json();
+        alert(`Failed to delete user: ${data.detail || JSON.stringify(data)}`);
+    }
 }
 
 fetchUsers();
