@@ -683,28 +683,49 @@ def create_account(
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@app.post("/activate_user")
-async def activate_user(
+@app.post("/change_status")
+async def change_status(
     data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    # Only owner or admin can activate accounts
+    """
+    Change a user's active status (activate or deactivate).
+    Only admin users may use this endpoint.
+    """
+    # Ensure only admins can modify
     error = require_role("admin")(current_user)
     if error:
         return error
 
     target_username = data.get("username")
-    active_state = data.get("is_active")
+    new_status = data.get("is_active")
 
-    if target_username is None or active_state is None:
+    # Validate fields
+    if target_username is None or new_status is None:
         raise HTTPException(status_code=400, detail="Missing username or is_active")
 
+    if not isinstance(new_status, (int, bool)):
+        raise HTTPException(status_code=400, detail="is_active must be int or boolean")
+
+    # Normalize to integer (Mongo stores as 0/1)
+    new_status_int = int(bool(new_status))
+
+    # Check if user exists
+    user = users.find_one({"username": target_username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update user's active flag
     users.update_one(
         {"username": target_username},
-        {"$set": {"is_active": int(active_state)}}
+        {"$set": {"is_active": new_status_int}}
     )
 
-    return {"message": "User updated successfully"}
+    return {
+        "message": f"User '{target_username}' status updated",
+        "is_active": new_status_int
+    }
+
 
 
 
