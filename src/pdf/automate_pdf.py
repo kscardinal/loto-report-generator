@@ -1,10 +1,12 @@
 import sys
 import json
-import requests
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 from icecream import ic
+from datetime import datetime, timedelta
+import jwt
+import subprocess
 
 # Load .env file
 load_dotenv()
@@ -12,9 +14,42 @@ load_dotenv()
 # -------------------------
 # CONFIGURATION
 # -------------------------
-SERVER = os.getenv("SERVER_IP")
+# Determine which server to use based on environment
+APP_ENV = os.getenv("APP_ENV", "dev").lower()
+if APP_ENV == "dev":
+    SERVER = os.getenv("TEST_SERVER_IP")
+else:
+    SERVER = os.getenv("SERVER_IP")
+
 BASE_DIR = Path(__file__).parent.parent.parent
 TEMP_DIR = BASE_DIR / "temp"
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY not set in .env")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MINUTES):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+# -----------------------------
+# JWT setup
+# -----------------------------
+TEST_USERNAME = "testuser"
+TEST_TOKEN = create_access_token({"sub": TEST_USERNAME, "role": "admin"})
+
+# Headers for mobile/API endpoints
+HEADERS = {"Authorization": f"Bearer {TEST_TOKEN}"}
+
+# Cookies for web endpoints
+COOKIES = {"access_token": TEST_TOKEN}
+
+import requests
 
 # -------------------------
 # Extract images referenced in JSON
@@ -47,10 +82,6 @@ def upload_files(
     tags: list | None = None,
     notes: str = ""
 ):
-    """
-    Upload a JSON report + optional images to the FastAPI server.
-    Sends uploaded_by, tags, and notes as form fields.
-    """
     if tags is None:
         tags = []
 
@@ -63,38 +94,51 @@ def upload_files(
             continue
         files_payload.append(('files', (name, open(file_path, 'rb'))))
 
-    # Build form fields as list of tuples
-    # Multiple 'tags' entries are required for FastAPI to parse them correctly
+    # Form fields
     form_data = [("uploaded_by", uploaded_by), ("notes", notes)]
     for t in tags:
         form_data.append(("tags", t))
 
-    # Send POST request
-    import requests
-    res = requests.post(f"{SERVER}/upload/", files=files_payload, data=form_data)
+    # Send POST request with JWT cookie for web compatibility
+    res = requests.post(
+        f"{SERVER}/upload/",
+        files=files_payload,
+        data=form_data,
+        cookies=COOKIES,   # Include JWT
+        headers=HEADERS     # Optional: also include Authorization for API
+    )
 
     try:
         print("Upload response:", res.json())
     except Exception:
         print("Upload failed:", res.text)
 
-
 # -------------------------
 # Trigger PDF generation
 # -------------------------
 def generate_pdf(report_name: str):
-    res = requests.get(f"{SERVER}/download_pdf/{report_name}")
+    res = requests.get(
+        f"{SERVER}/download_pdf/{report_name}",
+        cookies=COOKIES,
+        headers=HEADERS,
+        stream=True
+    )
     if res.status_code == 200:
-        print("Generate Reponse: PDF generated successfully")
+        print("PDF generated successfully")
     else:
-        print("Generate Reponse: Error generating PDF:", res.status_code)
+        print("Error generating PDF:", res.status_code)
 
 # -------------------------
-# Download PDF via /download_pdf
+# Download PDF
 # -------------------------
 def download_pdf(report_name: str, output_dir: Path):
     output_pdf_path = output_dir / f"{report_name}.pdf"
-    res = requests.get(f"{SERVER}/download_pdf/{report_name}", stream=True)
+    res = requests.get(
+        f"{SERVER}/download_pdf/{report_name}",
+        stream=True,
+        cookies=COOKIES,
+        headers=HEADERS
+    )
     if res.status_code == 200:
         with open(output_pdf_path, "wb") as f:
             for chunk in res.iter_content(chunk_size=8192):
@@ -108,8 +152,11 @@ def download_pdf(report_name: str, output_dir: Path):
 # Clear temp folder
 # -------------------------
 def clear_temp():
-    res = requests.post(f"{SERVER}/clear/")
-    print("Clear response:", res.json())
+    res = requests.post(f"{SERVER}/clear/", cookies=COOKIES, headers=HEADERS)
+    try:
+        print("Clear response:", res.json())
+    except Exception:
+        print("Clear failed:", res.text)
 
 # -------------------------
 # Main automation
@@ -135,13 +182,12 @@ def main(json_path: Path | str = None):
 
     report_name = json_path.stem
 
-# Example call
     upload_files(
-        str(json_path),             # path to your JSON file
-        included_files,             # list of images to include
-        uploaded_by="Automation",         # set author
-        tags=["tests", "automation"],      # any tags you want
-        notes="This report was uploaded via a test automation" # sample note
+        str(json_path),
+        included_files,
+        uploaded_by="Automation",
+        tags=["tests", "automation"],
+        notes="Uploaded via test automation"
     )
     output_pdf_path = download_pdf(report_name, BASE_DIR)
     clear_temp()
