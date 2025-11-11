@@ -27,7 +27,7 @@ if not TEST_SERVER or not requests:
 # JWT setup
 # -----------------------------
 TEST_USERNAME = "testuser"
-TEST_TOKEN = create_access_token({"sub": TEST_USERNAME})
+TEST_TOKEN = create_access_token({"sub": TEST_USERNAME, "role": "admin"})
 
 # Headers for mobile/API endpoints
 HEADERS = {"Authorization": f"Bearer {TEST_TOKEN}"}

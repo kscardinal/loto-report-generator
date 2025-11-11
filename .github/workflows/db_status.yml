@@ -1,0 +1,40 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"] # adjust as needed
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 3️⃣ Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # 4️⃣ Set up uv
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      # 5️⃣ Install dependencies from lock file
+      - name: Sync dependencies
+        run: uv sync
+
+      # 8️⃣ Run tests
+      - name: Run pytest
+        run: uv run pytest -q src/tests/test_db_status.py
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}

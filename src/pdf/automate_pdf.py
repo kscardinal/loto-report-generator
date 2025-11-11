@@ -4,8 +4,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from icecream import ic
-
-from ..api.auth_utils import create_access_token
+from datetime import datetime, timedelta
+import jwt
+import subprocess
 
 # Load .env file
 load_dotenv()
@@ -23,11 +24,24 @@ else:
 BASE_DIR = Path(__file__).parent.parent.parent
 TEMP_DIR = BASE_DIR / "temp"
 
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY not set in .env")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MINUTES):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
 # -----------------------------
 # JWT setup
 # -----------------------------
 TEST_USERNAME = "testuser"
-TEST_TOKEN = create_access_token({"sub": TEST_USERNAME})
+TEST_TOKEN = create_access_token({"sub": TEST_USERNAME, "role": "admin"})
 
 # Headers for mobile/API endpoints
 HEADERS = {"Authorization": f"Bearer {TEST_TOKEN}"}
