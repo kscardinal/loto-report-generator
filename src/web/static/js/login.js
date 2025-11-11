@@ -3,6 +3,7 @@ const passwordInput = document.getElementById("password");
 
 const emailCheck = document.getElementById("emailCheck");
 const passwordCheck = document.getElementById("passwordCheck");
+const activationCheck = document.getElementById("activationCheck");
 
 let login_attempts = 0;
 
@@ -46,6 +47,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             passwordCheck.style.display = "block";
             login_attempts += 1;
             console.log("Login attempts:", login_attempts);
+        } else if (response.status === 403) {
+            // Account not activated
+            emailCheck.style.display = "none";
+            passwordCheck.style.display = "none";
+            activationCheck.textContent = "❌ Your account has not been activated yet";
+            activationCheck.style.display = "block";
         } else {
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";

@@ -43,15 +43,36 @@ def get_current_user(request: Request):
     if not token:
         if "text/html" in request.headers.get("accept", ""):
             return RedirectResponse("/login")
-        else:
-            raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
     # 4️⃣ Decode JWT
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload.get("sub")  # return username
+
+        # Return full payload, not just username
+        return {
+            "username": payload.get("sub"),
+            "role": payload.get("role", "user")
+        }
+
     except jwt.PyJWTError:
         if "text/html" in request.headers.get("accept", ""):
             return RedirectResponse("/login")
-        else:
-            raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def require_role(required_role: str):
+    def wrapper(user):
+        if isinstance(user, RedirectResponse):
+            return user
+
+        role = user.get("role")
+
+        # Hierarchy: owner > admin > user
+        hierarchy = {"owner": 3, "admin": 2, "user": 1}
+
+        if hierarchy.get(role, 0) < hierarchy.get(required_role, 0):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+        return None  # No error
+    return wrapper
