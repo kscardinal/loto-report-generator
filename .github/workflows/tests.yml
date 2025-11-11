@@ -55,6 +55,8 @@ jobs:
       # 8️⃣ Run tests
       - name: Run pytest
         run: uv run pytest -q
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
       # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)
