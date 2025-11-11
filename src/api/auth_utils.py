@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from argon2 import PasswordHasher
 from urllib.parse import quote
+from bson import ObjectId
 
 ph = PasswordHasher()
 
@@ -30,34 +31,41 @@ def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MIN
 def get_current_user(request: Request, redirect: bool = True):
     token = None
 
-    # 1️⃣ Check Authorization header first (mobile)
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
 
-    # 2️⃣ If no header, check cookie (web)
     if not token:
         token = request.cookies.get("access_token")
 
-    # 3️⃣ If still no token → not authenticated
     if not token:
         if redirect and "text/html" in request.headers.get("accept", ""):
-            return RedirectResponse("/login")
+            response = RedirectResponse("/login")
+            response.set_cookie(
+                "return_url",
+                str(request.url),
+                max_age=60*5,  # optional: expires in 5 min
+                httponly=True
+            )
+            return response
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # 4️⃣ Decode JWT
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-
-        # Return full payload, not just username
         return {
             "username": payload.get("sub"),
             "role": payload.get("role", "user")
         }
-
     except jwt.PyJWTError:
         if redirect and "text/html" in request.headers.get("accept", ""):
-            return RedirectResponse("/login")
+            response = RedirectResponse("/login")
+            response.set_cookie(
+                "return_url",
+                str(request.url),
+                max_age=60*5,
+                httponly=True
+            )
+            return response
         raise HTTPException(status_code=401, detail="Invalid token")
     
 def get_current_user_no_redirect(request: Request):
@@ -81,3 +89,11 @@ def require_role(required_role: str):
 
         return None  # No error
     return wrapper
+
+def log_action(audit_logs_collection, username: str, action: str, details=None):
+    audit_logs_collection.insert_one({
+        "username": username,
+        "action": action,
+        "details": details or {},
+        "timestamp": datetime.utcnow()
+    })

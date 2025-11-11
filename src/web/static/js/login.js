@@ -26,7 +26,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
 
-            const response = await fetch("/update-login-attempts", {
+            const response_2 = await fetch("/update-login-attempts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -36,7 +36,9 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
                 })
             });
 
-            window.location.href = "/pdf_list";
+            const data = await response.json();
+            const returnUrl = data.return_url || "/pdf_list";
+            window.location.href = returnUrl;
         } else if (response.status === 404) {
             // User not found
             passwordCheck.style.display = "none";

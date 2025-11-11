@@ -539,48 +539,40 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 @app.post("/login")
-async def login_endpoint(data: dict):
+async def login_endpoint(request: Request, data: dict):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
-
     username_or_email_lower = username_or_email.lower()
 
     user = users.find_one({
         "$or": [
             {"username": username_or_email_lower},
-            {"email": username_or_email}  # email stays as-is (usually case-insensitive anyway)
+            {"email": username_or_email}
         ]
     })
 
     if not user:
         return JSONResponse({"message": "User not found"}, status_code=404)
 
-    # Verify password
     try:
         ph.verify(user["password"], password)
     except Exception:
         return JSONResponse({"message": "Wrong password"}, status_code=401)
 
-    # Reject inactive accounts
     if user.get("is_active") != 1:
         return JSONResponse({"message": "Account is not active"}, status_code=403)
 
-    # Update last accessed
-    users.update_one(
-        {"_id": user["_id"]},
-        {"$set": {"last_accessed": datetime.utcnow()}}
-    )
+    users.update_one({"_id": user["_id"]}, {"$set": {"last_accessed": datetime.utcnow()}})
 
-    # Include role in JWT
-    token_data = {
-        "sub": user["username"],
-        "role": user.get("role", "user")
-    }
-
+    token_data = {"sub": user["username"], "role": user.get("role", "user")}
     token = create_access_token(token_data)
 
-    response = JSONResponse({"message": "Login successful"}, status_code=200)
+    # --- Determine where to redirect ---
+    return_url = request.cookies.get("return_url") or "/pdf_list"
+
+    response = JSONResponse({"message": "Login successful", "return_url": return_url}, status_code=200)
     response.set_cookie(key="access_token", value=token, httponly=True)
+    response.delete_cookie("return_url")  # clean up after reading
     return response
 
 
