@@ -23,7 +23,7 @@ from sendgrid.helpers.mail import Mail
 import pytz
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_ipapi
 
 import gridfs
 from bson.objectid import ObjectId
@@ -666,7 +666,7 @@ async def update_login_attempts(
 # -----------------------------
 # Create Account Page
 # -----------------------------
-def send_new_user_email(user):
+def send_new_user_email(user, geo):
     """
     Sends a formatted HTML email when a new user signs up.
     `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
@@ -680,6 +680,21 @@ def send_new_user_email(user):
     local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
     formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
 
+    # IP
+    if geo is None:
+        location_str = "unknown"
+    else:
+        city = geo.get("city")
+        region = geo.get("region")
+        country = geo.get("country_name")
+
+        # if all are missing, just say "unknown"
+        if not any([city, region, country]):
+            location_str = "unknown"
+        else:
+            # join non-empty values with commas
+            location_str = ", ".join(filter(None, [city, region, country]))
+
 
     # Build the HTML content
     html_content = f"""
@@ -688,8 +703,9 @@ def send_new_user_email(user):
         <style>
             body {{
                 font-family: Arial, sans-serif;
-                background-color: #ffffff;
-                margin: 5%;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
                 padding: 0;
             }}
             h2 {{
@@ -741,6 +757,17 @@ def send_new_user_email(user):
             <tr>
                 <td>Date Created</td>
                 <td>{formatted_time}</td>
+            </tr>
+            <tr>
+                <td>IP Address</td>
+                <td>{ geo.get('ip', 'unknown') if geo else 'unknown' }</td>
+            </tr>
+            <tr>
+                <td>Location Created</td>
+                <td>
+                    { location_str }
+
+                </td>
             </tr>
         </table>
         <p>If you wish to activate this account, please follow the link below:</p>
@@ -808,13 +835,17 @@ def create_account(
         "verification_attempts": 0
     })
 
+    # IP
+    client_ip = get_client_ip(request)
+    geo = lookup_ip_ipapi(client_ip)
+
     send_new_user_email({
         "first_name": first_name,
         "last_name": last_name,
         "username": username_lower,
         "email": email,
         "date_created": datetime.utcnow()
-    })
+    }, geo)
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 

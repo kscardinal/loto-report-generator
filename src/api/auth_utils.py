@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from argon2 import PasswordHasher
 from urllib.parse import quote
 from bson import ObjectId
+import requests
+from typing import Optional, Dict
 
 ph = PasswordHasher()
 
@@ -102,14 +104,33 @@ def log_action(request, audit_logs_collection, username: str, action: str, detai
     })
 
 def get_client_ip(request: Request) -> str:
-    """
-    Get the client IP from request headers. Handles proxies if present.
-    """
-    # X-Forwarded-For is standard for proxies; may contain multiple IPs
-    x_forwarded_for = request.headers.get("X-Forwarded-For")
-    client_ip = request.client.host
-    if x_forwarded_for:
-        # First IP is usually the real client
-        return x_forwarded_for.split(",")[0].strip()
-    return client_ip
+    # canonical header names use dashes; some proxies use lowercase — check both
+    xff = request.headers.get("X-Forwarded-For") or request.headers.get("x-forwarded-for")
+    if xff:
+        # X-Forwarded-For may contain a list: client, proxy1, proxy2...
+        ip = xff.split(",")[0].strip()
+        if ip:
+            return ip
+    # fallback: direct client IP reported by ASGI server
+    client = request.client
+    if client is not None:
+        return client.host
+    return "unknown"
 
+def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
+    """
+    Query ipapi.co (https://ipapi.co/) for location info.
+    Returns dict with keys like: ip, city, region, country_name, latitude, longitude, org, timezone
+    Returns None on failure.
+    """
+    if ip in ("127.0.0.1", "localhost", "unknown"):
+        return None
+    try:
+        res = requests.get(f"https://ipapi.co/{ip}/json/", timeout=timeout)
+        if res.status_code == 200:
+            data = res.json()
+            # ipapi returns keys like 'city', 'region', 'country_name', 'latitude', 'longitude'
+            return data
+    except Exception:
+        pass
+    return None
