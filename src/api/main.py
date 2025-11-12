@@ -225,6 +225,15 @@ async def upload_report(
                 "notes": notes
             }}
         )
+
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username["username"],
+            action="upload",
+            details={"overwrite": True}
+        )
+
     else:
         uploads.insert_one({
             "report_name": report_name,
@@ -239,6 +248,14 @@ async def upload_report(
             "version": 1
         })
 
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username["username"],
+            action="upload",
+            details={"overwrite": False}
+        )
+
     return {"report_name": report_name, "photos": [p["photo_name"] for p in photos_data]}
 
 # -----------------------------
@@ -246,6 +263,7 @@ async def upload_report(
 # -----------------------------
 @app.get("/download_pdf/{report_name}", name="download_pdf")
 def download_pdf(
+    request: Request,
     report_name: str,
     username: str = Depends(get_current_user_no_redirect)
 ):
@@ -282,7 +300,14 @@ def download_pdf(
             elif item.is_dir():
                 shutil.rmtree(item)  # delete subfolders
 
-        print(f"DEBUG: Returning StreamingResponse")
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username["username"],
+            action="download_pdf",
+            details={"report": report_name, "status": "Successful"}
+        )
+
         return StreamingResponse(
             BytesIO(pdf_bytes),
             media_type="application/pdf",
@@ -290,9 +315,23 @@ def download_pdf(
         )
 
     except subprocess.CalledProcessError as e:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username["username"],
+            action="download_pdf",
+            details={"report": report_name, "status": "Failed", "message": e.stderr }
+        )
         return JSONResponse(status_code=500, content={"error": "PDF generation failed.", "details": e.stderr})
     except Exception as e:
         import traceback
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username["username"],
+            action="download_pdf",
+            details={"report": report_name, "status": "Failed", "message": traceback.format_exc() }
+        )
         return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
 
 
@@ -320,6 +359,14 @@ async def pdf_list(
     # Fetch report names
     docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="pdf_list",
+        details={}
+    )
 
     return templates.TemplateResponse(
         "pdf_list.html",
@@ -369,6 +416,14 @@ async def view_report(
     for key in ["date_added", "last_modified", "last_generated"]:
         if key in doc and isinstance(doc[key], datetime):
             doc[key] = format_datetime_with_ordinal(doc[key], tz_offset)
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=username["username"],
+        action="view_report",
+        details={"report": report_name}
+    )
 
     return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
 
@@ -424,6 +479,14 @@ async def db_status(
 async def create_report(request: Request, username: str = Depends(get_current_user)):
     if isinstance(username, RedirectResponse):
         return username
+    
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=username["username"],
+        action="create_report",
+        details={}
+    )
 
     return templates.TemplateResponse("input_form.html", {"request": request})
 
@@ -431,7 +494,7 @@ async def create_report(request: Request, username: str = Depends(get_current_us
 # Remove a report from the database
 # -----------------------------
 @app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
-async def remove_report(report_name: str, username: str = Depends(get_current_user_no_redirect)):
+async def remove_report(request: Request, report_name: str, username: str = Depends(get_current_user_no_redirect)):
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -440,6 +503,18 @@ async def remove_report(report_name: str, username: str = Depends(get_current_us
     result = uploads.delete_one({"_id": doc["_id"]})
     if result.deleted_count == 0:
         return JSONResponse(status_code=500, content={"error": f"Failed to delete report '{report_name}'"})
+
+    details = {"report": report_name}
+    if photo_names:  # Only add if not empty
+        details["photos_retained"] = photo_names
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=username["username"],
+        action="remove_report",
+        details=details
+    )
 
     return {
         "message": f"Report '{report_name}' deleted successfully.",
@@ -556,7 +631,22 @@ async def users_page(request: Request, current_user: dict = Depends(get_current_
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=current_user["username"],
+            action="users",
+            details={"status": "Invalid Permission"}
+        )
         return error
+    
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="users",
+        details={}
+    )
 
     return templates.TemplateResponse("user_list.html", {
         "request": request,
@@ -588,6 +678,13 @@ async def users_json(current_user: dict = Depends(get_current_user_no_redirect))
 # -----------------------------
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username="N/A",
+        action="login page",
+        details={}
+    )
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 @app.post("/login")
@@ -604,14 +701,35 @@ async def login_endpoint(request: Request, data: dict):
     })
 
     if not user:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username_or_email_lower,
+            action="login",
+            details={"status": f"fail: no user matching {username_or_email_lower}"}
+        )
         return JSONResponse({"message": "User not found"}, status_code=404)
 
     try:
         ph.verify(user["password"], password)
     except Exception:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username_or_email_lower,
+            action="login",
+            details={"status": "fail: invlaid password"}
+        )
         return JSONResponse({"message": "Wrong password"}, status_code=401)
 
     if user.get("is_active") != 1:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username_or_email_lower,
+            action="login",
+            details={"status": "fail: account not active"}
+        )
         return JSONResponse({"message": "Account is not active"}, status_code=403)
 
     users.update_one({"_id": user["_id"]}, {"$set": {"last_accessed": datetime.utcnow()}})
@@ -632,10 +750,8 @@ async def login_endpoint(request: Request, data: dict):
         audit_logs_collection=audit_logs,
         username=user["username"],
         action="login",
-        details={"target": user["username"]}
+        details={"status": "successful"}
     )
-
-
     return response
 
 
@@ -788,6 +904,13 @@ def send_new_user_email(user, geo):
 
 @app.get("/create-account")
 def create_account_form(request: Request):
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username="N/A",
+        action="create-account page",
+        details={}
+    )
     return templates.TemplateResponse("create_account.html", {"request": request})
 
 @app.post("/create-account")
@@ -808,10 +931,18 @@ def create_account(
 
     # Check if username/email already exists (use lowercase for username)
     if users.find_one({"$or": [{"username": username_lower}, {"email": email}]}):
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            username=username_lower,
+            action="create-account",
+            details={"status": "fail: account with email or username already exits"}
+        )
         return templates.TemplateResponse(
             "create_account.html",
             {"request": request, "error": "Username or email already exists"}
         )
+    
     
     # Hash password
     hashed_password = ph.hash(password)
@@ -846,6 +977,14 @@ def create_account(
         "email": email,
         "date_created": datetime.utcnow()
     }, geo)
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=username_lower,
+        action="create-account",
+        details={"status": "successful"}
+    )
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -984,6 +1123,14 @@ async def audit_logs_page(request: Request, current_user: dict = Depends(get_cur
     error = require_role("owner")(current_user)
     if error:
         return error
+    
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        username=current_user["username"],
+        action="audit_logs page",
+        details={}
+    )
 
     return templates.TemplateResponse("audit_logs.html", {
         "request": request,

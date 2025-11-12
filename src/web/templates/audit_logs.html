@@ -118,23 +118,51 @@ async function fetchLogs() {
         const div = document.createElement("div");
         div.classList.add("log-card");
 
-        const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString("en-US", options) : "N/A";
-        const details = JSON.stringify(log.details || {}, null, 2);
+        const timestamp = log.timestamp
+            ? new Date(log.timestamp).toLocaleString("en-US", {
+                timeZone: "America/New_York",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+            })
+            : "N/A";
 
-        // In your innerHTML assignment
+        const location = formatLocation(log.location);
+
+        // Format details
+        let detailsHTML = "";
+        const detailsObj = log.details || {};
+        const keys = Object.keys(detailsObj);
+        if (keys.length > 0) {
+            detailsHTML = "<ul style='margin:4px 0 0 15px; padding:0; color:#911eb4; font-size:13px;'>";
+            keys.forEach(key => {
+                detailsHTML += `<li>${key}: ${detailsObj[key]}</li>`;
+            });
+            detailsHTML += "</ul>";
+        }
+
         div.innerHTML = `
-            <h4>${log.username}</h4>
-            <p><strong>Time:</strong> ${timestamp}</p>
-            <p><strong>IP:</strong> ${log.ip_address || "N/A"}</p>
-            <p><strong>Location:</strong> ${formatLocation(log.location)}</p>
-            <br>
-            <p><strong>Action:</strong> ${log.action}</p>
-            <br>
-            <p><strong>Details:</strong> <pre>${details}</pre></p>
-        `;
+            <p>
+                <span style="color:#e6194B;font-weight:bold;">${log.username}</span> |
+                <span style="color:#f58231;">${log.action}</span> |
+                <span style="color:#4363d8;">${timestamp}</span>
+            </p>
 
+            <p>
+                <span style="color:#3cb44b;">${log.ip_address || "unknown"}</span> |
+                <span style="color:#3cb44b;">${location}</span>
+            </p>
+
+            ${detailsHTML}
+        `;
         container.appendChild(div);
     });
+
+
 }
 
 fetchLogs();
