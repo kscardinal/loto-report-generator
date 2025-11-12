@@ -29,6 +29,35 @@
         font-size: 13px;
         color: #333;
     }
+
+    .back-div {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+    }
+
+    .back-btn {
+        transform: translateY(-50%);
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.95em;
+        background-color: rgba(0,0,0,0.2);
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin-right: 10px;
+    }
+
+    .back-btn:hover {
+        background-color: rgba(0,0,0,0.35);
+    }
+
+    .current-user {
+        font-size: 0.9em;
+        color: white;
+        margin-top: 5px;
+    }
+
 </style>
 </head>
 
@@ -40,6 +69,13 @@
             Logged in as: {{ current_user.username }} ({{ current_user.role|capitalize }})
         </p>
     {% endif %}
+    
+    <div class="back-div">
+        <a href="{{ url_for('pdf_list') }}" class="back-btn">&#8592; Back</a>
+        {% if current_user and current_user.role == "owner" %}
+            <a href="/users" class="back-btn">Users</a>
+        {% endif %}
+    </div>
 </header>
 
 <main>
