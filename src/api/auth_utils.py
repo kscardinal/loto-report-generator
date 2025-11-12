@@ -94,9 +94,11 @@ def require_role(required_role: str):
 
 def log_action(request, audit_logs_collection, username: str, action: str, details=None):
     client_ip = get_client_ip(request)
+    geo = lookup_ip_ipapi(client_ip)
 
     audit_logs_collection.insert_one({
         "ip_address": client_ip,
+        "location": geo,
         "username": username,
         "action": action,
         "details": details or {},

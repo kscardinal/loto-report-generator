@@ -83,6 +83,24 @@
 </main>
 
 <script>
+function formatLocation(location) {
+    if (!location) return "unknown";
+
+    // Pull out the fields
+    const city = location.city || null;
+    const region = location.region || null;
+    const country = location.country_name || null;
+
+    // Make an array of the non-empty values
+    const parts = [city, region, country].filter(Boolean);
+
+    // If nothing is available, return unknown
+    if (parts.length === 0) return "unknown";
+
+    // Otherwise, join the available parts
+    return parts.join(", ");
+}
+
 async function fetchLogs() {
     const response = await fetch("/audit_logs_json", { credentials: "include" });
     const data = await response.json();
@@ -103,10 +121,15 @@ async function fetchLogs() {
         const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString("en-US", options) : "N/A";
         const details = JSON.stringify(log.details || {}, null, 2);
 
+        // In your innerHTML assignment
         div.innerHTML = `
-            <h4>${log.username} - ${log.action}</h4>
-            <p><strong>IP:</strong> ${log.ip_address || "N/A"}</p>
+            <h4>${log.username}</h4>
             <p><strong>Time:</strong> ${timestamp}</p>
+            <p><strong>IP:</strong> ${log.ip_address || "N/A"}</p>
+            <p><strong>Location:</strong> ${formatLocation(log.location)}</p>
+            <br>
+            <p><strong>Action:</strong> ${log.action}</p>
+            <br>
             <p><strong>Details:</strong> <pre>${details}</pre></p>
         `;
 
