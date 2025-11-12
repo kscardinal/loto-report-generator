@@ -57,7 +57,6 @@
         color: white;
         margin-top: 5px;
     }
-
 </style>
 </head>
 
@@ -85,7 +84,7 @@
         <div id="itemsPerPage" style="display:flex; justify-content: flex-end; align-items:center; gap:5px; width: 25%;">
             <label for="perPageSelect">Per Page:</label>
             <select id="perPageSelect" style="width:50px; text-align:center;">
-                <option value="25" selected>25</option>
+                <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
                 <option value="250">250</option>
@@ -110,10 +109,10 @@ function formatLocation(location) {
     return parts.length ? parts.join(", ") : "unknown";
 }
 
-// Read ?page= from URL, default to 1
+// Read ?page= and ?per_page= from URL
 const urlParams = new URLSearchParams(window.location.search);
 let currentPage = parseInt(urlParams.get("page")) || 1;
-let logsPerPage = 25;
+let logsPerPage = parseInt(urlParams.get("per_page")) || 25;
 let logs = [];
 
 async function fetchLogs() {
@@ -121,10 +120,12 @@ async function fetchLogs() {
     const data = await response.json();
     logs = data.logs || [];
     renderPage(currentPage);
+    // set dropdown to URL value
+    document.getElementById("perPageSelect").value = logsPerPage;
 }
 
 function updateURL() {
-    const newUrl = `${window.location.pathname}?page=${currentPage}`;
+    const newUrl = `${window.location.pathname}?page=${currentPage}&per_page=${logsPerPage}`;
     window.history.replaceState(null, "", newUrl);
 }
 
@@ -194,11 +195,10 @@ function renderPage(page) {
     const paginationInfo = document.getElementById("paginationInfo");
     paginationInfo.textContent = `${start + 1}-${end} / ${logs.length}`;
 
-    renderPagination(totalPages); // pass totalPages
+    renderPagination(totalPages);
 }
 
 function renderPagination(totalPages) {
-    const pagination = document.getElementById("pagination");
     const pageInfo = document.getElementById("pageInfo");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
@@ -207,65 +207,30 @@ function renderPagination(totalPages) {
 
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 
-    // Set prev/next buttons
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === totalPages;
 
-    prevBtn.onclick = () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderPage(currentPage);
-            updateURL();
-            document.getElementById("logList").scrollIntoView({ behavior: "smooth" });
-        }
-    };
+    prevBtn.onclick = () => { if(currentPage>1){currentPage--; renderPage(currentPage); updateURL(); document.getElementById("logList").scrollIntoView({behavior:"smooth"});}};
+    nextBtn.onclick = () => { if(currentPage<totalPages){currentPage++; renderPage(currentPage); updateURL(); document.getElementById("logList").scrollIntoView({behavior:"smooth"}); }};
 
-    nextBtn.onclick = () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderPage(currentPage);
-            updateURL();
-            document.getElementById("logList").scrollIntoView({ behavior: "smooth" });
-        }
-    };
+    jumpInput.value = currentPage; // show current page
 
-    // Jump to page
-    jumpInput.value = currentPage; // show current page in box
     function goToPage() {
         const page = parseInt(jumpInput.value, 10);
-        if (!isNaN(page) && page >= 1 && page <= Math.ceil(logs.length / logsPerPage)) {
-            currentPage = page;
-        } else {
-            currentPage = currentPage; // invalid input, keep current page
-        }
+        if(!isNaN(page) && page>=1 && page<=totalPages) currentPage=page;
         renderPage(currentPage);
         updateURL();
-        jumpInput.blur(); // <-- remove focus
+        jumpInput.blur();
     }
 
-    // On Enter key
-    jumpInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            goToPage();
-        }
-    });
+    jumpInput.addEventListener("keydown", (e) => { if(e.key==="Enter") goToPage(); });
+    jumpBtn.addEventListener("click", goToPage);
 
-    // On Go button click
-    jumpBtn.addEventListener("click", () => {
-        goToPage();
-    });
-
-    // Style buttons/input
-    [prevBtn, nextBtn, jumpBtn].forEach(btn => {
-        btn.style.margin = "0 5px";
-        btn.style.padding = "5px 10px";
-        btn.style.border = "none";
-        btn.style.borderRadius = "6px";
-        btn.style.background = "rgba(195,32,38,1)";
-        btn.style.color = "white";
-        btn.style.cursor = "pointer";
-        btn.onmouseover = () => btn.style.background = "rgba(160,29,31,1)";
-        btn.onmouseout = () => btn.style.background = "rgba(195,32,38,1)";
+    // style buttons
+    [prevBtn,nextBtn,jumpBtn].forEach(btn=>{
+        btn.style.margin="0 5px"; btn.style.padding="5px 10px"; btn.style.border="none"; 
+        btn.style.borderRadius="6px"; btn.style.background="rgba(195,32,38,1)"; btn.style.color="white"; btn.style.cursor="pointer";
+        btn.onmouseover=()=>btn.style.background="rgba(160,29,31,1)"; btn.onmouseout=()=>btn.style.background="rgba(195,32,38,1)";
     });
 }
 
