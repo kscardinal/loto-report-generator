@@ -103,6 +103,8 @@ cython_debug/
 
 # Environment variables
 .env
+.env.dev
+docker-compose.override.yml
 
 # macOS system files
 .DS_Store

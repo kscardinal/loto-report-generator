@@ -15,6 +15,12 @@ from argon2 import PasswordHasher
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError
 import secrets
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import pytz
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip
@@ -110,6 +116,49 @@ if not SECRET_KEY:
 # Hashing Passwords
 ph = PasswordHasher(time_cost=4, memory_cost=102400, parallelism=8, hash_len=32)
 
+# Get email and password from .env file
+sender_email = os.getenv("SENDER_EMAIL")
+sender_password = os.getenv("SENDER_PASSWORD")
+
+# -----------------------------
+# Email Functions
+# -----------------------------
+def send_email_gmail(to_email, subject, body):
+    # Defining the variables for sending the message
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "html"))
+
+    # Sending the data using gmail and variables in the .env file
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+
+def send_email(to_email, subject, body):
+    message = Mail(
+        from_email='no-reply@lotogenerator.app',  # must match your verified domain
+        to_emails=to_email,
+        subject=subject,
+        plain_text_content=body
+    )
+    try:
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        response = sg.send(message)
+        print(f"Email sent! Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+def send_email_auto(to_email, subject, body):
+    ENV = os.getenv("APP_ENV", "dev").lower()
+
+    if ENV == "dev":
+        send_email_gmail(to_email, subject, body)
+    elif ENV != "dev":
+        send_email(to_email, subject, body)
+    else:
+        raise ValueError(f"Unknown APP_ENV value: {ENV}")
 
 # -----------------------------
 # Upload JSON + images
@@ -615,6 +664,99 @@ async def update_login_attempts(
 # -----------------------------
 # Create Account Page
 # -----------------------------
+def send_new_user_email(user):
+    """
+    Sends a formatted HTML email when a new user signs up.
+    `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
+    """
+    to_email = os.getenv("DEFAULT_EMAIL", "")
+    subject = f"New Account Created: {user['username']}"
+
+    # Convert UTC to Eastern Time
+    utc_time = datetime.utcnow()
+    eastern = pytz.timezone("US/Eastern")  # change this to your timezone if needed
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+
+    # Build the HTML content
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #ffffff;
+                margin: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #333333;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+            }}
+            th, td {{
+                text-align: left;
+                padding: 8px;
+                border-bottom: 1px solid #dddddd;
+            }}
+            th {{
+                background-color: #f0f0f0;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>New User Account Created</h2>
+        <p>A new user has signed up and may require activation:</p>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>First Name</td>
+                <td>{user['first_name']}</td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>{user['last_name']}</td>
+            </tr>
+            <tr>
+                <td>Username</td>
+                <td>{user['username']}</td>
+            </tr>
+            <tr>
+                <td>Email</td>
+                <td>{user['email']}</td>
+            </tr>
+            <tr>
+                <td>Date Created</td>
+                <td>{formatted_time}</td>
+            </tr>
+        </table>
+        <p>If you wish to activate this account, please follow the link below:</p>
+        <p>
+          <a href="https://lotogenerator.app/users" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Login & Activate
+          </a>
+        </p>
+        <p class="footer">This is an automated message from LOTO Report Generator. Do not reply.</p>
+    </body>
+    </html>
+    """
+
+    # Send email using your auto function
+    send_email_auto(to_email, subject, html_content)
+
+
 @app.get("/create-account")
 def create_account_form(request: Request):
     return templates.TemplateResponse("create_account.html", {"request": request})
@@ -662,6 +804,14 @@ def create_account(
         "latest_reset": None,
         "password_resets": 0,
         "verification_attempts": 0
+    })
+
+    send_new_user_email({
+        "first_name": first_name,
+        "last_name": last_name,
+        "username": username_lower,
+        "email": email,
+        "date_created": datetime.utcnow()
     })
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
