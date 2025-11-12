@@ -1,6 +1,6 @@
-<div style="text-align: center;">
-	<h1 align="center">📌 loto-report-generator</h1>
-	<p align="center"><code>loto-report-generator</code>is a Python application for generating PDF reports related to lockout/tagout procedures. It uses custom fonts and images, and can be configured for different server environments.</p>
+<div style="text-align: center;"> 
+	<h1 align="center">📌 loto-report-generator</h1> 
+	<p align="center"><code>loto-report-generator</code> is a Python web application for generating, managing, and downloading LOTO (Lockout/Tagout) reports. It supports PDF generation, JSON/photo uploads, audit logging, and role-based access, all configurable via environment variables and Docker.</p> 
 </div>
 
 <div style="text-align: center;">
@@ -78,25 +78,39 @@
 
 ## Overview  
 
-`loto-report-generation` is a Python-based tool designed to automate the creation of PDF reports for lockout/tagout (LOTO) procedures. It streamlines the reporting process by integrating custom templates, images, and fonts, allowing users to generate professional and consistent documentation. The application is configurable for different environments and can be easily customized to fit specific organizational needs, making it ideal for safety compliance and operational record-keeping.  
+`loto-report-generation` is a full-stack Python application designed to automate the creation, management, and retrieval of LOTO reports. It features:
+- Custom PDF generation with templates, fonts, and images
+- Dynamic JSON/photo uploads for report creation
+- Web interface and API endpoints for interactive management
+- Role-based authentication and audit logging for security and compliance
+- Dockerized deployment for easy setup across environments
+
+This makes it ideal for industrial safety documentation, operational reporting, and automated compliance workflows.
 
 ---
 
 ## Features  
 
-- **Automated PDF Generation**: Instantly creates professional LOTO reports using custom templates, images, and fonts for a polished look.
-- **Environment Configuration via .env**: Easily adapts to different server setups and deployment scenarios with simple environment variable management.
-- **Extensible Data Input**: Supports dynamic data sources (like JSON) for flexible report customization and integration with other systems.
-- **Modular Design**: Separates logic for PDF creation, automation, and templating, making it easy to extend or modify for future enhancements.
+- **Secure Authentication & Roles**: Supports login, account creation, and owner/admin/user roles. Sensitive actions are restricted based on role.
+- **Audit Logging**: Tracks user actions like logins, report creation, uploads, deletions, and status changes with timestamps and IP addresses.
+- **Automated PDF Generation**: Generates professional LOTO reports using templates, fonts, and embedded images.
+- **JSON & Photo Uploads**: Accepts structured data and image files for flexible report creation.
+- **Web Interface**: Interactive frontend for managing users, reports, and logs with visual status indicators and responsive design.
+- **RESTful API Endpoints**: Full set of API routes for programmatic access to users, reports, files, and audit logs.
+- **Environment Config via `.env`**: Supports local and production deployment using environment variables.
+- **Modular & Extensible**: Components like auth, PDF generation, API, and database are self-contained and easily extendable.
+- **Docker & Nginx Integration**: Full containerized setup for consistent deployments.
+
 
 ---
 
 ## Tech Stack  
 
-- **Frontend**: HTML, CSS, JavaScript, TypeScript, Markdown  
-- **Backend**:  Python, FastAPI, Jinja  
-- **Database**:  MongoDB  
-- **Other Tools**: Docker, ReportLab, UV, Pytest, GitHub Actions
+- **Frontend**: HTML, CSS, JavaScript, TypeScript, Markdown
+- **Backend**: Python, FastAPI, Jinja2
+- **Database**: MongoDB with GridFS for file storage
+- **Authentication & Security**: JWT, role-based access
+- **Other Tools**: Docker, Nginx, UV, Pytest, ReportLab, GitHub Actions
 
 
 ---
@@ -105,67 +119,27 @@
 
 ```
 loto-report-generator/
-├─ .env                                 # Stores environment variables and secrets (not committed to Git)
-├─ .env.dev                             # Stores environment vairbales and secrets for testing in local environments
-├─ .github/
-│  └── workflows/                       # GitHub Actions workflows for automated testing and CI/CD
-│      └── tests.yml                    # Runs pytest on pushes/merges to verify PDF generation works
-├─ .pre-commit-config.yaml              # Pre-commit hook configuration (runs pytest before pushing)
-├─ Dockerfile                           # Defines the custom Python Docker image used by the app
-├─ docker-compose.yml                   # Sets up and links containers for FastAPI, MongoDB, and Nginx
-├─ docker-compose.override.yml          # Overrides server images for testing in local environments
-├─ includes/                            # Static assets and resources used in LOTO PDF generation
-├─ logs/                                # Directory for runtime and application logs
-├─ mongod.conf                          # MongoDB configuration file
-├─ nginx.conf                           # Nginx reverse proxy configuration for serving the FastAPI app
-├─ nginx.def.conf                       # Changes the Nginx reverse proxy for testing in local environments
-├─ readme_helper.py                     # Script to generate or update the directory structure readme
+├─ .env                               # Environment variables
+├─ .env.dev                           # Local/test environment variables
+├─ Dockerfile                         # Python image for the app
+├─ docker-compose.yml                 # Docker setup: FastAPI, MongoDB, Nginx
+├─ includes/                          # Images, fonts, and other static assets
+├─ logs/                              # Application and server logs
+├─ mongod.conf                        # MongoDB configuration
+├─ nginx.conf                         # Nginx reverse proxy config
 ├─ src/
-│  ├── api/
-│  │   ├── endpoints.json               # Metadata or route definitions for available API endpoints
-│  │   ├── auth_utils.py                # Contains utility functions used for authentication
-│  │   ├── logging_config.py            # Centralized logging configuration for the FastAPI app
-│  │   └── main.py                      # FastAPI server entry point; handles API requests and routing
-│  ├── database/
-│  │   ├── clear_db.py                  # Utility script to clear or reset the MongoDB database
-│  │   ├── db.py                        # Handles database initialization and connections
-│  │   ├── db_2.py                      # Contains MongoDB helper functions for data management
-│  │   ├── db_template.txt              # Template describing schema and properties for new database entries
-│  │   └── decode.py                    # Functions to decode data (e.g., images or base64-encoded files)
-│  ├── pdf/
-│  │   ├── automate_pdf.py              # Automates PDF generation from test data or API triggers
-│  │   └── generate_pdf.py              # Core script that builds PDFs from JSON input data
-│  ├── tests/
-│  │   ├── test_db_status.py            # pytest for verifying database is up and running on server
-│  │   ├── test_pdf_scripts.py          # pytest suite verifying PDF generation and app logic
-│  │   ├── test_data.json               # Primary dataset used for PDF testing
-│  │   ├── test_data_2.json             # Additional dataset for secondary test case
-│  │   ├── test_data_3.json             # Additional dataset for tertiary test case
-│  │   └── test_data_....json           # Placeholder for other test datasets covering edge cases
-│  └── web/
-│      ├── main.html                    # Entry HTML page for the web interface
-│      ├── static/
-│      │   ├── css/
-│      │   │   ├── input_form.css       # Stylesheet for the main data input form
-│      │   │   ├── login.css            # Stylesheet for the login page
-│      │   │   └── user_list.css        # Stylesheet for the users page
-│      │   ├── dependencies/
-│      │   │   └── energySources.json   # Defines available energy sources and dropdown options
-│      │   ├── includes/                # Images, icons, and shared frontend assets
-│      │   └── js/
-│      │       ├── input_form.js        # Frontend logic for user data input handling
-│      │       ├── json_handlers.js     # Manages JSON generation, download, and data processing
-│      │       ├── login.js             # Frontend logic for user authentication and logging in
-│      │       └── upload_json.js       # Handles JSON and photo uploads to the backend/database
-│      └── templates/
-│          ├── audit_logs.html          # Jinja2 template displaying the user logs
-│          ├── create_acount.html       # Jinja2 template displaying the create account page
-│          ├── input_form.html          # Jinja2 template for the data entry form page
-│          ├── login.html               # Jinja2 template displaying the login page
-│          ├── pdf_list.html            # Jinja2 template displaying all reports stored in the database
-│          ├── user_list.html           # Jinja2 template displaying all users
-│          └── view_report.html         # Jinja2 template for viewing a specific report in detail
-└─ temp/                                # Temporary storage for generated files or cached data
+│  ├── api/                           # Backend FastAPI endpoints and utilities
+│  │   ├── main.py                    # FastAPI entry point
+│  │   ├── auth_utils.py              # Authentication helpers
+│  │   └── logging_config.py          # Central logging config
+│  ├── database/                      # MongoDB helper scripts
+│  ├── pdf/                           # PDF generation scripts
+│  ├── tests/                         # Pytest test cases
+│  └── web/                           # Frontend web interface
+│      ├── main.html                  # Entry HTML page
+│      ├── static/                    # CSS, JS, and assets
+│      └── templates/                 # Jinja2 HTML templates
+└─ temp/                              # Temporary files
 ```
 
 ---
