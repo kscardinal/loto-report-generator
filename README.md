@@ -57,6 +57,14 @@
 
 ---
 
+<div style="text-align: center">
+	<p align="center">
+		<img src="https://img.shields.io/website?url=https%3A%2F%2Flotogenerator.app%2Fhealth&up_message=online&down_message=offline&label=lotogenerator.app&style=for-the-badge&labelColor=4A4A4A" alt="lotogenerator.app Check">
+	</p>
+</div>
+
+---
+
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)

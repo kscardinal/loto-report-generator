@@ -825,3 +825,13 @@ async def audit_logs_json(current_user: dict = Depends(get_current_user_no_redir
 
     return {"logs": log_list}
 
+# -----------------------------
+# Public API for website status
+# -----------------------------
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """
+    Health check endpoint for monitoring and badges.
+    Returns a simple 200 OK response.
+    """
+    return JSONResponse(content={"status": "ok"}, status_code=200)
