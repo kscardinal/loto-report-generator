@@ -136,13 +136,15 @@ def send_email_gmail(to_email, subject, body):
         server.login(sender_email, sender_password)
         server.send_message(msg)
 
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body_html, body_text=None):
     message = Mail(
         from_email='no-reply@lotogenerator.app',  # must match your verified domain
         to_emails=to_email,
         subject=subject,
-        plain_text_content=body
+        plain_text_content=body_text if body_text else "Please view this email in an HTML-compatible client.",
+        html_content=body_html
     )
+
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
