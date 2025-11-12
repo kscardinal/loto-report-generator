@@ -96,7 +96,7 @@
 - **Frontend**: HTML, CSS, JavaScript, TypeScript, Markdown  
 - **Backend**:  Python, FastAPI, Jinja  
 - **Database**:  MongoDB  
-- **Other Tools**: ReportLab, UV, Pytest
+- **Other Tools**: Docker, ReportLab, UV, Pytest, GitHub Actions
 
 
 ---
@@ -106,20 +106,24 @@
 ```
 loto-report-generator/
 ├─ .env                                 # Stores environment variables and secrets (not committed to Git)
+├─ .env.dev                             # Stores environment vairbales and secrets for testing in local environments
 ├─ .github/
 │  └── workflows/                       # GitHub Actions workflows for automated testing and CI/CD
 │      └── tests.yml                    # Runs pytest on pushes/merges to verify PDF generation works
 ├─ .pre-commit-config.yaml              # Pre-commit hook configuration (runs pytest before pushing)
 ├─ Dockerfile                           # Defines the custom Python Docker image used by the app
 ├─ docker-compose.yml                   # Sets up and links containers for FastAPI, MongoDB, and Nginx
+├─ docker-compose.override.yml          # Overrides server images for testing in local environments
 ├─ includes/                            # Static assets and resources used in LOTO PDF generation
 ├─ logs/                                # Directory for runtime and application logs
 ├─ mongod.conf                          # MongoDB configuration file
 ├─ nginx.conf                           # Nginx reverse proxy configuration for serving the FastAPI app
+├─ nginx.def.conf                       # Changes the Nginx reverse proxy for testing in local environments
 ├─ readme_helper.py                     # Script to generate or update the directory structure readme
 ├─ src/
 │  ├── api/
 │  │   ├── endpoints.json               # Metadata or route definitions for available API endpoints
+│  │   ├── auth_utils.py                # Contains utility functions used for authentication
 │  │   ├── logging_config.py            # Centralized logging configuration for the FastAPI app
 │  │   └── main.py                      # FastAPI server entry point; handles API requests and routing
 │  ├── database/
@@ -132,7 +136,8 @@ loto-report-generator/
 │  │   ├── automate_pdf.py              # Automates PDF generation from test data or API triggers
 │  │   └── generate_pdf.py              # Core script that builds PDFs from JSON input data
 │  ├── tests/
-│  │   ├── test_pdf_scripts.py          # Main pytest suite verifying PDF generation and app logic
+│  │   ├── test_db_status.py            # pytest for verifying database is up and running on server
+│  │   ├── test_pdf_scripts.py          # pytest suite verifying PDF generation and app logic
 │  │   ├── test_data.json               # Primary dataset used for PDF testing
 │  │   ├── test_data_2.json             # Additional dataset for secondary test case
 │  │   ├── test_data_3.json             # Additional dataset for tertiary test case
@@ -141,17 +146,24 @@ loto-report-generator/
 │      ├── main.html                    # Entry HTML page for the web interface
 │      ├── static/
 │      │   ├── css/
-│      │   │   └── input_form.css       # Stylesheet for the main data input form
+│      │   │   ├── input_form.css       # Stylesheet for the main data input form
+│      │   │   ├── login.css            # Stylesheet for the login page
+│      │   │   └── user_list.css        # Stylesheet for the users page
 │      │   ├── dependencies/
 │      │   │   └── energySources.json   # Defines available energy sources and dropdown options
 │      │   ├── includes/                # Images, icons, and shared frontend assets
 │      │   └── js/
 │      │       ├── input_form.js        # Frontend logic for user data input handling
 │      │       ├── json_handlers.js     # Manages JSON generation, download, and data processing
+│      │       ├── login.js             # Frontend logic for user authentication and logging in
 │      │       └── upload_json.js       # Handles JSON and photo uploads to the backend/database
 │      └── templates/
+│          ├── audit_logs.html          # Jinja2 template displaying the user logs
+│          ├── create_acount.html       # Jinja2 template displaying the create account page
 │          ├── input_form.html          # Jinja2 template for the data entry form page
+│          ├── login.html               # Jinja2 template displaying the login page
 │          ├── pdf_list.html            # Jinja2 template displaying all reports stored in the database
+│          ├── user_list.html           # Jinja2 template displaying all users
 │          └── view_report.html         # Jinja2 template for viewing a specific report in detail
 └─ temp/                                # Temporary storage for generated files or cached data
 ```
@@ -228,7 +240,10 @@ APP_ENV=dev
 
 # Server IP (used by PDF scripts)
 SERVER_IP=http://<your-server-domain-or-ip>
-TEST_SERVER_IP=http://backend:8000
+TEST_SERVER_IP=http://localhost:8000
+
+#JWT
+SECRET_KEY=...
 ```
 
 3. Start Docker
@@ -429,25 +444,33 @@ http://localhost:8000/docs
 ```
 - For more info on each endpoint
 
-| Endpoint                               | Method(s)      | Description                                                                             |
-|----------------------------------------|----------------|-----------------------------------------------------------------------------------------|
-| `/upload/`                             | POST           | Uploads JSON and other files to the server, storing metadata and photos in the database |
-| `/create_report`                       | GET            | Displays a webpage for creating a report with options to download/upload                |
-| `/pdf_list`                            | GET            | Displays a webpage listing all PDFs/reports available in the database                   |
-| `/pdf_list_json`                       | GET            | Returns JSON of all reports with metadata only (no JSON data or photos)                 |
-| `/view_report/{report_name}`           | GET            | Displays detailed report metadata and associated photos (HTML page)                     |
-| `/metadata/{report_name}`              | GET            | Returns stored metadata for a specific report as JSON (excluding JSON data/photos)      |
-| `/download_report_files/{report_name}` | GET            | Downloads the report JSON and all related photos for a given report name as URLs        |
-| `/download_json/{report_name}`         | GET            | Downloads the JSON file for a specific report                                           |
-| `/download_photo/{photo_id}`           | GET            | Downloads an individual photo from GridFS by its ID                                     |
-| `/download_pdf/{report_name}`          | GET            | Downloads/streams the generated PDF file for the specified report                       |
-| `/photo/{photo_id}`                    | GET            | Returns an image stored in GridFS by its ID                                             |
-| `/remove_report/{report_name}`         | GET, POST      | Deletes a report from the database (retains shared photos)                              |
-| `/cleanup_orphan_photos`               | GET, POST      | Deletes all photos in GridFS not referenced by any report                               |
-| `/clear/`                              | POST           | Clears all temporary files in the server's temp directory                               |
-| `/db_status`                           | GET            | Checks database connection and returns success or error message                         |
-
-
+| Endpoint                               | Method(s)      | Type     | Description                                                                             |
+|----------------------------------------|----------------|----------|-----------------------------------------------------------------------------------------|
+| `/login`                               | GET, POST      | 🔒 Auth | Displays the login page and handles user authentication                                 |
+| `/create-account`                      | GET, POST      | 🔒 Auth | Displays the account creation page and creates a new user                               |
+| `/jwt_test`                            | GET            | ⚙️ API  | Verifies the current JWT and returns confirmation                                       |
+| `/update-login-attempts`               | POST           | ⚙️ API  | Updates the login attempts count for a user (JWT-protected)                             |
+| `/change_status`                       | POST           | ⚙️ API  | Changes a user's active status (owner only)                                             |
+| `/update_role`                         | POST           | ⚙️ API  | Updates a user's role (owner only)                                                      |
+| `/users`                               | GET            | 🖥️ Page | Displays an HTML page listing all users (owner only)                                    |
+| `/users_json`                          | GET            | ⚙️ API  | Returns JSON of all users (owner only)                                                  |
+| `/audit_logs`                          | GET            | 🖥️ Page | Displays all audit logs in formatted view (owner only)                                  |
+| `/audit_logs_json`                     | GET            | ⚙️ API  | Returns audit logs as JSON (owner only)                                                 |
+| `/create_report`                       | GET            | 🖥️ Page | Displays a webpage for creating a report with options to download/upload                |
+| `/upload/`                             | POST           | ⚙️ API  | Uploads JSON and other files to the server, storing metadata and photos in the database |
+| `/pdf_list`                            | GET            | 🖥️ Page | Displays a webpage listing all PDFs/reports available in the database                   |
+| `/pdf_list_json`                       | GET            | ⚙️ API  | Returns JSON of all reports with metadata only (no JSON data or photos)                 |
+| `/view_report/{report_name}`           | GET            | 🖥️ Page | Displays detailed report metadata and associated photos (HTML page)                     |
+| `/metadata/{report_name}`              | GET            | ⚙️ API  | Returns stored metadata for a specific report as JSON (excluding JSON data/photos)      |
+| `/download_report_files/{report_name}` | GET            | ⚙️ API  | Returns URLs for downloading a report’s JSON and all related photos                     |
+| `/download_json/{report_name}`         | GET            | ⚙️ API  | Downloads the JSON file for a specific report                                           |
+| `/download_photo/{photo_id}`           | GET            | ⚙️ API  | Downloads an individual photo from GridFS by its ID                                     |
+| `/download_pdf/{report_name}`          | GET            | ⚙️ API  | Downloads/streams the generated PDF file for the specified report                       |
+| `/photo/{photo_id}`                    | GET            | ⚙️ API  | Returns an image stored in GridFS by its ID                                             |
+| `/remove_report/{report_name}`         | GET, POST      | ⚙️ API  | Deletes a report from the database (retains shared photos)                              |
+| `/cleanup_orphan_photos`               | GET, POST      | ⚙️ API  | Deletes all photos in GridFS not referenced by any report                               |
+| `/clear/`                              | POST           | ⚙️ API  | Clears all temporary files in the server’s temp directory                               |
+| `/db_status`                           | GET            | ⚙️ API  | Checks database connection and returns success or error message                         |
 
 ---
 
