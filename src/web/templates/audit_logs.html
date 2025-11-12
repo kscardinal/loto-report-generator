@@ -80,41 +80,72 @@
 
 <main>
     <div id="logList"></div>
+    <div id="paginationInfo" style="text-align:center; margin-bottom: 10px;"></div>
+    <div id="pagination" style="display:flex; justify-content:center; align-items:center; gap:50px; margin-top:20px;">
+        <div id="itemsPerPage" style="display:flex; justify-content: flex-end; align-items:center; gap:5px; width: 25%;">
+            <label for="perPageSelect">Per Page:</label>
+            <select id="perPageSelect" style="width:50px; text-align:center;">
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+            </select>
+        </div>
+        <div id="navButtons" style="display:flex; align-items:center; gap:5px;">
+            <button id="prevBtn">← Prev</button>
+            <span id="pageInfo"></span>
+            <button id="nextBtn">Next →</button>
+        </div>
+        <div id="jumpPage" style="display:flex; align-items:center; gap:5px; width: 25%;">
+            <input type="text" id="jumpPageInput" style="width:40px; text-align:center;" />
+            <button id="jumpPageBtn">Go</button>
+        </div>
+    </div>
 </main>
 
 <script>
 function formatLocation(location) {
     if (!location) return "unknown";
-
-    // Pull out the fields
-    const city = location.city || null;
-    const region = location.region || null;
-    const country = location.country_name || null;
-
-    // Make an array of the non-empty values
-    const parts = [city, region, country].filter(Boolean);
-
-    // If nothing is available, return unknown
-    if (parts.length === 0) return "unknown";
-
-    // Otherwise, join the available parts
-    return parts.join(", ");
+    const parts = [location.city, location.region, location.country_name].filter(Boolean);
+    return parts.length ? parts.join(", ") : "unknown";
 }
+
+// Read ?page= from URL, default to 1
+const urlParams = new URLSearchParams(window.location.search);
+let currentPage = parseInt(urlParams.get("page")) || 1;
+let logsPerPage = 25;
+let logs = [];
 
 async function fetchLogs() {
     const response = await fetch("/audit_logs_json", { credentials: "include" });
     const data = await response.json();
+    logs = data.logs || [];
+    renderPage(currentPage);
+}
+
+function updateURL() {
+    const newUrl = `${window.location.pathname}?page=${currentPage}`;
+    window.history.replaceState(null, "", newUrl);
+}
+
+const perPageSelect = document.getElementById("perPageSelect");
+perPageSelect.addEventListener("change", () => {
+    logsPerPage = parseInt(perPageSelect.value);
+    currentPage = 1; // reset to first page
+    renderPage(currentPage);
+    updateURL();
+});
+
+function renderPage(page) {
     const container = document.getElementById("logList");
     container.innerHTML = "";
 
-    const options = {
-        timeZone: "America/New_York",
-        year: "numeric", month: "long", day: "numeric",
-        hour: "numeric", minute: "numeric", second: "numeric",
-        hour12: true
-    };
+    const totalPages = Math.ceil(logs.length / logsPerPage);
+    const start = (page - 1) * logsPerPage;
+    const end = Math.min(start + logsPerPage, logs.length);
+    const pageLogs = logs.slice(start, end);
 
-    data.logs.forEach(log => {
+    pageLogs.forEach(log => {
         const div = document.createElement("div");
         div.classList.add("log-card");
 
@@ -132,11 +163,10 @@ async function fetchLogs() {
             : "N/A";
 
         const location = formatLocation(log.location);
-
-        // Format details
-        let detailsHTML = "";
         const detailsObj = log.details || {};
         const keys = Object.keys(detailsObj);
+
+        let detailsHTML = "";
         if (keys.length > 0) {
             detailsHTML = "<ul style='margin:4px 0 0 15px; padding:0; color:#911eb4; font-size:13px;'>";
             keys.forEach(key => {
@@ -151,21 +181,96 @@ async function fetchLogs() {
                 <span style="color:#f58231;">${log.action}</span> |
                 <span style="color:#4363d8;">${timestamp}</span>
             </p>
-
             <p>
                 <span style="color:#3cb44b;">${log.ip_address || "unknown"}</span> |
                 <span style="color:#3cb44b;">${location}</span>
             </p>
-
             ${detailsHTML}
         `;
         container.appendChild(div);
     });
 
+    // Update log count info
+    const paginationInfo = document.getElementById("paginationInfo");
+    paginationInfo.textContent = `${start + 1}-${end} / ${logs.length}`;
 
+    renderPagination(totalPages); // pass totalPages
+}
+
+function renderPagination(totalPages) {
+    const pagination = document.getElementById("pagination");
+    const pageInfo = document.getElementById("pageInfo");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const jumpInput = document.getElementById("jumpPageInput");
+    const jumpBtn = document.getElementById("jumpPageBtn");
+
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    // Set prev/next buttons
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage(currentPage);
+            updateURL();
+            document.getElementById("logList").scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderPage(currentPage);
+            updateURL();
+            document.getElementById("logList").scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    // Jump to page
+    jumpInput.value = currentPage; // show current page in box
+    function goToPage() {
+        const page = parseInt(jumpInput.value, 10);
+        if (!isNaN(page) && page >= 1 && page <= Math.ceil(logs.length / logsPerPage)) {
+            currentPage = page;
+        } else {
+            currentPage = currentPage; // invalid input, keep current page
+        }
+        renderPage(currentPage);
+        updateURL();
+        jumpInput.blur(); // <-- remove focus
+    }
+
+    // On Enter key
+    jumpInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            goToPage();
+        }
+    });
+
+    // On Go button click
+    jumpBtn.addEventListener("click", () => {
+        goToPage();
+    });
+
+    // Style buttons/input
+    [prevBtn, nextBtn, jumpBtn].forEach(btn => {
+        btn.style.margin = "0 5px";
+        btn.style.padding = "5px 10px";
+        btn.style.border = "none";
+        btn.style.borderRadius = "6px";
+        btn.style.background = "rgba(195,32,38,1)";
+        btn.style.color = "white";
+        btn.style.cursor = "pointer";
+        btn.onmouseover = () => btn.style.background = "rgba(160,29,31,1)";
+        btn.onmouseout = () => btn.style.background = "rgba(195,32,38,1)";
+    });
 }
 
 fetchLogs();
 </script>
+
 </body>
 </html>
