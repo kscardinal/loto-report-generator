@@ -136,7 +136,9 @@ async def update_log_location(audit_logs_collection, log_id, ip):
 
 def update_log_location_sync(audit_logs_collection, log_id, ip):
     import asyncio
+    print("Start asyncio")
     asyncio.run(update_log_location(audit_logs_collection, log_id, ip))
+    print("End asyncio")
 
 # --- Main logging function ---
 def log_action(request, audit_logs_collection, username: str, action: str, details=None, background_tasks: BackgroundTasks = None):
