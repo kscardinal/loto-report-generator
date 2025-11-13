@@ -12,6 +12,7 @@ import requests
 from typing import Optional, Dict
 from typing import Optional, Dict
 import httpx
+from pymongo.collection import Collection
 from icecream import ic
 
 ph = PasswordHasher()
@@ -95,58 +96,86 @@ def require_role(required_role: str):
         return None  # No error
     return wrapper
 
+# --- Get client IP ---
 def get_client_ip(request: Request) -> str:
-    # canonical header names use dashes; some proxies use lowercase — check both
     xff = request.headers.get("X-Forwarded-For") or request.headers.get("x-forwarded-for")
     if xff:
-        # X-Forwarded-For may contain a list: client, proxy1, proxy2...
         ip = xff.split(",")[0].strip()
         if ip:
             return ip
-    # fallback: direct client IP reported by ASGI server
     client = request.client
     if client is not None:
         return client.host
     return "unknown"
 
-# --- Async lookup function ---
-async def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
+
+# --- Async IP lookup with DB cache ---
+async def lookup_ip_with_db(ip: str, known_locations_collection: Collection, timeout: int = 5) -> Optional[Dict]:
     if ip in ("127.0.0.1", "localhost", "unknown"):
-        print(f"IPAPI lookup cancel for {ip}: local")
         return None
+
+    # Check DB first
+    existing = known_locations_collection.find_one({"ip_address": ip})
+    if existing:
+        location = existing.get("location")
+        if location and any(location.values()):  # at least one field is non-empty
+            return location
+        else:
+            print(f"Location missing or incomplete for {ip}, trying IPAPI again")
+
+
+    # Query API
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             res = await client.get(f"https://ipapi.co/{ip}/json/")
-            print(f"IPAPI response status: {res.status_code}")
             if res.status_code == 200:
-                ic(res.json())
-                return res.json()
+                data = res.json()
+                location = {
+                    "city": data.get("city"),
+                    "region": data.get("region"),
+                    "country": data.get("country_name"),
+                    "latitude": data.get("latitude"),
+                    "longitude": data.get("longitude")
+                }
+                # Store in DB
+                known_locations_collection.update_one(
+                    {"ip_address": ip},
+                    {"$set": {"location": location, "last_updated": datetime.utcnow()}},
+                    upsert=True
+                )
+                return location
+            elif res.status_code == 429:
+                print(f"Rate limit hit for IPAPI on {ip}")
     except Exception as e:
         print(f"IPAPI lookup failed for {ip}: {e}")
+
     return None
 
-# --- Background updater ---
-async def update_log_location(audit_logs_collection, log_id, ip):
-    print(f"Updating location for IP: {ip}")
-    geo = await lookup_ip_ipapi(ip)
-    ic(geo)
+
+# --- Background task for logging ---
+async def update_log_location(audit_logs_collection: Collection, known_locations_collection: Collection, log_id, ip):
+    geo = await lookup_ip_with_db(ip, known_locations_collection)
     if geo:
         audit_logs_collection.update_one({"_id": log_id}, {"$set": {"location": geo}})
-        print("location lookup / update log passed")
-    else:
-        print("location lookup / update log failed")
 
-def update_log_location_sync(audit_logs_collection, log_id, ip):
+
+def update_log_location_sync(audit_logs_collection: Collection, known_locations_collection: Collection, log_id, ip):
     import asyncio
-    print("Start asyncio")
-    asyncio.run(update_log_location(audit_logs_collection, log_id, ip))
-    print("End asyncio")
+    asyncio.run(update_log_location(audit_logs_collection, known_locations_collection, log_id, ip))
+
 
 # --- Main logging function ---
-def log_action(request, audit_logs_collection, username: str, action: str, details=None, background_tasks: BackgroundTasks = None):
+def log_action(
+    request: Request,
+    audit_logs_collection: Collection,
+    known_locations_collection: Collection,
+    username: str,
+    action: str,
+    details=None,
+    background_tasks: BackgroundTasks = None
+):
     client_ip = get_client_ip(request)
 
-    # Insert immediately so action is captured right away
     log_entry = {
         "ip_address": client_ip,
         "location": None,  # filled later
@@ -159,7 +188,5 @@ def log_action(request, audit_logs_collection, username: str, action: str, detai
     inserted = audit_logs_collection.insert_one(log_entry)
     log_id = inserted.inserted_id
 
-    # Schedule location lookup to run after response is sent
     if background_tasks:
-        background_tasks.add_task(update_log_location_sync, audit_logs_collection, log_id, client_ip)
-        print("Background task added")
+        background_tasks.add_task(update_log_location_sync, audit_logs_collection, known_locations_collection, log_id, client_ip)

@@ -23,7 +23,7 @@ from sendgrid.helpers.mail import Mail
 import pytz
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_ipapi
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
 
 import gridfs
 from bson.objectid import ObjectId
@@ -106,6 +106,7 @@ db = client[MONGO_DB]
 uploads = db['reports']    # collection for metadata + JSON
 users = db['users']        # collection for users + metadata 
 audit_logs = db["audit_logs"]
+known_locations = db['known_locations']
 fs = gridfs.GridFS(db)     # GridFS for storing photos
 
 # JWT
@@ -230,6 +231,7 @@ async def upload_report(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
             details={"overwrite": True},
@@ -253,6 +255,7 @@ async def upload_report(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
             details={"overwrite": False},
@@ -307,6 +310,7 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
             details={"report": report_name, "status": "Successful"},
@@ -323,6 +327,7 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
             details={"report": report_name, "status": "Failed", "message": e.stderr },
@@ -334,6 +339,7 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
             details={"report": report_name, "status": "Failed", "message": traceback.format_exc() },
@@ -373,6 +379,7 @@ async def pdf_list(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="pdf_list",
         details={},
@@ -432,6 +439,7 @@ async def view_report(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="view_report",
         details={"report": report_name},
@@ -506,6 +514,7 @@ async def create_report(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="create_report",
         details={},
@@ -540,6 +549,7 @@ async def remove_report(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="remove_report",
         details=details,
@@ -684,6 +694,7 @@ async def users_page(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=current_user["username"],
             action="users",
             details={"status": "Invalid Permission"},
@@ -694,6 +705,7 @@ async def users_page(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="users",
         details={},
@@ -738,6 +750,7 @@ async def login_page(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username="N/A",
         action="login page",
         details={},
@@ -766,6 +779,7 @@ async def login_endpoint(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
             details={"status": f"fail: no user matching {username_or_email_lower}"},
@@ -779,6 +793,7 @@ async def login_endpoint(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
             details={"status": "fail: invlaid password"},
@@ -790,6 +805,7 @@ async def login_endpoint(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
             details={"status": "fail: account not active"},
@@ -813,6 +829,7 @@ async def login_endpoint(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=user["username"],
         action="login",
         details={"status": "successful"},
@@ -866,9 +883,9 @@ def send_new_user_email(user, geo):
     if geo is None:
         location_str = "unknown"
     else:
-        city = geo.get("city")
-        region = geo.get("region")
-        country = geo.get("country_name")
+        city = geo["location"].get("city")
+        region = geo["location"].get("region")
+        country = geo["location"].get("country")
 
         # if all are missing, just say "unknown"
         if not any([city, region, country]):
@@ -942,7 +959,7 @@ def send_new_user_email(user, geo):
             </tr>
             <tr>
                 <td>IP Address</td>
-                <td>{ geo.get('ip', 'unknown') if geo else 'unknown' }</td>
+                <td>{ geo.get('ip_address', 'unknown') if geo else 'unknown' }</td>
             </tr>
             <tr>
                 <td>Location Created</td>
@@ -976,6 +993,7 @@ def create_account_form(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username="N/A",
         action="create-account page",
         details={},
@@ -1005,6 +1023,7 @@ async def create_account(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
             username=username_lower,
             action="create-account",
             details={"status": "fail: account with email or username already exits"},
@@ -1040,7 +1059,12 @@ async def create_account(
 
     # IP
     client_ip = get_client_ip(request)
-    geo = await lookup_ip_ipapi(client_ip)
+    geo = known_locations.find_one({"ip_address": client_ip})
+    if geo:
+        geo = geo
+    else:
+        # Optional: fallback to API if not found
+        geo = await lookup_ip_with_db(client_ip, known_locations)
 
     send_new_user_email({
         "first_name": first_name,
@@ -1053,6 +1077,7 @@ async def create_account(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username_lower,
         action="create-account",
         details={"status": "successful"},
@@ -1105,6 +1130,7 @@ async def change_status(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="change_status",
         details={"target": target_username, "is_active": new_status_int},
@@ -1146,6 +1172,7 @@ async def update_role(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="update_role",
         details={"target": target_username, "new_role": new_role},
@@ -1182,6 +1209,7 @@ async def delete_user(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="delete_user",
         details={"target": target_username, "deleted": True},
@@ -1210,6 +1238,7 @@ async def audit_logs_page(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="audit_logs page",
         details={},

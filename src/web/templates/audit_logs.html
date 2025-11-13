@@ -105,7 +105,7 @@
 <script>
 function formatLocation(location) {
     if (!location) return "unknown";
-    const parts = [location.city, location.region, location.country_name].filter(Boolean);
+    const parts = [location.city, location.region, location.country].filter(Boolean);
     return parts.length ? parts.join(", ") : "unknown";
 }
 
