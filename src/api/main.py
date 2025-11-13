@@ -29,7 +29,7 @@ from .auth_utils import create_access_token, get_current_user, get_current_user_
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException, status, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -1319,3 +1319,20 @@ async def health_check():
     Returns a simple 200 OK response.
     """
     return JSONResponse(content={"status": "ok"}, status_code=200)
+
+@app.get("/check-username-email")
+async def check_username_email(
+    username: str = Query(None),
+    email: str = Query(None)
+):
+    if username:
+        field = "username"
+        value = username.lower()  # ensure lowercase for querying username
+    elif email:
+        field = "email"
+        value = email.lower()  # fix here to use email.lower()
+    else:
+        return JSONResponse({"exists": False})
+
+    exists = users.find_one({field: value}) is not None
+    return JSONResponse({"exists": exists})
