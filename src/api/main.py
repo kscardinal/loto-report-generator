@@ -21,6 +21,8 @@ from email.mime.multipart import MIMEMultipart
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import pytz
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
@@ -139,12 +141,16 @@ def send_email_gmail(to_email, subject, body):
 
 def send_email(to_email, subject, body_html, body_text=None):
     message = Mail(
-        from_email='no-reply@lotogenerator.app',  # must match your verified domain
+        from_email='no-reply@lotogenerator.app',
         to_emails=to_email,
         subject=subject,
         plain_text_content=body_text if body_text else "Please view this email in an HTML-compatible client.",
         html_content=body_html
     )
+
+    # Disable click tracking so links go straight to your URLs
+    tracking_settings = TrackingSettings(click_tracking=ClickTracking(enable=False))
+    message.tracking_settings = tracking_settings
 
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
