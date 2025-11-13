@@ -1,36 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; }
-        .container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; margin-bottom: 20px; }
-        form { display: flex; flex-direction: column; }
-        input { padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; }
-        button { padding: 10px; background: #C32026; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
-        button:hover { background: #a01b20; }
-        .error { color: red; text-align: center; margin-bottom: 15px; }
-    </style>
+<meta charset="UTF-8">
+<title>LOTO Generator | Create Account</title>
+<link rel="stylesheet" href="/static/css/create_account.css">
 </head>
 <body>
-    <div class="container">
-        <h2>Create Account</h2>
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-        <form method="post" action="/create-account">
-            <input type="text" name="first_name" placeholder="First Name" required>
-            <input type="text" name="last_name" placeholder="Last Name" required>
-            <input type="text" name="email" placeholder="Email" required>
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
-            <button type="submit">Create Account</button>
+<main>
+    <div class="login-container">
+        <h2>Sonnaz Group</h2>
+        <h3>Create an account</h3>
+        <form method="post" id="signupForm" >
+            <div class="name-container">
+                <input type="text" id="firstNameInput" name="first_name" placeholder="First Name" autocomplete="first-name" required autofocus autocapitalize="words">
+                <input type="text" id="lastNameInput" name="last_name" placeholder="Last Name" autocomplete="last-name" required autocapitalize="words">
+            </div>
+            <input type="text" id="emailInput" name="email" placeholder="Email" autocomplete="email" required>
+            <p class="check" id ="emailCheck">❌ Invalid Email Address</p>
+            <div class="padding"></div>
+            <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required>
+            <p class="check" id ="usernameCheck">❌ Invalid Username</p>
+            <input type="password" id="passwordInput" name="password" placeholder="Password" autocomplete="password" required>
+            <p class="check" id ="passwordCheck-Length">❌ Password must be 12 characters minimum</p>
+            <p class="check" id ="passwordCheck-Forbidden">❌ Password can't contain prohibited items</p>
+            <p class="check" id ="passwordCheck-Uppercase">❌ Password must contain an uppercase letter</p>
+            <p class="check" id ="passwordCheck-Lowercase">❌ Password must contain an lowercase letter</p>
+            <p class="check" id ="passwordCheck-Number">❌ Password must contain a number</p>
+            <p class="check" id ="passwordCheck-Special">❌ Password must contain a special character</p>
+            <div class="entropy-container" id="entropy-Container">
+                <p id="entropy-words">Very Weak</p>
+                <div class="entropy" id ="entropy-bar"></div>
+                <p class="check" id ="passwordCheck-Repeat">⚠️ Password contains a repeat sequence</p>
+                <p class="check" id ="passwordCheck-Sequential">⚠️ Password contains a sequential sequence</p>
+            </div>
+            <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm Password" autocomplete="confirm-password" required>
+            <p class="check" id ="passwordCheck-Confirm">❌ Password must match</p>
+            <button type="submit" id="create-Button" disabled>Create Account</button>
         </form>
-        <p style="text-align:center; margin-top:10px;"><a href="/login">Already have an account? Login</a></p>
+        <div id="loadingSpinner" style="display:none; margin-top: 10px;">
+            <svg width="24" height="24" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#C32026" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
+                <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            </svg>
+            <span>Loading...</span>
+        </div>
+        <a href="/login">Login</a>
+        <a href="ForgotPassword.html">Forgot Password?</a>
     </div>
+</main>
+<script type="module" src="/static/js/create_account.js"></script>
 </body>
 </html>

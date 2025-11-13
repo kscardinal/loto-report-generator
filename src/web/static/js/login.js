@@ -25,7 +25,6 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             // Success
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
-
             const response_2 = await fetch("/update-login-attempts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -35,7 +34,6 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
                     login_attempts: current_login_attempts 
                 })
             });
-
             const data = await response.json();
             const returnUrl = data.return_url || "/pdf_list";
             window.location.href = returnUrl;
@@ -54,7 +52,15 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             passwordInput.focus();
             passwordInput.select();
             current_login_attempts += 1;
-            console.log("Login attempts:", current_login_attempts);
+            const response_2 = await fetch("/update-login-attempts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ 
+                    username: usernameInput.value.toLowerCase(), 
+                    login_attempts: current_login_attempts 
+                })
+            });
         } else if (response.status === 403) {
             // Account not activated
             emailCheck.style.display = "none";
@@ -62,6 +68,16 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             activationCheck.textContent = "❌ Your account has not been activated yet";
             activationCheck.style.display = "block";
             passwordInput.blur();
+            current_login_attempts += 1;
+            const response_2 = await fetch("/update-login-attempts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ 
+                    username: usernameInput.value.toLowerCase(), 
+                    login_attempts: current_login_attempts 
+                })
+            });
         } else {
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
