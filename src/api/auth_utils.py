@@ -126,6 +126,7 @@ async def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
 
 # --- Background updater ---
 async def update_log_location(audit_logs_collection, log_id, ip):
+    print(f"Update_logs - IP: {ip}")
     geo = await lookup_ip_ipapi(ip)
     if geo:
         audit_logs_collection.update_one({"_id": log_id}, {"$set": {"location": geo}})
