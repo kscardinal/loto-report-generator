@@ -1416,3 +1416,21 @@ async def check_username_email(
 
     exists = users.find_one({field: value}) is not None
     return JSONResponse({"exists": exists})
+
+
+@app.get("/forgot_password")
+def forgot_password_form(
+    request: Request,
+    background_tasks: BackgroundTasks = None
+):
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username="N/A",
+        action="forgot_password page",
+        details={},
+        background_tasks=background_tasks
+    )
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
