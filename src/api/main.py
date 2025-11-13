@@ -21,13 +21,15 @@ from email.mime.multipart import MIMEMultipart
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import pytz
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
 
 from .logging_config import logger, log_requests_json
-from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_ipapi
+from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
 
 import gridfs
 from bson.objectid import ObjectId
-from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException, status
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Depends, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -106,6 +108,7 @@ db = client[MONGO_DB]
 uploads = db['reports']    # collection for metadata + JSON
 users = db['users']        # collection for users + metadata 
 audit_logs = db["audit_logs"]
+known_locations = db['known_locations']
 fs = gridfs.GridFS(db)     # GridFS for storing photos
 
 # JWT
@@ -138,12 +141,16 @@ def send_email_gmail(to_email, subject, body):
 
 def send_email(to_email, subject, body_html, body_text=None):
     message = Mail(
-        from_email='no-reply@lotogenerator.app',  # must match your verified domain
+        from_email='no-reply@lotogenerator.app',
         to_emails=to_email,
         subject=subject,
         plain_text_content=body_text if body_text else "Please view this email in an HTML-compatible client.",
         html_content=body_html
     )
+
+    # Disable click tracking so links go straight to your URLs
+    tracking_settings = TrackingSettings(click_tracking=ClickTracking(enable=False))
+    message.tracking_settings = tracking_settings
 
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
@@ -172,7 +179,8 @@ async def upload_report(
     files: List[UploadFile] = File(...),
     uploaded_by: str = Form("anonymous"),
     tags: List[str] = Form([]),
-    notes: str = Form("")
+    notes: str = Form(""),
+    background_tasks: BackgroundTasks = None
 ):
     json_file = None
     include_files = []
@@ -229,9 +237,11 @@ async def upload_report(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
-            details={"overwrite": True}
+            details={"overwrite": True},
+            background_tasks=background_tasks
         )
 
     else:
@@ -251,9 +261,11 @@ async def upload_report(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
-            details={"overwrite": False}
+            details={"overwrite": False},
+            background_tasks=background_tasks
         )
 
     return {"report_name": report_name, "photos": [p["photo_name"] for p in photos_data]}
@@ -265,7 +277,8 @@ async def upload_report(
 def download_pdf(
     request: Request,
     report_name: str,
-    username: str = Depends(get_current_user_no_redirect)
+    username: str = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
 ):
     print(f"DEBUG: Processing download for {report_name}")
     doc = uploads.find_one({"report_name": report_name})
@@ -303,9 +316,11 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
-            details={"report": report_name, "status": "Successful"}
+            details={"report": report_name, "status": "Successful"},
+            background_tasks=background_tasks
         )
 
         return StreamingResponse(
@@ -318,9 +333,11 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
-            details={"report": report_name, "status": "Failed", "message": e.stderr }
+            details={"report": report_name, "status": "Failed", "message": e.stderr },
+            background_tasks=background_tasks
         )
         return JSONResponse(status_code=500, content={"error": "PDF generation failed.", "details": e.stderr})
     except Exception as e:
@@ -328,9 +345,11 @@ def download_pdf(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username["username"],
             action="download_pdf",
-            details={"report": report_name, "status": "Failed", "message": traceback.format_exc() }
+            details={"report": report_name, "status": "Failed", "message": traceback.format_exc() },
+            background_tasks=background_tasks
         )
         return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
 
@@ -339,7 +358,9 @@ def download_pdf(
 # Clear temp folder
 # -----------------------------
 @app.post("/clear/")
-async def clear_temp_folders(username: str = Depends(get_current_user_no_redirect)):
+async def clear_temp_folders(
+    username: str = Depends(get_current_user_no_redirect)
+):
     for file in TEMP_DIR.iterdir():
         if file.is_file():
             file.unlink()
@@ -351,7 +372,8 @@ async def clear_temp_folders(username: str = Depends(get_current_user_no_redirec
 @app.get("/pdf_list", response_class=HTMLResponse)
 async def pdf_list(
     request: Request, 
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = None
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -363,9 +385,11 @@ async def pdf_list(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="pdf_list",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
 
     return templates.TemplateResponse(
@@ -403,7 +427,8 @@ async def view_report(
     request: Request,
     report_name: str,
     username: str = Depends(get_current_user),
-    tz_offset: int = 0   # default no offset    
+    tz_offset: int = 0,
+    background_tasks: BackgroundTasks = None  
 ):
     if isinstance(username, RedirectResponse):
         return username
@@ -420,9 +445,11 @@ async def view_report(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="view_report",
-        details={"report": report_name}
+        details={"report": report_name},
+        background_tasks=background_tasks
     )
 
     return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
@@ -431,7 +458,10 @@ async def view_report(
 # Fetch individual photo
 # -----------------------------
 @app.get("/photo/{photo_id}")
-def get_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
+def get_photo(
+    photo_id: str, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     photo = fs.get(ObjectId(photo_id))
     return Response(photo.read(), media_type="image/jpeg")
 
@@ -439,7 +469,10 @@ def get_photo(photo_id: str, username: str = Depends(get_current_user_no_redirec
 # Fetch metadata for a given report
 # -----------------------------
 @app.get("/metadata/{report_name}")
-async def get_metadata(report_name: str, username: str = Depends(get_current_user_no_redirect)):
+async def get_metadata(
+    report_name: str, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     doc = uploads.find_one(
         {"report_name": report_name},
         {"_id": 0, "json_data": 0, "photos": 0}
@@ -476,16 +509,22 @@ async def db_status(
 # Opens the page to create a report
 # -----------------------------
 @app.get("/create_report", response_class=HTMLResponse)
-async def create_report(request: Request, username: str = Depends(get_current_user)):
+async def create_report(
+    request: Request, 
+    username: str = Depends(get_current_user),
+    background_tasks: BackgroundTasks = None
+):
     if isinstance(username, RedirectResponse):
         return username
     
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="create_report",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
 
     return templates.TemplateResponse("input_form.html", {"request": request})
@@ -494,7 +533,12 @@ async def create_report(request: Request, username: str = Depends(get_current_us
 # Remove a report from the database
 # -----------------------------
 @app.api_route("/remove_report/{report_name}", methods=["GET", "POST"])
-async def remove_report(request: Request, report_name: str, username: str = Depends(get_current_user_no_redirect)):
+async def remove_report(
+    request: Request, 
+    report_name: str, 
+    username: str = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
+):
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -511,9 +555,11 @@ async def remove_report(request: Request, report_name: str, username: str = Depe
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username["username"],
         action="remove_report",
-        details=details
+        details=details,
+        background_tasks=background_tasks
     )
 
     return {
@@ -525,7 +571,9 @@ async def remove_report(request: Request, report_name: str, username: str = Depe
 # Cleanup orphaned photos from GridFS
 # -----------------------------
 @app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
-async def cleanup_orphan_photos(username: str = Depends(get_current_user_no_redirect)):
+async def cleanup_orphan_photos(
+    username: str = Depends(get_current_user_no_redirect)
+):
     deleted_photos = {}
     for grid_out in fs.find():
         photo_id = grid_out._id
@@ -544,7 +592,9 @@ async def cleanup_orphan_photos(username: str = Depends(get_current_user_no_redi
 # JSON endpoints
 # -----------------------------
 @app.get("/pdf_list_json")
-async def pdf_list_json(username: str = Depends(get_current_user_no_redirect)):
+async def pdf_list_json(
+    username: str = Depends(get_current_user_no_redirect)
+):
     docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
     report_list = []
     for doc in docs:
@@ -561,7 +611,10 @@ async def pdf_list_json(username: str = Depends(get_current_user_no_redirect)):
 # Download JSON + all related photos (separately)
 # -----------------------------
 @app.get("/download_report_files/{report_name}", name="download_report_files")
-def download_report_files(report_name: str, username: str = Depends(get_current_user_no_redirect)):
+def download_report_files(
+    report_name: str, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -576,7 +629,10 @@ def download_report_files(report_name: str, username: str = Depends(get_current_
 # Download JSON file for a report
 # -----------------------------
 @app.get("/download_json/{report_name}", name="download_json")
-def download_json(report_name: str, username: str = Depends(get_current_user_no_redirect)):
+def download_json(
+    report_name: str, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     doc = uploads.find_one({"report_name": report_name})
     if not doc:
         return JSONResponse(status_code=404, content={"error": f"Report '{report_name}' not found"})
@@ -589,7 +645,10 @@ def download_json(report_name: str, username: str = Depends(get_current_user_no_
 # Download photo by its GridFS ID
 # -----------------------------
 @app.get("/download_photo/{photo_id}", name="download_photo")
-def download_photo(photo_id: str, username: str = Depends(get_current_user_no_redirect)):
+def download_photo(
+    photo_id: str, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     try:
         grid_out = fs.get(ObjectId(photo_id))
     except Exception:
@@ -604,7 +663,10 @@ def download_photo(photo_id: str, username: str = Depends(get_current_user_no_re
 # JWT Test Page
 # -----------------------------
 @app.get("/jwt_test", response_class=HTMLResponse)
-async def jwt_test(request: Request, username: str = Depends(get_current_user_no_redirect)):
+async def jwt_test(
+    request: Request, 
+    username: str = Depends(get_current_user_no_redirect)
+):
     if isinstance(username, RedirectResponse):
         return username  # redirect for web if not authenticated
 
@@ -624,7 +686,11 @@ async def jwt_test(request: Request, username: str = Depends(get_current_user_no
 # Users List Page
 # -----------------------------
 @app.get("/users", response_class=HTMLResponse)
-async def users_page(request: Request, current_user: dict = Depends(get_current_user)):
+async def users_page(
+    request: Request, 
+    current_user: dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = None
+):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
@@ -634,18 +700,22 @@ async def users_page(request: Request, current_user: dict = Depends(get_current_
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=current_user["username"],
             action="users",
-            details={"status": "Invalid Permission"}
+            details={"status": "Invalid Permission"},
+            background_tasks=background_tasks
         )
         return error
     
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="users",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
 
     return templates.TemplateResponse("user_list.html", {
@@ -655,7 +725,9 @@ async def users_page(request: Request, current_user: dict = Depends(get_current_
 
 
 @app.get("/users_json")
-async def users_json(current_user: dict = Depends(get_current_user_no_redirect)):
+async def users_json(
+    current_user: dict = Depends(get_current_user_no_redirect)
+):
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
@@ -677,18 +749,27 @@ async def users_json(current_user: dict = Depends(get_current_user_no_redirect))
 # Login Page
 # -----------------------------
 @app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
+async def login_page(
+    request: Request,
+    background_tasks: BackgroundTasks = None
+):
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username="N/A",
         action="login page",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 @app.post("/login")
-async def login_endpoint(request: Request, data: dict):
+async def login_endpoint(
+    request: Request, 
+    data: dict,
+    background_tasks: BackgroundTasks = None
+):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
     username_or_email_lower = username_or_email.lower()
@@ -704,9 +785,11 @@ async def login_endpoint(request: Request, data: dict):
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
-            details={"status": f"fail: no user matching {username_or_email_lower}"}
+            details={"status": f"fail: no user matching {username_or_email_lower}"},
+            background_tasks=background_tasks
         )
         return JSONResponse({"message": "User not found"}, status_code=404)
 
@@ -716,9 +799,11 @@ async def login_endpoint(request: Request, data: dict):
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
-            details={"status": "fail: invlaid password"}
+            details={"status": "fail: invlaid password"},
+            background_tasks=background_tasks
         )
         return JSONResponse({"message": "Wrong password"}, status_code=401)
 
@@ -726,9 +811,11 @@ async def login_endpoint(request: Request, data: dict):
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
             username=username_or_email_lower,
             action="login",
-            details={"status": "fail: account not active"}
+            details={"status": "fail: account not active"},
+            background_tasks=background_tasks
         )
         return JSONResponse({"message": "Account is not active"}, status_code=403)
 
@@ -748,9 +835,11 @@ async def login_endpoint(request: Request, data: dict):
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=user["username"],
         action="login",
-        details={"status": "successful"}
+        details={"status": "successful"},
+        background_tasks=background_tasks
     )
     return response
 
@@ -800,9 +889,9 @@ def send_new_user_email(user, geo):
     if geo is None:
         location_str = "unknown"
     else:
-        city = geo.get("city")
-        region = geo.get("region")
-        country = geo.get("country_name")
+        city = geo["location"].get("city")
+        region = geo["location"].get("region")
+        country = geo["location"].get("country")
 
         # if all are missing, just say "unknown"
         if not any([city, region, country]):
@@ -876,7 +965,7 @@ def send_new_user_email(user, geo):
             </tr>
             <tr>
                 <td>IP Address</td>
-                <td>{ geo.get('ip', 'unknown') if geo else 'unknown' }</td>
+                <td>{ geo.get('ip_address', 'unknown') if geo else 'unknown' }</td>
             </tr>
             <tr>
                 <td>Location Created</td>
@@ -903,25 +992,31 @@ def send_new_user_email(user, geo):
 
 
 @app.get("/create-account")
-def create_account_form(request: Request):
+def create_account_form(
+    request: Request,
+    background_tasks: BackgroundTasks = None
+):
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username="N/A",
         action="create-account page",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
     return templates.TemplateResponse("create_account.html", {"request": request})
 
 @app.post("/create-account")
-def create_account(
+async def create_account(
     request: Request,
     first_name: str = Form(...),
     last_name: str = Form(...),
     email: str = Form(...),
     username: str = Form(...),
     password: str = Form(...),
-    confirm_password: str = Form(...)
+    confirm_password: str = Form(...),
+    background_tasks: BackgroundTasks = None
 ):
     # Password confirmation
     if password != confirm_password:
@@ -934,9 +1029,11 @@ def create_account(
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
             username=username_lower,
             action="create-account",
-            details={"status": "fail: account with email or username already exits"}
+            details={"status": "fail: account with email or username already exits"},
+            background_tasks=background_tasks
         )
         return templates.TemplateResponse(
             "create_account.html",
@@ -968,7 +1065,12 @@ def create_account(
 
     # IP
     client_ip = get_client_ip(request)
-    geo = lookup_ip_ipapi(client_ip)
+    geo = known_locations.find_one({"ip_address": client_ip})
+    if geo:
+        geo = geo
+    else:
+        # Optional: fallback to API if not found
+        geo = await lookup_ip_with_db(client_ip, known_locations)
 
     send_new_user_email({
         "first_name": first_name,
@@ -981,9 +1083,11 @@ def create_account(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=username_lower,
         action="create-account",
-        details={"status": "successful"}
+        details={"status": "successful"},
+        background_tasks=background_tasks
     )
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -993,7 +1097,8 @@ def create_account(
 async def change_status(
     request: Request,
     data: dict,
-    current_user: dict = Depends(get_current_user_no_redirect)
+    current_user: dict = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
 ):
     """
     Change a user's active status (activate or deactivate).
@@ -1031,9 +1136,11 @@ async def change_status(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="change_status",
-        details={"target": target_username, "is_active": new_status_int}
+        details={"target": target_username, "is_active": new_status_int},
+        background_tasks=background_tasks
     )
 
     return {
@@ -1046,7 +1153,8 @@ async def change_status(
 async def update_role(
     request: Request,
     data: dict,
-    current_user: dict = Depends(get_current_user_no_redirect)
+    current_user: dict = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
 ):
     # Only owner can update roles
     error = require_role("owner")(current_user)
@@ -1070,9 +1178,11 @@ async def update_role(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="update_role",
-        details={"target": target_username, "new_role": new_role}
+        details={"target": target_username, "new_role": new_role},
+        background_tasks=background_tasks
     )
 
     return {"message": f"Updated role for {target_username} to {new_role}"}
@@ -1081,7 +1191,8 @@ async def update_role(
 async def delete_user(
     request: Request,
     data: dict, 
-    current_user: dict = Depends(get_current_user_no_redirect)
+    current_user: dict = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
 ):
     # Only owner can delete users
     error = require_role("owner")(current_user)
@@ -1104,9 +1215,11 @@ async def delete_user(
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="delete_user",
-        details={"target": target_username, "deleted": True}
+        details={"target": target_username, "deleted": True},
+        background_tasks=background_tasks
     )
 
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
@@ -1115,7 +1228,11 @@ async def delete_user(
 # Audit Logs Page (Owner Only)
 # -----------------------------
 @app.get("/audit_logs", response_class=HTMLResponse)
-async def audit_logs_page(request: Request, current_user: dict = Depends(get_current_user)):
+async def audit_logs_page(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
@@ -1127,9 +1244,11 @@ async def audit_logs_page(request: Request, current_user: dict = Depends(get_cur
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
         username=current_user["username"],
         action="audit_logs page",
-        details={}
+        details={},
+        background_tasks=background_tasks
     )
 
     return templates.TemplateResponse("audit_logs.html", {
