@@ -151,6 +151,23 @@ async function fetchUsers() {
     const container = document.getElementById("userList");
     container.innerHTML = "";
 
+    // Define role hierarchy
+    const roleRank = {
+        "owner": 3,
+        "admin": 2,
+        "user": 1
+    };
+
+    // Sort users
+    data.users.sort((a, b) => {
+        // Compare by role rank (descending order)
+        const rankDiff = (roleRank[b.role] || 0) - (roleRank[a.role] || 0);
+        if (rankDiff !== 0) return rankDiff;
+
+        // Then alphabetically, numbers before letters (localeCompare helps)
+        return a.username.localeCompare(b.username, undefined, { numeric: true, sensitivity: "base" });
+    });
+
     data.users.forEach(user => {
         const div = document.createElement("div");
         div.classList.add("user-card");
