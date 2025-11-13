@@ -1017,6 +1017,11 @@ def send_new_user_email(user, geo):
     # Send email using your auto function
     send_email_auto(to_email, subject, html_content)
 
+# Function to generate the backup_code (6 random digits)
+def generate_backup_code():
+    # Generates a 10-digit numeric string
+    return ''.join([str(secrets.randbelow(6)) for _ in range(6)])
+
 
 @app.get("/create-account")
 def create_account_form(
@@ -1083,7 +1088,7 @@ async def create_account(
         "last_accessed": None,
         "is_active": 0,
         "role": "user",
-        "backup_code": None,
+        "backup_code": generate_backup_code(),
         "login_attempts": 0,
         "latest_reset": None,
         "password_resets": 0,
