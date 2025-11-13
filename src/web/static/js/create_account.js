@@ -336,26 +336,28 @@ confirmPassword.addEventListener("input", function() {
 });
 
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
-    e.preventDefault();  // Prevent normal form submission that reloads page
+    e.preventDefault();
 
-    // Collect form inputs
-    const formData = new FormData(e.target);  // e.target is the form element
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const submitButton = document.getElementById("create-Button");
+
+    // Show spinner and disable button
+    loadingSpinner.style.display = "inline-block";
+    submitButton.disabled = true;
+    submitButton.textContent = "Creating...";
+
+    const formData = new FormData(e.target);
 
     try {
-        const response = await fetch("/create-account", {
+        const response = await fetch("/create_account", {
             method: "POST",
             body: formData,
         });
 
         if (response.redirected) {
-            // If server redirects (on success), follow redirect
             window.location.href = response.url;
         } else {
-            // On validation error, parse returned HTML and display error messages
             const text = await response.text();
-
-            // Optionally you can parse and display the error message from the server returned HTML
-            // Example (assuming your server returns HTML with an element with id "errorMessage"):
             const parser = new DOMParser();
             const doc = parser.parseFromString(text, "text/html");
             const errorMessageEl = doc.getElementById("errorMessage");
@@ -363,12 +365,18 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
                 document.getElementById("errorMessage").textContent = errorMessageEl.textContent;
                 document.getElementById("errorMessage").style.display = "block";
             } else {
-                // fallback error message
                 alert("Account creation failed. Please try again.");
             }
+            // Hide spinner & re-enable button on error
+            loadingSpinner.style.display = "none";
+            submitButton.disabled = false;
+            submitButton.textContent = "Create Account";
         }
     } catch (error) {
         console.error("Error submitting form: ", error);
         alert("Failed to create account due to network error.");
+        loadingSpinner.style.display = "none";
+        submitButton.disabled = false;
+        submitButton.textContent = "Create Account";
     }
 });

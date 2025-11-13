@@ -37,6 +37,14 @@
             <p class="check" id ="passwordCheck-Confirm">❌ Password must match</p>
             <button type="submit" id="create-Button" disabled>Create Account</button>
         </form>
+        <div id="loadingSpinner" style="display:none; margin-top: 10px;">
+            <svg width="24" height="24" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#C32026" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
+                <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            </svg>
+            <span>Loading...</span>
+        </div>
         <a href="/login">Login</a>
         <a href="ForgotPassword.html">Forgot Password?</a>
     </div>

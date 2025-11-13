@@ -898,13 +898,13 @@ async def update_login_attempts(
 # -----------------------------
 # Create Account Page
 # -----------------------------
-def send_new_user_email(user, geo):
+def new_user_activation_email(user, geo):
     """
     Sends a formatted HTML email when a new user signs up.
     `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
     """
     to_email = os.getenv("DEFAULT_EMAIL", "")
-    subject = f"New Account Created: {user['username']}"
+    subject = f"LOTO Generator - Actication: {user['username']}"
 
     # Convert UTC to Eastern Time
     utc_time = datetime.utcnow()
@@ -941,7 +941,7 @@ def send_new_user_email(user, geo):
                 padding: 0;
             }}
             h2 {{
-                color: #333333;
+                color: #C32026;
             }}
             table {{
                 width: 100%;
@@ -966,41 +966,14 @@ def send_new_user_email(user, geo):
         <h2>New User Account Created</h2>
         <p>A new user has signed up and may require activation:</p>
         <table>
-            <tr>
-                <th>Field</th>
-                <th>Value</th>
-            </tr>
-            <tr>
-                <td>First Name</td>
-                <td>{user['first_name']}</td>
-            </tr>
-            <tr>
-                <td>Last Name</td>
-                <td>{user['last_name']}</td>
-            </tr>
-            <tr>
-                <td>Username</td>
-                <td>{user['username']}</td>
-            </tr>
-            <tr>
-                <td>Email</td>
-                <td>{user['email']}</td>
-            </tr>
-            <tr>
-                <td>Date Created</td>
-                <td>{formatted_time}</td>
-            </tr>
-            <tr>
-                <td>IP Address</td>
-                <td>{ geo.get('ip_address', 'unknown') if geo else 'unknown' }</td>
-            </tr>
-            <tr>
-                <td>Location Created</td>
-                <td>
-                    { location_str }
-
-                </td>
-            </tr>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>First Name</td><td>{user.get('first_name', '')[:1].upper() + user.get('first_name', '')[1:] if user.get('first_name') else ''}</td></tr>
+            <tr><td>Last Name</td><td>{user.get('last_name', '')[:1].upper() + user.get('last_name', '')[1:] if user.get('last_name') else ''}</td></tr>
+            <tr><td>Username</td><td>{user.get('username', '')}</td></tr>
+            <tr><td>Email</td><td>{user.get('email', '')}</td></tr>
+            <tr><td>Date Created</td><td>{formatted_time}</td></tr>
+            <tr><td>IP Address</td><td>{geo.get('ip_address', 'unknown') if geo else 'unknown'}</td></tr>
+            <tr><td>Location</td><td>{location_str}</td></tr>
         </table>
         <p>If you wish to activate this account, please follow the link below:</p>
         <p>
@@ -1017,13 +990,107 @@ def send_new_user_email(user, geo):
     # Send email using your auto function
     send_email_auto(to_email, subject, html_content)
 
+def new_user_welcome_email(user, geo):
+    """
+    Sends a formatted HTML email to a new user notifying them that their account
+    is created and waiting for admin approval before they can access it.
+    `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
+    """
+    to_email = user.get('email', '')
+    subject = f"LOTO Generator Account Created - Awaiting Approval"
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = user.get('date_created', datetime.utcnow())
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    # Geo location string
+    if geo is None:
+        location_str = "unknown"
+    else:
+        city = geo["location"].get("city")
+        region = geo["location"].get("region")
+        country = geo["location"].get("country")
+        location_str = ", ".join(filter(None, [city, region, country])) or "unknown"
+
+    # Build the HTML content
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+            }}
+            th, td {{
+                text-align: left;
+                padding: 8px;
+                border-bottom: 1px solid #dddddd;
+            }}
+            th {{
+                background-color: #f0f0f0;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Welcome {user.get('first_name', '')[:1].upper() + user.get('first_name', '')[1:] if user.get('first_name') else ''}!</h2>
+        <p>Your account has been successfully created and is now awaiting administrator approval before you can access it.</p>
+        <p>Here are your account details:</p>
+        <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>First Name</td><td>{user.get('first_name', '')[:1].upper() + user.get('first_name', '')[1:] if user.get('first_name') else ''}</td></tr>
+            <tr><td>Last Name</td><td>{user.get('last_name', '')[:1].upper() + user.get('last_name', '')[1:] if user.get('last_name') else ''}</td></tr>
+            <tr><td>Username</td><td>{user.get('username', '')}</td></tr>
+            <tr><td>Email</td><td>{user.get('email', '')}</td></tr>
+            <tr><td>Date Created</td><td>{formatted_time}</td></tr>
+            <tr><td>IP Address</td><td>{geo.get('ip_address', 'unknown') if geo else 'unknown'}</td></tr>
+            <tr><td>Location</td><td>{location_str}</td></tr>
+        </table>
+        <p>Once your account is approved by the administrator, you will receive another notification with instructions on how to log in.</p>
+        <p>In the meantime, you can visit our site:</p>
+        <p><a href="https://lotogenerator.app/users" class="button">Visit LOTO Generator</a></p>
+        <p class="footer">This is an automated message. Please do not reply to this email.</p>
+    </body>
+    </html>
+    """
+
+    # Use your email sending function here
+    send_email_auto(to_email, subject, html_content)
+
 # Function to generate the backup_code (6 random digits)
 def generate_backup_code():
     # Generates a 10-digit numeric string
     return ''.join([str(secrets.randbelow(6)) for _ in range(6)])
 
 
-@app.get("/create-account")
+@app.get("/create_account")
 def create_account_form(
     request: Request,
     background_tasks: BackgroundTasks = None
@@ -1039,7 +1106,7 @@ def create_account_form(
     )
     return templates.TemplateResponse("create_account.html", {"request": request})
 
-@app.post("/create-account")
+@app.post("/create_account")
 async def create_account(
     request: Request,
     first_name: str = Form(...),
@@ -1104,7 +1171,15 @@ async def create_account(
         # Optional: fallback to API if not found
         geo = await lookup_ip_with_db(client_ip, known_locations)
 
-    send_new_user_email({
+    new_user_activation_email({
+        "first_name": first_name,
+        "last_name": last_name,
+        "username": username_lower,
+        "email": email,
+        "date_created": datetime.utcnow()
+    }, geo)
+
+    new_user_welcome_email({
         "first_name": first_name,
         "last_name": last_name,
         "username": username_lower,
