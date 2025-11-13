@@ -117,6 +117,7 @@ async def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             res = await client.get(f"https://ipapi.co/{ip}/json/")
+            print(f"IPAPI response status: {res.status_code}")
             if res.status_code == 200:
                 ic(res.json())
                 return res.json()
