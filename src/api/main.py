@@ -382,16 +382,6 @@ async def pdf_list(
     docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
 
-    log_action(
-        request=request,
-        audit_logs_collection=audit_logs,
-        known_locations_collection=known_locations,
-        username=current_user["username"],
-        action="pdf_list",
-        details={},
-        background_tasks=background_tasks
-    )
-
     return templates.TemplateResponse(
         "pdf_list.html",
         {"request": request, "report_names": report_names, "current_user": current_user}
