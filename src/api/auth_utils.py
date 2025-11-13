@@ -126,13 +126,17 @@ async def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
 
 # --- Background updater ---
 async def update_log_location(audit_logs_collection, log_id, ip):
-    print(f"Update_logs - IP: {ip}")
+    print(f"Updating location for IP: {ip}")
     geo = await lookup_ip_ipapi(ip)
     if geo:
         audit_logs_collection.update_one({"_id": log_id}, {"$set": {"location": geo}})
         print("location lookup / update log passed")
     else:
         print("location lookup / update log failed")
+
+def update_log_location_sync(audit_logs_collection, log_id, ip):
+    import asyncio
+    asyncio.run(update_log_location(audit_logs_collection, log_id, ip))
 
 # --- Main logging function ---
 def log_action(request, audit_logs_collection, username: str, action: str, details=None, background_tasks: BackgroundTasks = None):
@@ -153,5 +157,5 @@ def log_action(request, audit_logs_collection, username: str, action: str, detai
 
     # Schedule location lookup to run after response is sent
     if background_tasks:
-        background_tasks.add_task(update_log_location, audit_logs_collection, log_id, client_ip)
+        background_tasks.add_task(update_log_location_sync, audit_logs_collection, log_id, client_ip)
         print("Background task added")
