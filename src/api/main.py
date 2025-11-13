@@ -570,18 +570,65 @@ async def remove_report(
 # -----------------------------
 # Cleanup orphaned photos from GridFS
 # -----------------------------
+def sizeof_fmt(num, suffix="B"):
+    """Human-readable file size."""
+    for unit in ["", "K", "M", "G", "T"]:
+        if abs(num) < 1024:
+            return f"{num:.1f} {unit}{suffix}"
+        num /= 1024
+    return f"{num:.1f}P{suffix}"
+
 @app.api_route("/cleanup_orphan_photos", methods=["GET", "POST"])
 async def cleanup_orphan_photos(
-    username: str = Depends(get_current_user_no_redirect)
+    request: Request,  # for logging
+    background_tasks: BackgroundTasks,
+    username: dict = Depends(get_current_user_no_redirect)
 ):
+    # Require admin access
+    error = require_role("admin")(username)
+    if error:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
+            username=username["username"],
+            action="cleanup_orphan_photos",
+            details={"status": "Invalid Permission"},
+            background_tasks=background_tasks
+        )
+        return error
+
     deleted_photos = {}
+    total_bytes = 0
     for grid_out in fs.find():
         photo_id = grid_out._id
         photo_name = grid_out.filename
         usage_count = uploads.count_documents({"photos.photo_id": photo_id})
         if usage_count == 0:
             fs.delete(photo_id)
-            deleted_photos[photo_name] = str(photo_id)
+            deleted_photos[str(photo_id)] = photo_name
+            total_bytes += grid_out.length  # Get file size in bytes
+
+    details = {}
+    if not deleted_photos:
+        details["status"] = "No orphaned photos to remove"
+    else:
+        count = len(deleted_photos)
+        size = sizeof_fmt(total_bytes)
+        photo_word = "photo" if count == 1 else "photos"
+        details["status"] = f"{count} {photo_word} removed ({size} total)"
+        for pid, name in deleted_photos.items():
+            details[pid] = name
+
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=username["username"],
+        action="clean_orphan_photos",
+        details=details,
+        background_tasks=background_tasks
+    )
 
     return {
         "message": f"Cleanup complete. {len(deleted_photos)} orphaned photos deleted.",
@@ -707,16 +754,6 @@ async def users_page(
             background_tasks=background_tasks
         )
         return error
-    
-    log_action(
-        request=request,
-        audit_logs_collection=audit_logs,
-        known_locations_collection=known_locations,
-        username=current_user["username"],
-        action="users",
-        details={},
-        background_tasks=background_tasks
-    )
 
     return templates.TemplateResponse("user_list.html", {
         "request": request,
@@ -1197,6 +1234,15 @@ async def delete_user(
     # Only owner can delete users
     error = require_role("owner")(current_user)
     if error:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
+            username=current_user["username"],
+            action="delete_user",
+            details={"target": target_username, "deleted": False, "status": "insufficient permissions"},
+            background_tasks=background_tasks
+        )
         return error
 
     target_username = data.get("username")
@@ -1239,18 +1285,17 @@ async def audit_logs_page(
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
+            username=current_user["username"],
+            action="audit_logs page",
+            details={"status": "insufficient permissions"},
+            background_tasks=background_tasks
+        )
         return error
     
-    log_action(
-        request=request,
-        audit_logs_collection=audit_logs,
-        known_locations_collection=known_locations,
-        username=current_user["username"],
-        action="audit_logs page",
-        details={},
-        background_tasks=background_tasks
-    )
-
     return templates.TemplateResponse("audit_logs.html", {
         "request": request,
         "current_user": current_user
