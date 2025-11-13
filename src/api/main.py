@@ -984,7 +984,7 @@ def create_account_form(
     return templates.TemplateResponse("create_account.html", {"request": request})
 
 @app.post("/create-account")
-def create_account(
+async def create_account(
     request: Request,
     first_name: str = Form(...),
     last_name: str = Form(...),
@@ -1040,7 +1040,7 @@ def create_account(
 
     # IP
     client_ip = get_client_ip(request)
-    geo = lookup_ip_ipapi(client_ip)
+    geo = await lookup_ip_ipapi(client_ip)
 
     send_new_user_email({
         "first_name": first_name,

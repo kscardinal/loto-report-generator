@@ -12,6 +12,7 @@ import requests
 from typing import Optional, Dict
 from typing import Optional, Dict
 import httpx
+from icecream import ic
 
 ph = PasswordHasher()
 
@@ -111,33 +112,26 @@ def get_client_ip(request: Request) -> str:
 # --- Async lookup function ---
 async def lookup_ip_ipapi(ip: str, timeout: int = 5) -> Optional[Dict]:
     if ip in ("127.0.0.1", "localhost", "unknown"):
+        print(f"IPAPI lookup cancel for {ip}: local")
         return None
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             res = await client.get(f"https://ipapi.co/{ip}/json/")
             if res.status_code == 200:
+                ic(res.json())
                 return res.json()
     except Exception as e:
         print(f"IPAPI lookup failed for {ip}: {e}")
     return None
 
-async def get_location_async(ip: str, timeout: int = 5):
-    if ip in ("127.0.0.1", "localhost", "unknown"):
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            res = await client.get(f"https://ipapi.co/{ip}/json/")
-            if res.status_code == 200:
-                return res.json()
-    except Exception:
-        pass
-    return None
-
 # --- Background updater ---
 async def update_log_location(audit_logs_collection, log_id, ip):
-    geo = await get_location_async(ip)
+    geo = await lookup_ip_ipapi(ip)
     if geo:
         audit_logs_collection.update_one({"_id": log_id}, {"$set": {"location": geo}})
+        print("location lookup / update log passed")
+    else:
+        print("location lookup / update log failed")
 
 # --- Main logging function ---
 def log_action(request, audit_logs_collection, username: str, action: str, details=None, background_tasks: BackgroundTasks = None):
@@ -159,3 +153,4 @@ def log_action(request, audit_logs_collection, username: str, action: str, detai
     # Schedule location lookup to run after response is sent
     if background_tasks:
         background_tasks.add_task(update_log_location, audit_logs_collection, log_id, client_ip)
+        print("Background task added")
