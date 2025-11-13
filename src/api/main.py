@@ -240,7 +240,7 @@ async def upload_report(
             known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
-            details={"overwrite": True},
+            details={"report": report_name, "status": "update"},
             background_tasks=background_tasks
         )
 
@@ -264,7 +264,7 @@ async def upload_report(
             known_locations_collection=known_locations,
             username=username["username"],
             action="upload",
-            details={"overwrite": False},
+            details={"report": report_name, "status": "insert"},
             background_tasks=background_tasks
         )
 
