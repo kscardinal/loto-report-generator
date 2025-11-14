@@ -1620,11 +1620,17 @@ async def reset_password(
     # Hash password
     hashed_password = ph.hash(new_password)
 
-    # Normalize username to lowercase for consistency
-    users.update_one(
+    # Update password, latest_reset, and increment password_resets
+    result = users.update_one(
         {"email": target_email.lower()},
-        {"$set": {"password": hashed_password}}
+        {
+            "$set": {"password": hashed_password, "latest_reset": datetime.utcnow()},
+            "$inc": {"password_resets": 1}
+        }
     )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
 
     return JSONResponse({"message": f"Reset password for {target_email}"}, status_code=200)
 
