@@ -1,13 +1,15 @@
 // pdf_list.js (ES module)
 let pendingAction = null; // stored callback for modal confirm
 
-// read initial page/per_page from URL (fallbacks)
+// ------------------------------
+// Global variables
+// ------------------------------
 let totalPages = 1;  // global total pages
-const urlParams = new URLSearchParams(window.location.search);
-let currentPage = Math.max(1, parseInt(urlParams.get("page")) || 1);
-let perPage = Math.max(1, parseInt(urlParams.get("per_page")) || 25);
+let currentPage = 1;
+let perPage = 25;
 let reports = []; // array of all reports
 
+// DOM elements
 const reportListEl = document.getElementById("reportList");
 const perPageSelect = document.getElementById("perPageSelect");
 const prevBtn = document.getElementById("prevBtn");
@@ -20,32 +22,54 @@ const confirmModal = document.getElementById("confirmModal");
 const confirmText = document.getElementById("confirmText");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
+const logoutBtn = document.getElementById("logout-btn");
 
-// sync select with initial
-perPageSelect.value = String(perPage);
+// ------------------------------
+// Load settings from localStorage
+// ------------------------------
+function loadSettings() {
+    const savedPage = parseInt(localStorage.getItem("reports_currentPage"), 10);
+    const savedPerPage = parseInt(localStorage.getItem("reports_perPage"), 10);
 
-// util: update URL without reload
+    if (!isNaN(savedPage) && savedPage >= 1) currentPage = savedPage;
+    if (!isNaN(savedPerPage) && savedPerPage > 0) perPage = savedPerPage;
+
+    perPageSelect.value = perPage;
+}
+loadSettings();
+
+// ------------------------------
+// Save settings to localStorage
+// ------------------------------
+function saveSettings() {
+    localStorage.setItem("reports_currentPage", currentPage);
+    localStorage.setItem("reports_perPage", perPage);
+}
+
+// ------------------------------
+// Utility: update URL
+// ------------------------------
 function updateURL() {
     const newUrl = `${window.location.pathname}?page=${currentPage}&per_page=${perPage}`;
     window.history.replaceState(null, "", newUrl);
 }
 
-// fetch a page from server
-async function fetchPage(page = 1, per_page = perPage) {
-    const resp = await fetch(`/pdf_list_json?page=${page}&per_page=${per_page}`, { credentials: "include" });
-    if (!resp.ok) {
-        console.error("Failed to load reports JSON", resp.status);
-        reportListEl.innerHTML = `<p class="no-reports">Failed to load reports (status ${resp.status}).</p>`;
-        return null;
-    }
-    return await resp.json();
+// ------------------------------
+// Format date in ET timezone
+// ------------------------------
+function formatETDate(isoStr) {
+    if (!isoStr) return "N/A";
+    const dt = new Date(isoStr);
+    return dt.toLocaleString("en-US", { timeZone: "America/New_York" });
 }
 
-// render a page response
+// ------------------------------
+// Render a page of reports
+// ------------------------------
 function renderReportsPage(json) {
     if (!json || !Array.isArray(json.reports)) {
         reportListEl.innerHTML = `<p class="no-reports">No reports found.</p>`;
-        pageInfo.textContent = `Page ${currentPage} of 1`;
+        pageInfo.textContent = `Page 1 of 1`;
         paginationInfo.textContent = "";
         prevBtn.disabled = true;
         nextBtn.disabled = true;
@@ -54,23 +78,23 @@ function renderReportsPage(json) {
         return;
     }
 
-    const reports = json.reports;
-    const total = json.total || 0;
-    const totalPages = json.total_pages || 1;
-    const start = (json.page - 1) * json.per_page + 1;
-    const end = Math.min(start + reports.length - 1, total);
+    reports = json.reports;
+    totalPages = json.total_pages || 1;
 
-    // clear
+    // Clamp currentPage if necessary
+    currentPage = Math.min(Math.max(json.page || 1, 1), totalPages);
+
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(start + reports.length - 1, json.total || reports.length);
+
     reportListEl.innerHTML = "";
-
-    // create cards
-    reports.forEach((r) => {
+    reports.forEach(r => {
         const card = document.createElement("div");
         card.className = "report-card";
-        // metadata
+
         const uploadedBy = r.uploaded_by || "Unknown";
         const tags = Array.isArray(r.tags) ? r.tags.join(", ") : (r.tags || "None");
-        const dateUploaded = r.date_added ? new Date(r.date_added).toLocaleString() : "N/A";
+        const dateUploaded = formatETDate(r.date_added);
 
         card.innerHTML = `
             <div class="report-info" role="button" tabindex="0" aria-label="Open ${escapeHtml(r.report_name)}">
@@ -88,14 +112,12 @@ function renderReportsPage(json) {
             </div>
         `;
 
-        // card click -> open report (except when clicking buttons)
-        card.addEventListener("click", (ev) => {
+        card.addEventListener("click", ev => {
             if (ev.target.closest(".download-btn") || ev.target.closest(".delete-btn")) return;
             window.location.href = `/view_report/${encodeURIComponent(r.report_name)}`;
         });
 
-        // keyboard accessibility: Enter opens
-        card.addEventListener("keydown", (ev) => {
+        card.addEventListener("keydown", ev => {
             if (ev.key === "Enter" && !ev.target.closest(".download-btn") && !ev.target.closest(".delete-btn")) {
                 window.location.href = `/view_report/${encodeURIComponent(r.report_name)}`;
             }
@@ -104,59 +126,55 @@ function renderReportsPage(json) {
         reportListEl.appendChild(card);
     });
 
-    // attach delete handlers (event delegation is OK too)
+    // Attach delete handlers
     document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", (ev) => {
+        btn.onclick = ev => {
             ev.stopPropagation();
-            const encodedName = btn.dataset.report;
-            const decodedName = decodeURIComponent(encodedName);
-            confirmAction(`Delete`, decodedName, () => deleteReport(decodedName));
-        });
+            const decodedName = decodeURIComponent(btn.dataset.report);
+            confirmAction("Delete", decodedName, () => deleteReport(decodedName));
+        };
     });
 
-    // update pagination UI
-    pageInfo.textContent = `Page ${json.page} of ${totalPages}`;
-    paginationInfo.textContent = `${start}-${end} / ${total}`;
-    prevBtn.disabled = json.page <= 1;
-    nextBtn.disabled = json.page >= totalPages;
+    // Update pagination UI
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    paginationInfo.textContent = `${start}-${end} / ${json.total || reports.length}`;
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
     jumpBtn.disabled = totalPages <= 1;
     jumpInput.disabled = totalPages <= 1;
-
-    // update global trackers
-    currentPage = json.page;
-    perPage = json.per_page;
     jumpInput.value = currentPage;
-    updateURL();
 
-    // After rendering, remove focus from any input/select/button
-    if (document.activeElement) {
-        document.activeElement.blur();
-    }
+    updateURL();
+    saveSettings();
+
+    // blur focused element to avoid aria-hidden issues
+    if (document.activeElement) document.activeElement.blur();
 }
 
-// confirm modal
+// ------------------------------
+// Confirm modal
+// ------------------------------
 function confirmAction(actionText, targetName, callbackFn) {
     confirmText.textContent = `Are you sure you want to ${actionText} "${targetName}"?`;
     pendingAction = callbackFn;
     confirmModal.style.display = "flex";
 }
 
-// modal button handlers
 confirmNo.addEventListener("click", () => {
     pendingAction = null;
     confirmModal.style.display = "none";
 });
+
 confirmYes.addEventListener("click", async () => {
-    if (pendingAction) {
-        await pendingAction();
-        pendingAction = null;
-    }
+    if (pendingAction) await pendingAction();
+    pendingAction = null;
     confirmModal.style.display = "none";
-    // reload current page
     await loadAndRender(currentPage, perPage);
 });
 
-// backend delete
+// ------------------------------
+// Delete report
+// ------------------------------
 async function deleteReport(reportName) {
     try {
         const resp = await fetch(`/remove_report/${encodeURIComponent(reportName)}`, {
@@ -165,92 +183,96 @@ async function deleteReport(reportName) {
             headers: { "Content-Type": "application/json" }
         });
         if (!resp.ok) {
-            const data = await resp.json().catch(()=>({}));
+            const data = await resp.json().catch(() => ({}));
             alert(`Failed to delete report: ${data.detail || data.error || resp.status}`);
         } else {
-            // Success - refresh
-            // If deletion makes current page empty, move back one page if possible
             await loadAndRender(currentPage, perPage);
         }
     } catch (err) {
-        console.error("Delete failed", err);
+        console.error(err);
         alert("Delete failed - see console.");
     }
 }
 
-async function loadAndRender(page = 1, pp = perPage) {
+// ------------------------------
+// Load and render
+// ------------------------------
+async function loadAndRender(page = currentPage, pp = perPage) {
     perPage = pp;
-    const response = await fetch(`/pdf_list_json?per_page=${perPage}`, { credentials: "include" });
-    const data = await response.json();
-    reports = data.reports;
 
-    totalPages = data.total_pages;
-    currentPage = Math.min(Math.max(page, 1), totalPages); // clamp page
+    const resp = await fetch(`/pdf_list_json?per_page=${perPage}`, { credentials: "include" });
+    const data = await resp.json();
+    reports = data.reports || [];
 
-    const json = await fetchPage(page, pp);
-    renderReportsPage(json);
+    totalPages = data.total_pages || Math.ceil((reports.length || 1) / perPage);
+    currentPage = Math.min(Math.max(page, 1), totalPages);
+
+    renderReportsPage({
+        reports: reports.slice((currentPage - 1) * perPage, currentPage * perPage),
+        total: reports.length,
+        page: currentPage,
+        per_page: perPage,
+        total_pages: totalPages
+    });
 }
 
-// pagination controls wired
-prevBtn.addEventListener("click", async () => {
-    if (currentPage > 1) await loadAndRender(currentPage - 1, perPage);
-});
-nextBtn.addEventListener("click", async () => {
-    await loadAndRender(currentPage + 1, perPage);
-});
-perPageSelect.addEventListener("change", async (e) => {
+// ------------------------------
+// Pagination controls
+// ------------------------------
+prevBtn.addEventListener("click", async () => { if (currentPage > 1) await loadAndRender(currentPage - 1, perPage); });
+nextBtn.addEventListener("click", async () => { if (currentPage < totalPages) await loadAndRender(currentPage + 1, perPage); });
+
+perPageSelect.addEventListener("change", async e => {
     perPage = parseInt(e.target.value, 10) || 25;
     currentPage = 1;
     await loadAndRender(currentPage, perPage);
 });
+
 jumpBtn.addEventListener("click", async () => {
     let n = parseInt(jumpInput.value, 10);
     if (!isNaN(n)) {
-        const maxPage = totalPages; // compute total pages dynamically
-        if (n < 1) n = 1;
-        else if (n > maxPage) n = maxPage;
-
+        n = Math.min(Math.max(n, 1), totalPages);
         await loadAndRender(n, perPage);
     }
 });
-jumpInput.addEventListener("keydown", async (e) => {
+
+jumpInput.addEventListener("keydown", async e => {
     if (e.key === "Enter") {
         let n = parseInt(jumpInput.value, 10);
         if (!isNaN(n)) {
-            const maxPage = totalPages;
-            if (n < 1) n = 1;
-            else if (n > maxPage) n = maxPage;
-
+            n = Math.min(Math.max(n, 1), totalPages);
             await loadAndRender(n, perPage);
         }
     }
 });
 
-// logout button (call /logout to clear HttpOnly cookie)
-const logoutBtn = document.getElementById("logout-btn");
+// ------------------------------
+// Logout button
+// ------------------------------
 if (logoutBtn) {
-    logoutBtn.addEventListener("click", async (ev) => {
+    logoutBtn.addEventListener("click", async ev => {
         ev.preventDefault();
         try {
             await fetch("/logout", { method: "POST", credentials: "include" });
             window.location.href = "/login";
         } catch (err) {
-            console.error("Logout failed", err);
+            console.error(err);
             window.location.href = "/login";
         }
     });
 }
 
-// small helper: escape any text for insertion
-function escapeHtml(s){
+// ------------------------------
+// Escape HTML helper
+// ------------------------------
+function escapeHtml(s) {
     if (s === null || s === undefined) return "";
-    return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
 }
 
-// initial load
+// ------------------------------
+// Initial load
+// ------------------------------
 loadAndRender(currentPage, perPage);
