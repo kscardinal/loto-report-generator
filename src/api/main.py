@@ -1898,3 +1898,9 @@ async def reset_password(data: dict, background_tasks: BackgroundTasks):
     background_tasks.add_task(password_reset_email, user)
 
     return JSONResponse({"message": f"Reset password for {target_email_normalized}"}, status_code=200)
+
+@app.post("/logout")
+def logout(response: Response):
+    # Clear the access_token cookie
+    response.delete_cookie(key="access_token", path="/")
+    return {"message": "Logged out"}
