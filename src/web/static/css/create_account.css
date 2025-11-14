@@ -40,7 +40,7 @@ body {
     width: 200px;
     padding: 10px;
     margin: 20px 0;
-    background: #4CAF50;
+    background: #C32026;
     border: none;
     color: white;
     border-radius: 6px;
@@ -58,7 +58,7 @@ body {
 }
 
 .login-container button:hover {
-    background: #45a049;
+    background: #A01D20;
 }
 
 .login-container a {
