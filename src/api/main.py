@@ -1605,12 +1605,73 @@ async def update_verification_attempts(
     return JSONResponse({"message": f"Updated login attempts for {target_email} to {attempts}"}, status_code=200)
 
 # -----------------------------
+# Password reset email
+# -----------------------------
+def password_reset_email(user):
+    """
+    Sends an HTML email notifying the user their password was reset.
+    `user` is a dict with at least 'email' and optionally 'first_name'.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Password Reset Notification"
+
+    # Current time in Eastern Time
+    utc_now = datetime.utcnow()
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_now.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Password Reset Notification</h2>
+        <p>Hello {user.get('first_name', '')},</p>
+        <p>Your password was successfully reset on {formatted_time}.</p>
+        <p>If you did not perform this action, please contact support immediately.</p>
+        <p>For security, do not share your password and keep your account private.</p>
+        <p>You can log in here:</p>
+        <p><a href="https://lotogenerator.app/login" class="button">Log In to LOTO Generator</a></p>
+        <p class="footer">This is an automated message. Please do not reply to this email.</p>
+    </body>
+    </html>
+    """
+
+    # Use your existing email function
+    send_email_auto(to_email, subject, html_content)
+
+
+# -----------------------------
 # Reset password endpoint
 # -----------------------------
 @app.post("/reset_password")
-async def reset_password(
-    data: dict,
-):
+async def reset_password(data: dict, background_tasks: BackgroundTasks):
     target_email = data.get("email")
     new_password = data.get("new_password")
 
@@ -1619,10 +1680,11 @@ async def reset_password(
     
     # Hash password
     hashed_password = ph.hash(new_password)
+    target_email_normalized = target_email.lower()
 
     # Update password, latest_reset, and increment password_resets
     result = users.update_one(
-        {"email": target_email.lower()},
+        {"email": target_email_normalized},
         {
             "$set": {"password": hashed_password, "latest_reset": datetime.utcnow()},
             "$inc": {"password_resets": 1}
@@ -1632,5 +1694,10 @@ async def reset_password(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return JSONResponse({"message": f"Reset password for {target_email}"}, status_code=200)
+    # Fetch user document to include in email
+    user = users.find_one({"email": target_email_normalized})
 
+    # Send password reset email in the background
+    background_tasks.add_task(password_reset_email, user)
+
+    return JSONResponse({"message": f"Reset password for {target_email_normalized}"}, status_code=200)
