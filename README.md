@@ -392,7 +392,7 @@ fi
 
 1. Count lines of code
 ```bash
-git ls-files src | xargs wc -l
+git ls-files src | xargs wc -l | sort -n
 find . -type f -print0 | xargs -0 wc -l
 ```
 
