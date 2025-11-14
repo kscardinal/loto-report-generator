@@ -1147,7 +1147,7 @@ async def create_account(
     users.insert_one({
         "first_name": first_name,
         "last_name": last_name,
-        "email": email,
+        "email": email.lower(),
         "username": username_lower,  # store lowercase for login
         "display_username": username,  # optional: keep original for display
         "password": hashed_password,
@@ -1603,4 +1603,28 @@ async def update_verification_attempts(
     )
 
     return JSONResponse({"message": f"Updated login attempts for {target_email} to {attempts}"}, status_code=200)
+
+# -----------------------------
+# Reset password endpoint
+# -----------------------------
+@app.post("/reset_password")
+async def reset_password(
+    data: dict,
+):
+    target_email = data.get("email")
+    new_password = data.get("new_password")
+
+    if not target_email or new_password is None:
+        raise HTTPException(status_code=400, detail="Missing 'email' or 'new_password' in request")
+    
+    # Hash password
+    hashed_password = ph.hash(new_password)
+
+    # Normalize username to lowercase for consistency
+    users.update_one(
+        {"email": target_email.lower()},
+        {"$set": {"password": hashed_password}}
+    )
+
+    return JSONResponse({"message": f"Reset password for {target_email}"}, status_code=200)
 

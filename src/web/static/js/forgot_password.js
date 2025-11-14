@@ -245,7 +245,6 @@ sendButton.addEventListener("click", async function() {
             code.required = true;
             codeSent = true; // update state
 
-            console.log(data["code"]);
             return data;
 
         } catch (err) {
@@ -318,7 +317,6 @@ sendButton.addEventListener("click", async function() {
                 })
             });
 
-            console.log(data["new_backup_code"]);
             return data;
 
         } catch (err) {
@@ -327,8 +325,9 @@ sendButton.addEventListener("click", async function() {
         }
     } else {
         // Third press → update password
-        newPassword = password.value;
-        confirmPasswordValue = confirmPassword.value;
+        const newPassword = password.value;
+        const confirmPasswordValue = confirmPassword.value;
+
         if (!newPassword || !confirmPasswordValue) {
             alert("Please fill out both password fields.");
             return;
@@ -340,35 +339,17 @@ sendButton.addEventListener("click", async function() {
         }
 
         try {
-            const response = await fetch("http://127.0.0.1:5000/update-password", {
+            const res = await fetch("/reset_password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: emailValue, new_password: newPassword })
+                body: JSON.stringify({ email: emailValue, new_password: confirmPasswordValue })
             });
 
-            const result = await response.json();
+            const data = await res.json();
 
-            if (result.success) {
-
-                try {
-                    const response = await fetch("http://127.0.0.1:5000/update-verification-attempts", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include", // send cookies if needed
-                        body: JSON.stringify({
-                            email: emailValue,             // the user's email
-                            verification_attempts: codeAttempts      
-                        })
-                    });
-
-                    const data = await response.json();
-                } catch (err) {
-                    console.error("Failed to reset verification_attempts:", err);
-                }
-
-
+            if (res.ok) {
                 console.log("Redirecting…");
-                window.location.href = "Login.html";
+                window.location.href = "/login";
             } else {
                 alert(result.message || "Failed to update password.");
             }
@@ -431,11 +412,9 @@ function passwordMatch() {
 }
 
 async function validateForm() {
-    const emailValue = email.value;
     const passwordValue = password.value;
     const confirmPasswordValue = confirmPassword.value;
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     const forbiddenPattern = /[\s\t\n\r\"']/;
     const lowercasePattern = /[a-z]/;
     const uppercasePattern = /[A-Z]/;
