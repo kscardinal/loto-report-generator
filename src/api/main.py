@@ -1212,17 +1212,43 @@ def status_change_email(user, performed_by, new_status):
     to_email = user.get("email", "")
     subject = "LOTO Generator Account Status Updated"
     status_str = "Activated" if new_status else "Deactivated"
-    utc_now = datetime.utcnow()
-    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
 
     html_content = f"""
     <html>
     <head>
         <style>
-            body {{ font-family: Arial, sans-serif; margin: 5%; }}
-            h2 {{ color: #C32026; }}
-            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
-            .button {{ background-color:#C32026; color:#fff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block; font-weight:bold; }}
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
         </style>
     </head>
     <body>
@@ -1310,17 +1336,43 @@ def role_update_email(user, performed_by, new_role):
     """
     to_email = user.get("email", "")
     subject = "LOTO Generator Account Role Updated"
-    utc_now = datetime.utcnow()
-    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
 
     html_content = f"""
     <html>
     <head>
         <style>
-            body {{ font-family: Arial, sans-serif; margin: 5%; }}
-            h2 {{ color: #C32026; }}
-            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
-            .button {{ background-color:#C32026; color:#fff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block; font-weight:bold; }}
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
         </style>
     </head>
     <body>
@@ -1390,16 +1442,34 @@ def user_deleted_email(user, performed_by):
     """
     to_email = user.get("email", "")
     subject = "LOTO Generator Account Deleted"
-    utc_now = datetime.utcnow()
-    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
 
     html_content = f"""
     <html>
     <head>
         <style>
-            body {{ font-family: Arial, sans-serif; margin: 5%; }}
-            h2 {{ color: #C32026; }}
-            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
         </style>
     </head>
     <body>
