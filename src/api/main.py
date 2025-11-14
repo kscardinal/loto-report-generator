@@ -1200,6 +1200,48 @@ async def create_account(
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
+
+# -----------------------------
+# Email for account status change (activate/deactivate)
+# -----------------------------
+def status_change_email(user, performed_by, new_status):
+    """
+    Sends an email notifying the user their account status was updated.
+    Includes who changed it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Status Updated"
+    status_str = "Activated" if new_status else "Deactivated"
+    utc_now = datetime.utcnow()
+    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 5%; }}
+            h2 {{ color: #C32026; }}
+            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
+            .button {{ background-color:#C32026; color:#fff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block; font-weight:bold; }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Status Updated</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account status was updated to <strong>{status_str}</strong>.</p>
+        <p><strong>Changed by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you did not request this change, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: change_status
+# -----------------------------
 @app.post("/change_status")
 async def change_status(
     request: Request,
@@ -1250,12 +1292,54 @@ async def change_status(
         background_tasks=background_tasks
     )
 
+    # Send email notification in background
+    background_tasks.add_task(status_change_email, user, current_user["username"], new_status_int)
+
     return {
         "message": f"User '{target_username}' status updated",
         "is_active": new_status_int
     }
 
+# -----------------------------
+# Email for role update
+# -----------------------------
+def role_update_email(user, performed_by, new_role):
+    """
+    Sends an email notifying the user their account role was updated.
+    Includes who changed it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Role Updated"
+    utc_now = datetime.utcnow()
+    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
 
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 5%; }}
+            h2 {{ color: #C32026; }}
+            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
+            .button {{ background-color:#C32026; color:#fff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block; font-weight:bold; }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Role Updated</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account role has been updated to <strong>{new_role}</strong>.</p>
+        <p><strong>Changed by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you did not request this change, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: update_role
+# -----------------------------
 @app.post("/update_role")
 async def update_role(
     request: Request,
@@ -1263,7 +1347,6 @@ async def update_role(
     current_user: dict = Depends(get_current_user_no_redirect),
     background_tasks: BackgroundTasks = None
 ):
-    # Only owner can update roles
     error = require_role("owner")(current_user)
     if error:
         return error
@@ -1273,14 +1356,14 @@ async def update_role(
 
     if new_role == "owner":
         raise HTTPException(status_code=403, detail="Cannot assign owner role")
-
     if new_role not in ["admin", "user"]:
         raise HTTPException(status_code=400, detail="Invalid role value")
 
-    users.update_one(
-        {"username": target_username},
-        {"$set": {"role": new_role}}
-    )
+    user = users.find_one({"username": target_username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    users.update_one({"username": target_username}, {"$set": {"role": new_role}})
 
     log_action(
         request=request,
@@ -1292,8 +1375,50 @@ async def update_role(
         background_tasks=background_tasks
     )
 
+    # Send email notification in background
+    background_tasks.add_task(role_update_email, user, current_user["username"], new_role)
+
     return {"message": f"Updated role for {target_username} to {new_role}"}
 
+# -----------------------------
+# Email for deleted user
+# -----------------------------
+def user_deleted_email(user, performed_by):
+    """
+    Sends an email notifying the user their account was deleted.
+    Includes who deleted it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Deleted"
+    utc_now = datetime.utcnow()
+    formatted_time = utc_now.strftime("%B %d, %Y %I:%M %p UTC")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 5%; }}
+            h2 {{ color: #C32026; }}
+            .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Deleted</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account has been <strong>deleted</strong>.</p>
+        <p><strong>Deleted by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you believe this was done in error, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: delete_user
+# -----------------------------
 @app.post("/delete_user")
 async def delete_user(
     request: Request,
@@ -1319,7 +1444,6 @@ async def delete_user(
     if not target_username:
         raise HTTPException(status_code=400, detail="Missing 'username' in request")
 
-    # Prevent deleting owner
     target_user = users.find_one({"username": target_username.lower()})
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1337,6 +1461,9 @@ async def delete_user(
         details={"target": target_username, "deleted": True},
         background_tasks=background_tasks
     )
+
+    # Send email notification in background
+    background_tasks.add_task(user_deleted_email, target_user, current_user["username"])
 
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
 
