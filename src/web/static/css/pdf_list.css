@@ -1,0 +1,203 @@
+/* -----------------------------
+   Global Styles
+----------------------------- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+main {
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+/* -----------------------------
+   Header
+----------------------------- */
+header {
+    background-color: #C32026;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.current-user {
+    font-size: 0.9em;
+    color: white;
+    margin-top: 5px;
+}
+
+.left-div {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+}
+
+.right-div {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+}
+
+.back-btn, .add-btn {
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.95em;
+    background-color: rgba(0,0,0,0.2);
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.back-btn:hover, .add-btn:hover {
+    background-color: rgba(0,0,0,0.35);
+}
+
+.back-btn {
+    margin-right: 10px;
+}
+
+.add-btn {
+    margin-left: 10px;
+}
+
+/* -----------------------------
+   Report Cards
+----------------------------- */
+.report-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 15px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.report-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.report-name {
+    color: #C32026;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    white-space: pre;
+}
+
+.report-meta {
+    font-size: 0.9em;
+    color: #888;
+    line-height: 1.4em;
+    white-space: pre;
+}
+
+/* -----------------------------
+   Buttons
+----------------------------- */
+.report-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.download-btn, .delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    font-size: 1.2em;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.download-btn {
+    background-color: #e0e0e0;
+    color: #555;
+    text-decoration: none;
+}
+
+.download-btn:hover {
+    background-color: #c0c0c0;
+    color: #333;
+}
+
+.download-btn-symbol, .delete-btn-symbol {
+    max-width: 25px;
+    max-height: 25px;
+}
+
+.delete-btn {
+    background-color: #dd7c7c;
+    border: none;
+}
+
+.delete-btn:hover {
+    background-color: #d65c5c;
+}
+
+/* -----------------------------
+   Empty State
+----------------------------- */
+.no-reports {
+    text-align: center;
+    color: #666;
+    margin-top: 40px;
+    font-style: italic;
+}
+
+/* -----------------------------
+   Confirmation Modal
+----------------------------- */
+#confirmModal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+#confirmBox {
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 400px;
+    text-align: center;
+}
+
+#confirmBox button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+#confirmYes { background-color: #28a745; color: white; }
+#confirmNo { background-color: #dc3545; color: white; margin-left: 10px; }

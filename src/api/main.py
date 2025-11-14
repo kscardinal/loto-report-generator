@@ -228,7 +228,7 @@ async def upload_report(
                 "photos": photos_data,
                 "last_modified": now,
                 "last_generated": now,
-                "uploaded_by": uploaded_by,
+                "uploaded_by": username["username"],
                 "tags": tags,
                 "notes": notes
             }}
@@ -249,7 +249,7 @@ async def upload_report(
             "report_name": report_name,
             "json_data": json_data,
             "photos": photos_data,
-            "uploaded_by": uploaded_by,
+            "uploaded_by": username["username"],
             "tags": tags,
             "notes": notes,
             "date_added": now,

@@ -3,185 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>LOTO Generator | Reports</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #C32026;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative; /* add this */
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 2em;
-        }
-
-        main {
-            max-width: 800px;
-            margin: 20px auto;
-        }
-
-        .report-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .report-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: white;
-            margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-            padding: 0;
-        }
-
-        .report-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        .report-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 10px;
-            text-decoration: none;
-            color: #C32026;
-            font-weight: bold;
-            font-size: 1.1em;
-            flex-grow: 1;
-        }
-
-        .report-index {
-            color: #555;
-            font-weight: bold;
-            margin-right: 10px;
-            width: 25px;
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .download-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 35px;
-            height: 35px;
-            margin-right: 20px;
-            background-color: #e0e0e0; /* subtle gray */
-            color: #555;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 1.2em;
-            transition: background-color 0.2s;
-        }
-
-        .download-btn:hover {
-            background-color: #c0c0c0;
-            color: #333;
-        }
-
-        .download-btn-symbol {
-            max-width: 25px;
-            max-height: 25px;
-        }
-
-        .delete-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 35px;
-            height: 35px;
-            margin-right: 20px;
-            background-color: #dd7c7c; 
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 1.2em;
-            transition: background-color 0.2s;
-            border: none;
-        }
-
-        .delete-btn:hover {
-            background-color: #d65c5c;
-        }
-
-        .delete-btn-symbol {
-            max-width: 25px;
-            max-height: 25px;
-        }
-
-        .no-reports {
-            text-align: center;
-            color: #666;
-            margin-top: 40px;
-            font-style: italic;
-        }
-
-        .add-btn {
-            transform: translateY(-50%);
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.95em;
-            background-color: rgba(0,0,0,0.2);
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-left: 10px;
-            transition: background-color 0.2s;
-        }
-
-        .add-btn:hover {
-            background-color: rgba(0,0,0,0.35);
-        }
-
-        .current-user {
-            font-size: 0.9em;
-            color: white;
-            margin-top: 5px;
-        }
-
-        .left-div {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-        }
-
-        .right-div {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-        }
-
-        .back-btn {
-            transform: translateY(-50%);
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.95em;
-            background-color: rgba(0,0,0,0.2);
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-right: 10px;
-            transition: background-color 0.2s;
-        }
-
-        .back-btn:hover {
-            background-color: rgba(0,0,0,0.35);
-        }
-
-    </style>
+    <link rel="stylesheet" href="/static/css/pdf_list.css">
 </head>
 <body>
     <header>
@@ -207,65 +29,19 @@
     </header>
 
     <main>
-        {% if report_names %}
-            <ul class="report-list">
-                {% for name in report_names %}
-                    <li class="report-item">
-                        <a class="report-link" href="{{ url_for('view_report', report_name=name) }}">
-                            <span class="report-index">{{ loop.index }}.</span> {{ name }}
-                        </a>
-                        <a class="download-btn" href="{{ url_for('download_pdf', report_name=name) }}" title="Download PDF">
-                            <img src="{{ url_for('static', path='includes/downloadSymbol.svg') }}" alt="Download PDF" class="download-btn-symbol">
-                        </a>
-                        <button class="delete-btn" data-report="{{ name }}"> 
-                            <img src="{{ url_for('static', path='includes/trashSymbol.svg') }}" alt="Delete Report" class="delete-btn-symbol">
-                        </button>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="no-reports">No reports found.</p>
-        {% endif %}
+        <div id="reportList">
+            <!-- JS will populate report cards here -->
+        </div>
     </main>
+
+    <!-- Confirmation Modal (reused from delete user) -->
+    <div id="confirmModal">
+        <div id="confirmBox">
+            <p id="confirmText"></p>
+            <button id="confirmYes">Yes</button>
+            <button id="confirmNo">Cancel</button>
+        </div>
+    </div>
 </body>
-<script>
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            const reportName = btn.dataset.report;
-
-            if (!confirm(`Are you sure you want to delete "${reportName}"?`)) return;
-
-            try {
-                const response = await fetch(`/remove_report/${reportName}`, {
-                    method: "POST"
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Refresh the page after successful deletion
-                    window.location.reload();
-                } else {
-                    alert(`Error deleting report: ${data.error || JSON.stringify(data)}`);
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Failed to delete report. Check console for details.");
-            }
-        });
-    });
-
-    const logoutBtn = document.getElementById("logout-btn");
-
-    logoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-
-        try {
-            await fetch("/logout", { method: "POST", credentials: "include" });
-            window.location.href = "/login"; // redirect after logout
-        } catch (err) {
-            console.error("Logout failed", err);
-            alert("Logout failed, please try again.");
-        }
-    });
-</script>
+<script type="module" src="/static/js/pdf_list.js"></script>
 </html>
