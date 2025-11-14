@@ -32,23 +32,12 @@ email.addEventListener("input", async function() {
         emailCheckMessage.style.display = "none";
         emailCheckMessage.textContent = "❌ Invalid Email Address";
     } else if (emailPattern.test(email.value)) {
-        const response = await fetch(`/check-username-email?email=${encodeURIComponent(email.value)}`);
-        const result = await response.json();
-        if (result.exists) {
-            emailCheckMessage.textContent = "";
-            emailCheckMessage.style.display = "none";
-            email.classList.remove("error");
-            sendButton.disabled = false;
-            sendButton.style.backgroundColor = "#4CAF50";
-            sendButton.style.cursor = "pointer";
-        } else {
-            email.classList.add("error");
-            emailCheckMessage.style.display = "block";
-            emailCheckMessage.textContent = "❌ Email doesn't exist";
-            sendButton.disabled = true;
-            sendButton.style.backgroundColor = "#ccc";
-            sendButton.style.cursor = "not-allowed"; 
-        }
+        emailCheckMessage.textContent = "";
+        emailCheckMessage.style.display = "none";
+        email.classList.remove("error");
+        sendButton.disabled = false;
+        sendButton.style.backgroundColor = "#4CAF50";
+        sendButton.style.cursor = "pointer";
     } else {
         email.classList.add("error");
         emailCheckMessage.style.display = "block";
@@ -199,7 +188,8 @@ let codeAttempts = 0;
 
 sendButton.addEventListener("click", async function() {
     const emailValue = email.value.trim();
-    const codeValue = code.value.trim(); // get the code input
+    const codeValue = code.value.trim();
+    
     if (!emailValue) {
         alert("Please enter an email.");
         return;
@@ -208,31 +198,52 @@ sendButton.addEventListener("click", async function() {
     if (!codeSent) {
         // First press → send backup code
         try {
-            const exists = await checkAvailabilityBool("email", emailValue);
+            const res = await fetch("/send_backup_code", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email: emailValue }) // Must match FastAPI key
+            });
 
-            if (!exists) {
-                alert("This email is not registered in our system.");
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Handle different HTTP status codes
+                let message = "Something went wrong";
+                if (res.status === 400) {
+                    // Could be missing email OR no backup code
+                    if (data.detail === "Missing email") {
+                        message = "Please enter your email";
+                    } else if (data.detail === "User has no backup code stored") {
+                        message = "This user has no backup code available";
+                    } else {
+                        message = data.detail;
+                    }
+                } else if (res.status === 404) {
+                    message = "User not found";
+                }
+
+                // Update UI
+                emailCheckMessage.textContent = "❌ " + message;
+                emailCheckMessage.style.display = "block";
+                email.classList.add("error");
+
                 return;
             }
 
-            const response = await fetch("http://127.0.0.1:5000/send-backup-code", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: emailValue })
-            });
+            console.log(data["code"]);
 
-            const result = await response.json();
+            email.disabled = true;
+            emailCheckMessage.textContent = "";
+            emailCheckMessage.style.display = "none";
+            sendButton.textContent = "Verify";
+            code.style.display = "block";
+            code.required = true;
+            codeSent = true; // update state
 
-            if (result.success) {
-                email.disabled = true;
-                emailMessage.textContent = "";
-                sendButton.textContent = "Verify";
-                code.style.display = "block";
-                code.required = true;
-                codeSent = true; // update state
-            } else {
-                alert(result.message);
-            }
+            return data;
+
         } catch (err) {
             console.error("Error sending backup code:", err);
             alert("Something went wrong while sending the email.");

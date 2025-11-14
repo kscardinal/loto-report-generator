@@ -1434,3 +1434,94 @@ def forgot_password_form(
     )
     return templates.TemplateResponse("forgot_password.html", {"request": request})
 
+
+@app.post("/send_backup_code")
+async def send_backup_code(
+    request: Request,
+    data: dict,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Send the backup code to a user's email.
+    No authentication required.
+    """
+    target_email = data.get("email")
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Missing email")
+
+    # Normalize email
+    target_email = target_email.strip().lower()
+
+    # Look up user in DB
+    user = users.find_one({"email": target_email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    backup_code = user.get("backup_code")
+    if not backup_code:
+        raise HTTPException(status_code=400, detail="User has no backup code stored")
+
+    # Email template
+    html_body = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Your Backup Code</h2>
+        <p>Hello,</p>
+        <p>Here is your backup code:</p>
+        <div style="
+            font-size: 26px;
+            font-weight: bold;
+            padding: 12px 20px;
+            background: #f1f1f1;
+            border-radius: 6px;
+            display: inline-block;
+            letter-spacing: 2px;
+            margin: 15px 0;
+        ">
+            {backup_code}
+        </div>
+
+        <p class="footer">This is an automated message. Please do not reply to this email.</p>
+    </body>
+    </html>
+    """
+
+    # Send email in background
+    background_tasks.add_task(
+        send_email_auto,
+        to_email=target_email,
+        subject="LOTO Generator Backup Code",
+        body=html_body
+    )
+
+    # Log action (no current_user available → mark as "public")
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=target_email,
+        action="send_backup_code",
+        details={"target_email": target_email},
+        background_tasks=background_tasks
+    )
+
+    return {"message": f"Backup code sent to {target_email}", "code": f"{backup_code}"}
