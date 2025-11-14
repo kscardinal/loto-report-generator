@@ -8,7 +8,7 @@
 <body>
 <main>
     <div class="login-container">
-        <h2>Sonnaz Group</h2>
+        <h2>LOTO Generator</h2>
         <h3>Create an account</h3>
         <form method="post" id="signupForm" >
             <div class="name-container">
@@ -20,7 +20,7 @@
             <div class="padding"></div>
             <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required>
             <p class="check" id ="usernameCheck">❌ Invalid Username</p>
-            <input type="password" id="passwordInput" name="password" placeholder="Password" autocomplete="password" required>
+            <input type="password" id="passwordInput" name="password" placeholder="Password" autocomplete="current-password" required>
             <p class="check" id ="passwordCheck-Length">❌ Password must be 12 characters minimum</p>
             <p class="check" id ="passwordCheck-Forbidden">❌ Password can't contain prohibited items</p>
             <p class="check" id ="passwordCheck-Uppercase">❌ Password must contain an uppercase letter</p>
@@ -46,7 +46,7 @@
             <span>Loading...</span>
         </div>
         <a href="/login">Login</a>
-        <a href="ForgotPassword.html">Forgot Password?</a>
+        <a href="/forgot_password">Forgot Password?</a>
     </div>
 </main>
 <script type="module" src="/static/js/create_account.js"></script>

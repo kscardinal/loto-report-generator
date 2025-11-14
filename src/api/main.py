@@ -1147,7 +1147,7 @@ async def create_account(
     users.insert_one({
         "first_name": first_name,
         "last_name": last_name,
-        "email": email,
+        "email": email.lower(),
         "username": username_lower,  # store lowercase for login
         "display_username": username,  # optional: keep original for display
         "password": hashed_password,
@@ -1200,6 +1200,74 @@ async def create_account(
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
+
+# -----------------------------
+# Email for account status change (activate/deactivate)
+# -----------------------------
+def status_change_email(user, performed_by, new_status):
+    """
+    Sends an email notifying the user their account status was updated.
+    Includes who changed it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Status Updated"
+    status_str = "Activated" if new_status else "Deactivated"
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Status Updated</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account status was updated to <strong>{status_str}</strong>.</p>
+        <p><strong>Changed by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you did not request this change, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: change_status
+# -----------------------------
 @app.post("/change_status")
 async def change_status(
     request: Request,
@@ -1250,12 +1318,80 @@ async def change_status(
         background_tasks=background_tasks
     )
 
+    # Send email notification in background
+    background_tasks.add_task(status_change_email, user, current_user["username"], new_status_int)
+
     return {
         "message": f"User '{target_username}' status updated",
         "is_active": new_status_int
     }
 
+# -----------------------------
+# Email for role update
+# -----------------------------
+def role_update_email(user, performed_by, new_role):
+    """
+    Sends an email notifying the user their account role was updated.
+    Includes who changed it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Role Updated"
 
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Role Updated</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account role has been updated to <strong>{new_role}</strong>.</p>
+        <p><strong>Changed by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you did not request this change, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: update_role
+# -----------------------------
 @app.post("/update_role")
 async def update_role(
     request: Request,
@@ -1263,7 +1399,6 @@ async def update_role(
     current_user: dict = Depends(get_current_user_no_redirect),
     background_tasks: BackgroundTasks = None
 ):
-    # Only owner can update roles
     error = require_role("owner")(current_user)
     if error:
         return error
@@ -1273,14 +1408,14 @@ async def update_role(
 
     if new_role == "owner":
         raise HTTPException(status_code=403, detail="Cannot assign owner role")
-
     if new_role not in ["admin", "user"]:
         raise HTTPException(status_code=400, detail="Invalid role value")
 
-    users.update_one(
-        {"username": target_username},
-        {"$set": {"role": new_role}}
-    )
+    user = users.find_one({"username": target_username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    users.update_one({"username": target_username}, {"$set": {"role": new_role}})
 
     log_action(
         request=request,
@@ -1292,8 +1427,68 @@ async def update_role(
         background_tasks=background_tasks
     )
 
+    # Send email notification in background
+    background_tasks.add_task(role_update_email, user, current_user["username"], new_role)
+
     return {"message": f"Updated role for {target_username} to {new_role}"}
 
+# -----------------------------
+# Email for deleted user
+# -----------------------------
+def user_deleted_email(user, performed_by):
+    """
+    Sends an email notifying the user their account was deleted.
+    Includes who deleted it and when.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Account Deleted"
+
+    # Convert UTC to Eastern Time for date_created (or current time if missing)
+    utc_time = datetime.utcnow()
+    if isinstance(utc_time, str):
+        utc_time = datetime.fromisoformat(utc_time)
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Deleted</h2>
+        <p>Hello {user.get('first_name','')},</p>
+        <p>Your account has been <strong>deleted</strong>.</p>
+        <p><strong>Deleted by:</strong> {performed_by}</p>
+        <p><strong>Time:</strong> {formatted_time}</p>
+        <p>If you believe this was done in error, please contact support immediately.</p>
+        <p class="footer">This is an automated message. Please do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
+# -----------------------------
+# Endpoint: delete_user
+# -----------------------------
 @app.post("/delete_user")
 async def delete_user(
     request: Request,
@@ -1319,7 +1514,6 @@ async def delete_user(
     if not target_username:
         raise HTTPException(status_code=400, detail="Missing 'username' in request")
 
-    # Prevent deleting owner
     target_user = users.find_one({"username": target_username.lower()})
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1337,6 +1531,9 @@ async def delete_user(
         details={"target": target_username, "deleted": True},
         background_tasks=background_tasks
     )
+
+    # Send email notification in background
+    background_tasks.add_task(user_deleted_email, target_user, current_user["username"])
 
     return JSONResponse({"message": f"Deleted user {target_username}"}, status_code=200)
 
@@ -1416,3 +1613,288 @@ async def check_username_email(
 
     exists = users.find_one({field: value}) is not None
     return JSONResponse({"exists": exists})
+
+
+@app.get("/forgot_password")
+def forgot_password_form(
+    request: Request,
+    background_tasks: BackgroundTasks = None
+):
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username="N/A",
+        action="forgot_password page",
+        details={},
+        background_tasks=background_tasks
+    )
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+
+@app.post("/send_backup_code")
+async def send_backup_code(
+    request: Request,
+    data: dict,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Send the backup code to a user's email.
+    No authentication required.
+    """
+    target_email = data.get("email")
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Missing email")
+
+    # Normalize email
+    target_email = target_email.strip().lower()
+
+    # Look up user in DB
+    user = users.find_one({"email": target_email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    backup_code = user.get("backup_code")
+    if not backup_code:
+        raise HTTPException(status_code=400, detail="User has no backup code stored")
+
+    # Email template
+    html_body = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Your Backup Code</h2>
+        <p>Hello,</p>
+        <p>Here is your backup code:</p>
+        <div style="
+            font-size: 26px;
+            font-weight: bold;
+            padding: 12px 20px;
+            background: #f1f1f1;
+            border-radius: 6px;
+            display: inline-block;
+            letter-spacing: 2px;
+            margin: 15px 0;
+        ">
+            {backup_code}
+        </div>
+
+        <p class="footer">This is an automated message. Please do not reply to this email.</p>
+    </body>
+    </html>
+    """
+
+    # Send email in background
+    background_tasks.add_task(
+        send_email_auto,
+        to_email=target_email,
+        subject="LOTO Generator Backup Code",
+        body=html_body
+    )
+
+    # Log action (no current_user available → mark as "public")
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=target_email,
+        action="send_backup_code",
+        details={"target_email": target_email},
+        background_tasks=background_tasks
+    )
+
+    return {"message": f"Backup code sent to {target_email}", "code": f"{backup_code}"}
+
+@app.post("/verify_backup_code")
+async def verify_backup_code(
+    request: Request,
+    data: dict,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Verify a user's backup code.
+    No authentication required.
+    """
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        raise HTTPException(status_code=400, detail="Missing email or code")
+
+    email = email.strip().lower()
+    code = code.strip()
+
+    # Look up user
+    user = users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    backup_code = user.get("backup_code")
+    if not backup_code:
+        raise HTTPException(status_code=400, detail="No backup code stored for this user")
+
+    # Compare codes
+    if backup_code != code:
+        raise HTTPException(status_code=400, detail="Invalid backup code")
+
+    # Generate a new backup code
+    new_backup_code = generate_backup_code()
+
+    # Update the user document with the new code
+    users.update_one(
+        {"email": email},
+        {"$set": {"backup_code": new_backup_code}}
+    )
+
+    # Log action
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=email,
+        action="verify_backup_code",
+        details={"status": "successful validation", "new_code_generated": True},
+        background_tasks=background_tasks
+    )
+
+    return {
+        "message": "Backup code verified successfully. A new backup code has been generated.",
+        "new_backup_code": new_backup_code  # optionally return for testing
+    }
+
+# -----------------------------
+# Update verification attempts endpoint
+# -----------------------------
+@app.post("/update-verification-attempts")
+async def update_verification_attempts(
+    data: dict,
+):
+    target_email = data.get("email")
+    attempts = data.get("verification_attempts")
+
+    if not target_email or attempts is None:
+        raise HTTPException(status_code=400, detail="Missing 'email' or 'login_attempts' in request")
+
+    # Normalize username to lowercase for consistency
+    users.update_one(
+        {"email": target_email.lower()},
+        {"$set": {"verification_attempts": int(attempts)}}
+    )
+
+    return JSONResponse({"message": f"Updated login attempts for {target_email} to {attempts}"}, status_code=200)
+
+# -----------------------------
+# Password reset email
+# -----------------------------
+def password_reset_email(user):
+    """
+    Sends an HTML email notifying the user their password was reset.
+    `user` is a dict with at least 'email' and optionally 'first_name'.
+    """
+    to_email = user.get("email", "")
+    subject = "LOTO Generator Password Reset Notification"
+
+    # Current time in Eastern Time
+    utc_now = datetime.utcnow()
+    eastern = pytz.timezone("US/Eastern")
+    local_time = utc_now.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+            .button {{
+                background-color:#C32026; 
+                color:#ffffff; 
+                text-decoration:none; 
+                padding:10px 20px; 
+                border-radius:5px; 
+                display:inline-block;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Password Reset Notification</h2>
+        <p>Hello {user.get('first_name', '')},</p>
+        <p>Your password was successfully reset on {formatted_time}.</p>
+        <p>If you did not perform this action, please contact support immediately.</p>
+        <p>For security, do not share your password and keep your account private.</p>
+        <p>You can log in here:</p>
+        <p><a href="https://lotogenerator.app/login" class="button">Log In to LOTO Generator</a></p>
+        <p class="footer">This is an automated message. Please do not reply to this email.</p>
+    </body>
+    </html>
+    """
+
+    # Use your existing email function
+    send_email_auto(to_email, subject, html_content)
+
+
+# -----------------------------
+# Reset password endpoint
+# -----------------------------
+@app.post("/reset_password")
+async def reset_password(data: dict, background_tasks: BackgroundTasks):
+    target_email = data.get("email")
+    new_password = data.get("new_password")
+
+    if not target_email or new_password is None:
+        raise HTTPException(status_code=400, detail="Missing 'email' or 'new_password' in request")
+    
+    # Hash password
+    hashed_password = ph.hash(new_password)
+    target_email_normalized = target_email.lower()
+
+    # Update password, latest_reset, and increment password_resets
+    result = users.update_one(
+        {"email": target_email_normalized},
+        {
+            "$set": {"password": hashed_password, "latest_reset": datetime.utcnow()},
+            "$inc": {"password_resets": 1}
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Fetch user document to include in email
+    user = users.find_one({"email": target_email_normalized})
+
+    # Send password reset email in the background
+    background_tasks.add_task(password_reset_email, user)
+
+    return JSONResponse({"message": f"Reset password for {target_email_normalized}"}, status_code=200)
