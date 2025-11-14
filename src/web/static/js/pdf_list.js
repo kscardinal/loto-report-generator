@@ -64,6 +64,37 @@ function formatETDate(isoStr) {
 }
 
 // ------------------------------
+// Format date friendly
+// ------------------------------
+function formatFriendlyETDate(isoStr) {
+    if (!isoStr) return "N/A";
+
+    const dt = new Date(isoStr);
+    const now = new Date();
+
+    // Convert to ET offset (New York)
+    const options = { timeZone: "America/New_York" };
+    const etDate = new Date(dt.toLocaleString("en-US", options));
+    const etNow = new Date(now.toLocaleString("en-US", options));
+
+    // Differences
+    const dtDayStart = new Date(etDate.getFullYear(), etDate.getMonth(), etDate.getDate());
+    const nowDayStart = new Date(etNow.getFullYear(), etNow.getMonth(), etNow.getDate());
+    const diffDays = Math.floor((nowDayStart - dtDayStart) / (1000*60*60*24));
+
+    // Time part
+    const timeStr = etDate.toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" });
+
+    if (diffDays === 0) return `Today, ${timeStr}`;
+    if (diffDays === 1) return `Yesterday, ${timeStr}`;
+    if (diffDays < 7) return `${etDate.toLocaleDateString("en-US", { weekday: "long" })}, ${timeStr}`;
+    if (diffDays < 30) return `${etDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${timeStr}`;
+    
+    // For 30+ days ago, show full numeric date
+    return `${etDate.getMonth()+1}/${etDate.getDate()}/${etDate.getFullYear().toString().slice(-2)}, ${timeStr}`;
+}
+
+// ------------------------------
 // Render a page of reports
 // ------------------------------
 function renderReportsPage(json) {
@@ -94,7 +125,7 @@ function renderReportsPage(json) {
 
         const uploadedBy = r.uploaded_by || "Unknown";
         const tags = Array.isArray(r.tags) ? r.tags.join(", ") : (r.tags || "None");
-        const dateUploaded = formatETDate(r.date_added);
+        const dateUploaded = formatFriendlyETDate(r.last_modified);
 
         card.innerHTML = `
             <div class="report-info" role="button" tabindex="0" aria-label="Open ${escapeHtml(r.report_name)}">
