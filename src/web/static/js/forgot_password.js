@@ -176,6 +176,11 @@ password.addEventListener("input", function () {
     validateForm()
 });
 
+code.addEventListener("input", function() {
+    codeMessage.style.display = "none";
+    code.classList.remove("error");
+});
+
 
 confirmPassword.addEventListener("input", function() {
     passwordMatch()
@@ -232,8 +237,6 @@ sendButton.addEventListener("click", async function() {
                 return;
             }
 
-            console.log(data["code"]);
-
             email.disabled = true;
             emailCheckMessage.textContent = "";
             emailCheckMessage.style.display = "none";
@@ -242,6 +245,7 @@ sendButton.addEventListener("click", async function() {
             code.required = true;
             codeSent = true; // update state
 
+            console.log(data["code"]);
             return data;
 
         } catch (err) {
@@ -257,31 +261,69 @@ sendButton.addEventListener("click", async function() {
         }
 
         try {
-            const response = await fetch("http://127.0.0.1:5000/verify-backup-code", {
+            const res = await fetch("/verify_backup_code", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: emailValue, backup_code: codeValue })
+                body: JSON.stringify({ email: emailValue, code: codeValue })
             });
 
-            const result = await response.json();
+            const data = await res.json();
 
-            if (result.success) {
-                sendButton.disabled = true;
-                sendButton.textContent = "Update Password"
-                code.style.display = "none";
-                password.style.display = "block";
-                confirmPassword.style.display = "block";
-                password.required = true;
-                confirmPassword.required = true;
-                verifyCode = true;
-            } else {
+            if (!res.ok) {
+                // Handle different HTTP status codes
+                let message = "Something went wrong";
+                if (res.status === 400) {
+                    // Could be missing email OR no backup code
+                    if (data.detail === "Missing email or code") {
+                        message = "This user has no backup code available";
+                    } else if (data.detail === "No backup code stored for this user") {
+                        message = "This user has no backup code available";
+                    } else if (data.detail === "Invalid backup code") {
+                        message = "Invalid backup code";
+                    } else {
+                        message = data.detail;
+                    }
+                } else if (res.status === 404) {
+                    message = "User not found";
+                }
+
+                // Update UI
+                codeMessage.textContent = "❌ " + message;
+                codeMessage.style.display = "block";
+                code.classList.add("error");
+
                 codeAttempts = codeAttempts + 1;
                 console.log(codeAttempts)
-                alert("Invalid backup code, please try again.");
+
+                return;
             }
+
+            sendButton.disabled = true;
+            sendButton.textContent = "Update Password"
+            code.style.display = "none";
+            codeMessage.style.display = "none";
+            password.style.display = "block";
+            confirmPassword.style.display = "block";
+            password.required = true;
+            confirmPassword.required = true;
+            verifyCode = true;
+
+            const response_2 = await fetch("/update-verification-attempts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ 
+                    email: emailValue, 
+                    verification_attempts: codeAttempts 
+                })
+            });
+
+            console.log(data["new_backup_code"]);
+            return data;
+
         } catch (err) {
             console.error("Error verifying backup code:", err);
-            alert("Something went wrong while verifying the code.");
+            alert(err.message);
         }
     } else {
         // Third press → update password

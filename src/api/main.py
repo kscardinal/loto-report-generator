@@ -1525,3 +1525,82 @@ async def send_backup_code(
     )
 
     return {"message": f"Backup code sent to {target_email}", "code": f"{backup_code}"}
+
+@app.post("/verify_backup_code")
+async def verify_backup_code(
+    request: Request,
+    data: dict,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Verify a user's backup code.
+    No authentication required.
+    """
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        raise HTTPException(status_code=400, detail="Missing email or code")
+
+    email = email.strip().lower()
+    code = code.strip()
+
+    # Look up user
+    user = users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    backup_code = user.get("backup_code")
+    if not backup_code:
+        raise HTTPException(status_code=400, detail="No backup code stored for this user")
+
+    # Compare codes
+    if backup_code != code:
+        raise HTTPException(status_code=400, detail="Invalid backup code")
+
+    # Generate a new backup code
+    new_backup_code = generate_backup_code()
+
+    # Update the user document with the new code
+    users.update_one(
+        {"email": email},
+        {"$set": {"backup_code": new_backup_code}}
+    )
+
+    # Log action
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=email,
+        action="verify_backup_code",
+        details={"status": "successful validation", "new_code_generated": True},
+        background_tasks=background_tasks
+    )
+
+    return {
+        "message": "Backup code verified successfully. A new backup code has been generated.",
+        "new_backup_code": new_backup_code  # optionally return for testing
+    }
+
+# -----------------------------
+# Update verification attempts endpoint
+# -----------------------------
+@app.post("/update-verification-attempts")
+async def update_verification_attempts(
+    data: dict,
+):
+    target_email = data.get("email")
+    attempts = data.get("verification_attempts")
+
+    if not target_email or attempts is None:
+        raise HTTPException(status_code=400, detail="Missing 'email' or 'login_attempts' in request")
+
+    # Normalize username to lowercase for consistency
+    users.update_one(
+        {"email": target_email.lower()},
+        {"$set": {"verification_attempts": int(attempts)}}
+    )
+
+    return JSONResponse({"message": f"Updated login attempts for {target_email} to {attempts}"}, status_code=200)
+
