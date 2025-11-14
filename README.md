@@ -396,7 +396,12 @@ git ls-files src | xargs wc -l | sort -n
 find . -type f -print0 | xargs -0 wc -l
 ```
 
-2. Git file endings
+2. Counts the number of times a file has been committed
+```bash
+git log --pretty=format: --name-only | grep -v '^$' | sort | uniq -c | sort -n
+```
+
+3. Git file endings
 ```bash
 git config --global core.autocrlf
 ```
