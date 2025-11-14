@@ -1,29 +1,29 @@
 /* -----------------------------
-   Global Styles
+   Global
 ----------------------------- */
+:root{
+    --brand:#C32026;
+    --muted:#888;
+    --card-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+* { box-sizing: border-box; }
 body {
     font-family: Arial, sans-serif;
     background-color: #f7f7f7;
     color: #333;
     margin: 0;
     padding: 0;
+    -webkit-font-smoothing:antialiased;
 }
 
-h1 {
-    margin: 0;
-    font-size: 2em;
-}
-
-main {
-    max-width: 800px;
-    margin: 20px auto;
-}
+h1 { margin: 0; font-size: 2em; }
+main { max-width: 900px; margin: 22px auto; padding: 0 16px; }
 
 /* -----------------------------
    Header
 ----------------------------- */
 header {
-    background-color: #C32026;
+    background-color: var(--brand);
     color: white;
     padding: 20px 0;
     text-align: center;
@@ -31,137 +31,124 @@ header {
     position: relative;
 }
 
-.current-user {
-    font-size: 0.9em;
-    color: white;
-    margin-top: 5px;
-}
+.current-user { font-size: 0.9em; color: white; margin-top: 6px; }
 
-.left-div {
-    position: absolute;
-    left: 20px;
-    top: 50%;
-}
+/* left / right helper */
+.left-div { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); }
+.right-div { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
 
-.right-div {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-}
-
+/* header buttons */
 .back-btn, .add-btn {
-    transform: translateY(-50%);
     color: white;
     text-decoration: none;
     font-weight: bold;
     font-size: 0.95em;
-    background-color: rgba(0,0,0,0.2);
-    padding: 5px 10px;
+    background-color: rgba(0,0,0,0.18);
+    padding: 6px 10px;
     border-radius: 5px;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s;
 }
-
-.back-btn:hover, .add-btn:hover {
-    background-color: rgba(0,0,0,0.35);
-}
-
-.back-btn {
-    margin-right: 10px;
-}
-
-.add-btn {
-    margin-left: 10px;
-}
+.back-btn:hover, .add-btn:hover { background-color: rgba(0,0,0,0.35); }
 
 /* -----------------------------
-   Report Cards
+   Report list / cards
 ----------------------------- */
+.report-list { list-style: none; padding: 0; margin: 8px 0 0 0; }
+
+/* card */
 .report-card {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background-color: white;
+    justify-content: space-between;
+    background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    padding: 15px;
+    box-shadow: var(--card-shadow);
+    padding: 14px;
     margin: 10px 0;
     cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    user-select: none;
 }
-
 .report-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
+/* info column */
 .report-info {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0; /* allow ellipsis */
+    padding-right: 12px;
 }
 
 .report-name {
-    color: #C32026;
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 5px;
-    white-space: pre;
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .report-meta {
-    font-size: 0.9em;
-    color: #888;
-    line-height: 1.4em;
-    white-space: pre;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+/* small stacked meta lines (if you want each on new line) */
+.report-meta-line { color: var(--muted); font-size: 0.92rem; }
+
 /* -----------------------------
-   Buttons
+   Buttons area (right side)
 ----------------------------- */
 .report-buttons {
     display: flex;
-    gap: 10px;
-}
-
-.download-btn, .delete-btn {
-    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 35px;
-    height: 35px;
-    border-radius: 6px;
-    font-size: 1.2em;
-    transition: background-color 0.2s;
+    gap: 10px;
+    margin-left: 8px;
     flex-shrink: 0;
 }
 
-.download-btn {
-    background-color: #e0e0e0;
-    color: #555;
+/* icon buttons */
+.download-btn, .delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 7px;
+    font-size: 1.05rem;
+    transition: background-color 0.12s;
     text-decoration: none;
+    color: #222;
+    border: none;
+    background: transparent;
 }
 
-.download-btn:hover {
-    background-color: #c0c0c0;
-    color: #333;
+.download-btn {
+    background: #efefef;
 }
-
-.download-btn-symbol, .delete-btn-symbol {
-    max-width: 25px;
-    max-height: 25px;
-}
+.download-btn:hover { background: #dcdcdc; }
 
 .delete-btn {
-    background-color: #dd7c7c;
-    border: none;
+    background: #ffebe9;
 }
+.delete-btn:hover { background: #ffd5d2; }
 
-.delete-btn:hover {
-    background-color: #d65c5c;
+/* icon sizing */
+.download-btn-symbol, .delete-btn-symbol {
+    max-width: 22px; max-height: 22px;
 }
 
 /* -----------------------------
-   Empty State
+   Empty state
 ----------------------------- */
 .no-reports {
     text-align: center;
@@ -171,33 +158,62 @@ header {
 }
 
 /* -----------------------------
-   Confirmation Modal
+   Pagination bar
 ----------------------------- */
-#confirmModal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    justify-content: center;
+.pagination-bar {
+    display: flex;
+    gap: 16px;
     align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    padding: 6px 0;
+    flex-wrap: wrap;
 }
 
-#confirmBox {
-    background: white;
-    padding: 20px;
+.per-page, .jump { display:flex; gap:8px; align-items:center; }
+.per-page select, .jump input { padding:6px 8px; border-radius:6px; border:1px solid #ddd; }
+
+/* nav buttons */
+.nav { display:flex; gap:8px; align-items:center; }
+.page-btn {
+    padding: 6px 12px;
     border-radius: 6px;
-    max-width: 400px;
-    text-align: center;
-}
-
-#confirmBox button {
-    margin-top: 10px;
-    padding: 8px 16px;
-    border-radius: 4px;
     border: none;
+    background: var(--brand);
+    color: #fff;
     cursor: pointer;
 }
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(195,32,38,0.6); }
 
-#confirmYes { background-color: #28a745; color: white; }
-#confirmNo { background-color: #dc3545; color: white; margin-left: 10px; }
+/* page info text */
+.page-info { font-weight: 600; color: #333; }
+
+/* pagination info */
+.pagination-info { text-align:center; color:#444; margin-top: 6px; font-size: 0.95rem; }
+
+/* -----------------------------
+   Confirm modal
+----------------------------- */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 2000; }
+.modal-box {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    width: min(460px, 92%);
+    text-align: center;
+}
+.modal-actions { display:flex; gap:12px; justify-content:center; margin-top: 12px; }
+.modal-yes, .modal-no {
+    padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer;
+}
+.modal-yes { background: #28a745; color: white; }
+.modal-no { background: #dc3545; color: white; }
+
+/* small responsive tweaks */
+@media (max-width:700px){
+    .report-meta { white-space: normal; }
+    .report-name { font-size: 1rem; }
+    .right-div { right: 10px; }
+    .left-div { left: 10px; }
+    main { padding: 0 12px; }
+}

@@ -1,47 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LOTO Generator | Reports</title>
-    <link rel="stylesheet" href="/static/css/pdf_list.css">
+<meta charset="UTF-8">
+<title>LOTO Generator | Reports</title>
+<link rel="stylesheet" href="/static/css/pdf_list.css">
 </head>
 <body>
-    <header>
-        <h1>Available PDF Reports</h1>
+<header>
+    <h1>Available PDF Reports</h1>
 
-        {% if current_user %}
-            <p class="current-user">
-                Logged in as: {{ current_user.username }} ({{ current_user.role | capitalize }})
-            </p>
-        {% endif %}
+    {% if current_user %}
+        <p class="current-user">
+            Logged in as: {{ current_user.username }} ({{ current_user.role | capitalize }})
+        </p>
+    {% endif %}
 
-        {% if current_user and current_user.role == "owner" %}
-            <div class="left-div">
-                <a href="/users" class="back-btn">Users</a>
-                <a href="/audit_logs" class="back-btn">Logs</a>
-            </div>
-        {% endif %}
-
-        <div class="right-div">
-            <a href="/create_report" class="add-btn" title="Create New Report">+ Create Report</a>
-            <a href="#" class="add-btn" id="logout-btn">Logout</a>
+    {% if current_user and current_user.role == "owner" %}
+        <div class="left-div">
+            <a href="/users" class="back-btn">Users</a>
+            <a href="/audit_logs" class="back-btn">Logs</a>
         </div>
-    </header>
+    {% endif %}
 
-    <main>
-        <div id="reportList">
-            <!-- JS will populate report cards here -->
+    <div class="right-div">
+        <a href="{{ url_for('create_report') }}" class="add-btn" title="Create New Report">+ Create Report</a>
+        <a href="#" class="add-btn" id="logout-btn">Logout</a>
+    </div>
+</header>
+
+<main>
+    <div id="reportList" class="report-list">
+        <!-- JS populates report cards here -->
+    </div>
+
+    <!-- Pagination controls -->
+    <div id="paginationBar" class="pagination-bar">
+        <div class="per-page">
+            <label for="perPageSelect">Per Page:</label>
+            <select id="perPageSelect">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
         </div>
-    </main>
 
-    <!-- Confirmation Modal (reused from delete user) -->
-    <div id="confirmModal">
-        <div id="confirmBox">
-            <p id="confirmText"></p>
-            <button id="confirmYes">Yes</button>
-            <button id="confirmNo">Cancel</button>
+        <div class="nav">
+            <button id="prevBtn" class="page-btn">← Prev</button>
+            <span id="pageInfo" class="page-info">Page 1 of 1</span>
+            <button id="nextBtn" class="page-btn">Next →</button>
+        </div>
+
+        <div class="jump">
+            <label for="jumpPageInput">Go to</label>
+            <input id="jumpPageInput" type="text" inputmode="numeric" pattern="[0-9]*" />
+            <button id="jumpPageBtn" class="page-btn">Go</button>
         </div>
     </div>
-</body>
+
+    <div id="paginationInfo" class="pagination-info" aria-live="polite"></div>
+</main>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal">
+    <div id="confirmBox" class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+        <p id="confirmText"></p>
+        <div class="modal-actions">
+            <button id="confirmYes" class="modal-yes">Yes</button>
+            <button id="confirmNo" class="modal-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script type="module" src="/static/js/pdf_list.js"></script>
+</body>
 </html>

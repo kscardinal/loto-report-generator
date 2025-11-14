@@ -23,6 +23,7 @@ from sendgrid.helpers.mail import Mail
 import pytz
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
+from math import ceil
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
@@ -626,23 +627,55 @@ async def cleanup_orphan_photos(
     }
 
 # -----------------------------
-# JSON endpoints
+# JSON endpoints - Server-side pagination
 # -----------------------------
 @app.get("/pdf_list_json")
 async def pdf_list_json(
+    page: int = 1,
+    per_page: int = 25,
     username: str = Depends(get_current_user_no_redirect)
 ):
-    docs = uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
+    # Ensure valid values
+    if page < 1:
+        page = 1
+    if per_page < 1:
+        per_page = 25
+
+    skip = (page - 1) * per_page
+
+    total_reports = uploads.count_documents({})
+
+    # Query paginated + sorted by report_name
+    cursor = (
+        uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
+        .sort("report_name", 1)   # sort A → Z
+        .skip(skip)
+        .limit(per_page)
+    )
+
     report_list = []
-    for doc in docs:
+    for doc in cursor:
+        # Photo count (you excluded "photos" so doc.get might be missing)
         photo_count = len(doc.get("photos", [])) if "photos" in doc else 0
+
+        # Convert datetimes into ISO strings
         for key in ["date_added", "last_modified", "last_generated"]:
             if key in doc and isinstance(doc[key], datetime):
-                doc[key] = doc[key].isoformat()
+                eastern = pytz.timezone("US/Eastern")
+                local_time = doc[key].replace(tzinfo=pytz.utc).astimezone(eastern)
+                formatted_time = local_time.strftime("%B %d, %Y %I:%M:%S %p %Z")
+                doc[key] = formatted_time
+
         doc["num_photos"] = photo_count
         report_list.append(doc)
 
-    return {"reports": report_list}
+    return {
+        "page": page,
+        "per_page": per_page,
+        "total": total_reports,
+        "reports": report_list,
+        "total_pages": (total_reports + per_page - 1) // per_page,
+    }
 
 # -----------------------------
 # Download JSON + all related photos (separately)
