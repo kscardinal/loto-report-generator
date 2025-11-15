@@ -1107,8 +1107,6 @@ def new_user_welcome_email(user, geo):
             <tr><td>Location</td><td>{location_str}</td></tr>
         </table>
         <p>Once your account is approved by the administrator, you will receive another notification with instructions on how to log in.</p>
-        <p>In the meantime, you can visit our site:</p>
-        <p><a href="https://lotogenerator.app/users" class="button">Visit LOTO Generator</a></p>
         <p class="footer">This is an automated message. Please do not reply to this email.</p>
     </body>
     </html>
