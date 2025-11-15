@@ -336,9 +336,9 @@
       }
     },
     "/remove_report/{report_name}": {
-      "get": {
+      "post": {
         "summary": "Remove Report",
-        "operationId": "remove_report_remove_report__report_name__get",
+        "operationId": "remove_report_remove_report__report_name__post",
         "parameters": [
           {
             "name": "report_name",
@@ -373,9 +373,9 @@
           }
         }
       },
-      "post": {
+      "get": {
         "summary": "Remove Report",
-        "operationId": "remove_report_remove_report__report_name__get",
+        "operationId": "remove_report_remove_report__report_name__post",
         "parameters": [
           {
             "name": "report_name",
@@ -414,7 +414,7 @@
     "/cleanup_orphan_photos": {
       "get": {
         "summary": "Cleanup Orphan Photos",
-        "operationId": "cleanup_orphan_photos_cleanup_orphan_photos_get",
+        "operationId": "cleanup_orphan_photos_cleanup_orphan_photos_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -430,7 +430,7 @@
       },
       "post": {
         "summary": "Cleanup Orphan Photos",
-        "operationId": "cleanup_orphan_photos_cleanup_orphan_photos_get",
+        "operationId": "cleanup_orphan_photos_cleanup_orphan_photos_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -449,6 +449,28 @@
       "get": {
         "summary": "Pdf List Json",
         "operationId": "pdf_list_json_pdf_list_json_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "title": "Per Page"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -456,6 +478,16 @@
               "application/json": {
                 "schema": {
 
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -752,7 +784,7 @@
         }
       }
     },
-    "/create-account": {
+    "/create_account": {
       "get": {
         "summary": "Create Account Form",
         "operationId": "create_account_form_create_account_get",
@@ -971,6 +1003,274 @@
       "get": {
         "summary": "Audit Logs Json",
         "operationId": "audit_logs_json_audit_logs_json_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint for monitoring and badges.\nReturns a simple 200 OK response.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-username-email": {
+      "get": {
+        "summary": "Check Username Email",
+        "operationId": "check_username_email_check_username_email_get",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forgot_password": {
+      "get": {
+        "summary": "Forgot Password Form",
+        "operationId": "forgot_password_form_forgot_password_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_backup_code": {
+      "post": {
+        "summary": "Send Backup Code",
+        "description": "Send the backup code to a user's email.\nNo authentication required.",
+        "operationId": "send_backup_code_send_backup_code_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify_backup_code": {
+      "post": {
+        "summary": "Verify Backup Code",
+        "description": "Verify a user's backup code.\nNo authentication required.",
+        "operationId": "verify_backup_code_verify_backup_code_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/update-verification-attempts": {
+      "post": {
+        "summary": "Update Verification Attempts",
+        "operationId": "update_verification_attempts_update_verification_attempts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset_password": {
+      "post": {
+        "summary": "Reset Password",
+        "operationId": "reset_password_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "summary": "Logout",
+        "operationId": "logout_logout_post",
         "responses": {
           "200": {
             "description": "Successful Response",

@@ -423,33 +423,42 @@ http://localhost:8000/docs
 ```
 - For more info on each endpoint
 
-| Endpoint                               | Method(s)      | Type     | Description                                                                             |
-|----------------------------------------|----------------|----------|-----------------------------------------------------------------------------------------|
-| `/login`                               | GET, POST      | 🔒 Auth | Displays the login page and handles user authentication                                 |
-| `/create-account`                      | GET, POST      | 🔒 Auth | Displays the account creation page and creates a new user                               |
-| `/jwt_test`                            | GET            | ⚙️ API  | Verifies the current JWT and returns confirmation                                       |
-| `/update-login-attempts`               | POST           | ⚙️ API  | Updates the login attempts count for a user (JWT-protected)                             |
-| `/change_status`                       | POST           | ⚙️ API  | Changes a user's active status (owner only)                                             |
-| `/update_role`                         | POST           | ⚙️ API  | Updates a user's role (owner only)                                                      |
-| `/users`                               | GET            | 🖥️ Page | Displays an HTML page listing all users (owner only)                                    |
-| `/users_json`                          | GET            | ⚙️ API  | Returns JSON of all users (owner only)                                                  |
-| `/audit_logs`                          | GET            | 🖥️ Page | Displays all audit logs in formatted view (owner only)                                  |
-| `/audit_logs_json`                     | GET            | ⚙️ API  | Returns audit logs as JSON (owner only)                                                 |
-| `/create_report`                       | GET            | 🖥️ Page | Displays a webpage for creating a report with options to download/upload                |
-| `/upload/`                             | POST           | ⚙️ API  | Uploads JSON and other files to the server, storing metadata and photos in the database |
-| `/pdf_list`                            | GET            | 🖥️ Page | Displays a webpage listing all PDFs/reports available in the database                   |
-| `/pdf_list_json`                       | GET            | ⚙️ API  | Returns JSON of all reports with metadata only (no JSON data or photos)                 |
-| `/view_report/{report_name}`           | GET            | 🖥️ Page | Displays detailed report metadata and associated photos (HTML page)                     |
-| `/metadata/{report_name}`              | GET            | ⚙️ API  | Returns stored metadata for a specific report as JSON (excluding JSON data/photos)      |
-| `/download_report_files/{report_name}` | GET            | ⚙️ API  | Returns URLs for downloading a report’s JSON and all related photos                     |
-| `/download_json/{report_name}`         | GET            | ⚙️ API  | Downloads the JSON file for a specific report                                           |
-| `/download_photo/{photo_id}`           | GET            | ⚙️ API  | Downloads an individual photo from GridFS by its ID                                     |
-| `/download_pdf/{report_name}`          | GET            | ⚙️ API  | Downloads/streams the generated PDF file for the specified report                       |
-| `/photo/{photo_id}`                    | GET            | ⚙️ API  | Returns an image stored in GridFS by its ID                                             |
-| `/remove_report/{report_name}`         | GET, POST      | ⚙️ API  | Deletes a report from the database (retains shared photos)                              |
-| `/cleanup_orphan_photos`               | GET, POST      | ⚙️ API  | Deletes all photos in GridFS not referenced by any report                               |
-| `/clear/`                              | POST           | ⚙️ API  | Clears all temporary files in the server’s temp directory                               |
-| `/db_status`                           | GET            | ⚙️ API  | Checks database connection and returns success or error message                         |
+| Endpoint                               | Methods   | Category          | Description                                                                         |
+|----------------------------------------|-----------|-------------------|-------------------------------------------------------------------------------------|
+| `/health`                              | GET       | 🩺 Health         | Simple public health-check endpoint returning a JSON status payload.                |
+| `/login`                               | GET, POST | 🔒 Auth Page      | Displays the login page and processes user authentication.                          |
+| `/logout`                              | POST      | 🔒 Auth API       | Logs out the current user by clearing the authentication cookie/token.              |
+| `/create_account`                      | GET, POST | 🔒 Auth Page      | Displays the create-account page and creates a new (inactive) user.                 |
+| `/check-username-email`                | GET       | 🔒 Auth API       | Checks whether a username or email is already in use during signup.                 |
+| `/forgot_password`                     | GET       | 🔒 Auth Page      | Displays the forgot-password page where users can request a backup code.            |
+| `/send_backup_code`                    | POST      | 🔒 Auth API       | Sends the current backup code to the specified email and rotates the code.          |
+| `/verify_backup_code`                  | POST      | 🔒 Auth API       | Verifies a submitted backup code for an email and rotates to a new code.            |
+| `/update-verification-attempts`        | POST      | ⚙️ Auth API       | Updates the verification-attempt counter for a given email address.                 |
+| `/reset_password`                      | POST      | 🔒 Auth API       | Resets a user’s password and sends a confirmation email.                            |
+| `/jwt_test`                            | GET       | ⚙️ Auth API       | Verifies the current JWT and returns a success JSON response.                       |
+| `/users`                               | GET       | 🖥️ Admin Page    | Displays the HTML user management page (owner only).                                |
+| `/users_json`                          | GET       | ⚙️ Admin API      | Returns JSON data for all users (owner only).                                       |
+| `/change_status`                       | POST      | ⚙️ Admin API      | Activates or deactivates a user account (owner only).                               |
+| `/update_role`                         | POST      | ⚙️ Admin API      | Updates a user’s role (owner only).                                                 |
+| `/delete_user`                         | POST      | ⚙️ Admin API      | Deletes a user account and sends a notification email (owner only).                 |
+| `/update-login-attempts`               | POST      | ⚙️ Admin API      | Updates the stored login-attempt counter for a specified user (JWT-protected).      |
+| `/audit_logs`                          | GET       | 🖥️ Admin Page    | Displays the audit log viewer page (owner only).                                    |
+| `/audit_logs_json`                     | GET       | ⚙️ Admin API      | Returns recent audit logs as JSON (owner only).                                     |
+| `/create_report`                       | GET       | 🖥️ Reports Page  | Displays the HTML form for creating a new report.                                   |
+| `/upload/`                             | POST      | ⚙️ Reports API    | Uploads JSON report data and photos to create or update a report in MongoDB/GridFS. |
+| `/pdf_list`                            | GET       | 🖥️ Reports Page  | Displays the HTML page listing all available reports.                               |
+| `/pdf_list_json`                       | GET       | ⚙️ Reports API    | Returns a paginated JSON list of reports and their metadata.                        |
+| `/view_report/{report_name}`           | GET       | 🖥️ Reports Page  | Displays detailed metadata and photos for a single report as an HTML page.          |
+| `/metadata/{report_name}`              | GET       | ⚙️ Reports API    | Returns stored metadata for a specific report (without JSON payload or photos).     |
+| `/download_report_files/{report_name}` | GET       | ⚙️ Reports API    | Returns JSON containing download URLs for a report’s JSON and photos.               |
+| `/download_json/{report_name}`         | GET       | ⚙️ Reports API    | Downloads the raw JSON data for the specified report.                               |
+| `/download_pdf/{report_name}`          | GET       | ⚙️ Reports API    | Downloads or streams the generated PDF file for the specified report.               |
+| `/download_photo/{photo_id}`           | GET       | ⚙️ Reports API    | Downloads an individual photo file from GridFS by its ID.                           |
+| `/photo/{photo_id}`                    | GET       | ⚙️ Reports API    | Returns a photo image from GridFS by its ID for inline display.                     |
+| `/remove_report/{report_name}`         | GET, POST | ⚙️ Reports API    | Deletes a report document from the database (shared photos are retained).           |
+| `/cleanup_orphan_photos`               | GET, POST | 🧹 Maintenance    | Deletes photos in GridFS that are not referenced by any report.                     |
+| `/clear/`                              | POST      | 🧹 Maintenance    | Clears all temporary files in the server’s temp directory.                          |
+| `/db_status`                           | GET       | 🧩 Maintenance    | Checks the database connection and returns a status message.                        |
 
 ---
 
