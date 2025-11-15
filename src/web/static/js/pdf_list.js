@@ -109,14 +109,16 @@ function renderReportsPage(json) {
         return;
     }
 
+    // Sync globals with server
     reports = json.reports;
     totalPages = json.total_pages || 1;
-
-    // Clamp currentPage if necessary
     currentPage = Math.min(Math.max(json.page || 1, 1), totalPages);
+    perPage = json.per_page || perPage;
+
+    const total = json.total || reports.length;
 
     const start = (currentPage - 1) * perPage + 1;
-    const end = Math.min(start + reports.length - 1, json.total || reports.length);
+    const end = Math.min(start + reports.length - 1, total);
 
     reportListEl.innerHTML = "";
     reports.forEach(r => {
@@ -168,7 +170,7 @@ function renderReportsPage(json) {
 
     // Update pagination UI
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-    paginationInfo.textContent = `${start}-${end} / ${json.total || reports.length}`;
+    paginationInfo.textContent = `${start}-${end} / ${total}`;
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = currentPage >= totalPages;
     jumpBtn.disabled = totalPages <= 1;
@@ -178,7 +180,6 @@ function renderReportsPage(json) {
     updateURL();
     saveSettings();
 
-    // blur focused element to avoid aria-hidden issues
     if (document.activeElement) document.activeElement.blur();
 }
 
@@ -231,20 +232,9 @@ async function deleteReport(reportName) {
 async function loadAndRender(page = currentPage, pp = perPage) {
     perPage = pp;
 
-    const resp = await fetch(`/pdf_list_json?per_page=${perPage}`, { credentials: "include" });
+    const resp = await fetch(`/pdf_list_json?page=${page}&per_page=${perPage}`, { credentials: "include" });
     const data = await resp.json();
-    reports = data.reports || [];
-
-    totalPages = data.total_pages || Math.ceil((reports.length || 1) / perPage);
-    currentPage = Math.min(Math.max(page, 1), totalPages);
-
-    renderReportsPage({
-        reports: reports.slice((currentPage - 1) * perPage, currentPage * perPage),
-        total: reports.length,
-        page: currentPage,
-        per_page: perPage,
-        total_pages: totalPages
-    });
+    renderReportsPage(data);
 }
 
 // ------------------------------
