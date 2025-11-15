@@ -380,7 +380,7 @@ async def pdf_list(
         return current_user
 
     # Fetch report names
-    docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("report_name", 1)
+    docs = uploads.find({}, {"_id": 0, "report_name": 1}).sort("last_modified", -1)
     report_names = [doc.get("report_name") for doc in docs if doc.get("report_name")]
 
     return templates.TemplateResponse(
@@ -648,7 +648,7 @@ async def pdf_list_json(
     # Query paginated + sorted by report_name
     cursor = (
         uploads.find({}, {"_id": 0, "json_data": 0, "photos": 0})
-        .sort("report_name", 1)   # sort A → Z
+        .sort([("last_modified", -1), ("report_name", 1)])
         .skip(skip)
         .limit(per_page)
     )
