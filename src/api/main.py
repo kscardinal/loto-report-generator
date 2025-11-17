@@ -1935,3 +1935,46 @@ def logout(response: Response):
     # Clear the access_token cookie
     response.delete_cookie(key="access_token", path="/")
     return {"message": "Logged out"}
+
+@app.get("/map")
+def map_page(
+    request: Request,
+    current_user: dict = Depends(get_current_user_no_redirect)
+):
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+    return templates.TemplateResponse("map.html", {"request": request})
+
+@app.get("/locations_summary")
+async def locations_summary(current_user: dict = Depends(get_current_user_no_redirect)):
+    # Require owner access
+    error = require_role("owner")(current_user)
+    if error:
+        return error
+
+    # Only retrieve the location field
+    cursor = known_locations.find(
+        {}, {"_id": 0, "location": 1}
+    )
+
+    countries = set()
+    us_states = set()
+
+    for doc in cursor:
+        loc = doc.get("location", {})
+        country = loc.get("country")
+        region = loc.get("region")
+
+        if country:
+            countries.add(country)
+
+        # Only add U.S. states
+        if country == "United States" and region:
+            us_states.add(region)
+
+    return {
+        "countries": sorted(list(countries)),
+        "us_states": sorted(list(us_states))
+    }
