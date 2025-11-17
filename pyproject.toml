@@ -31,6 +31,7 @@ dependencies = [
     "reportlab>=4.4.2",
     "requests>=2.32.4",
     "sendgrid>=6.12.5",
+    "shapely>=2.1.2",
     "uvicorn>=0.38.0",
 ]
 

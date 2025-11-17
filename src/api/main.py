@@ -24,6 +24,7 @@ import pytz
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
 from math import ceil
+from shapely.geometry import shape, box
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
@@ -76,6 +77,7 @@ from src.database.db_2 import get_report_entry
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "web" / "static"
 TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
+DEPENDENCY_DIR = BASE_DIR / "web" / "static" / "dependencies"
 TEMP_DIR = BASE_DIR.parent / "temp"
 PROCESS_DIR = BASE_DIR / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
@@ -1939,42 +1941,77 @@ def logout(response: Response):
 @app.get("/map")
 def map_page(
     request: Request,
-    current_user: dict = Depends(get_current_user_no_redirect)
+    current_user: dict = Depends(get_current_user)
 ):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
         return error
+    
     return templates.TemplateResponse("map.html", {"request": request})
 
+COLORS = ["#FF6666", "#66FF66", "#6666FF", "#FFFF66"]
+
+def greedy_color(adjacency):
+    colors = {}
+    for name in adjacency:
+        used = set(colors.get(n) for n in adjacency[name] if n in colors)
+        colors[name] = next((c for c in COLORS if c not in used), COLORS[0])
+    return colors
+
+def build_adjacency(features, name_key="name"):
+    adjacency = {}
+    # Build bounding boxes for all features
+    bboxes = {f['properties'][name_key]: box(*shape(f['geometry']).bounds) for f in features}
+
+    for name_a, bbox_a in bboxes.items():
+        adjacency[name_a] = []
+        for name_b, bbox_b in bboxes.items():
+            if name_a == name_b:
+                continue
+            if bbox_a.intersects(bbox_b):
+                adjacency[name_a].append(name_b)
+    return adjacency
+
 @app.get("/locations_summary")
-async def locations_summary(current_user: dict = Depends(get_current_user_no_redirect)):
-    # Require owner access
-    error = require_role("owner")(current_user)
-    if error:
-        return error
+async def locations_summary(current_user: dict = Depends(get_current_user)):
+    # --- Get visited countries and states from DB ---
+    docs = list(known_locations.find({}))
+    visited_countries = set()
+    visited_states = set()
 
-    # Only retrieve the location field
-    cursor = known_locations.find(
-        {}, {"_id": 0, "location": 1}
-    )
-
-    countries = set()
-    us_states = set()
-
-    for doc in cursor:
-        loc = doc.get("location", {})
+    for doc in docs:
+        loc = doc.get("location") or {}
         country = loc.get("country")
-        region = loc.get("region")
-
+        state = loc.get("region")
         if country:
-            countries.add(country)
+            visited_countries.add(country)
+        if state:
+            visited_states.add(state)
 
-        # Only add U.S. states
-        if country == "United States" and region:
-            us_states.add(region)
+    # --- Load GeoJSON ---
+    with open(DEPENDENCY_DIR / "countries.geojson") as f:
+        countries_geo = json.load(f)
+    with open(DEPENDENCY_DIR / "states.json") as f:
+        states_geo = json.load(f)
+
+    # --- Build adjacency & assign colors ---
+    countries_adj = build_adjacency(countries_geo['features'], name_key="name")
+    countries_colors = greedy_color(countries_adj)
+
+    states_adj = build_adjacency(states_geo['features'], name_key="NAME")
+    states_colors = greedy_color(states_adj)
+
+    # Only include visited places
+    visited_countries_colors = {c: countries_colors[c] for c in visited_countries if c in countries_colors}
+    visited_states_colors = {s: states_colors[s] for s in visited_states if s in states_colors}
 
     return {
-        "countries": sorted(list(countries)),
-        "us_states": sorted(list(us_states))
+        "countries": list(visited_countries),
+        "us_states": list(visited_states),
+        "countries_colors": visited_countries_colors,
+        "states_colors": visited_states_colors
     }
