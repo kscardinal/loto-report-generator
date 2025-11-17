@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from shapely.geometry import shape, Point
+from shapely.geometry import shape, Point, MultiPolygon, Polygon
 from shapely import maximum_inscribed_circle
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -8,6 +8,7 @@ import numpy as np
 import cv2 as cv
 import numba as nb
 from icecream import ic
+from shapely.ops import unary_union
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEPENDENCY_DIR = BASE_DIR / "web" / "static" / "dependencies"
@@ -136,16 +137,26 @@ def largest_inscribed_rectangle_state(state_name, resolution=1000):
             }
     return None
 
-def combined_largest_centers_and_plot(state_name, do_print:bool = False, do_plot:bool = False):
-    with open(DEPENDENCY_DIR / "states.json") as f:
+def combined_largest_centers_and_plot(
+    region_name: str, 
+    geojson_file: Path, 
+    name_property: str = "NAME", 
+    do_print: bool = False, 
+    do_plot: bool = False
+):
+    # Load the GeoJSON
+    with open(geojson_file) as f:
         data = json.load(f)
+
     polygon = None
     for feature in data['features']:
-        if feature['properties']['NAME'].lower() == state_name.lower():
+        if feature['properties'].get(name_property, '').lower() == region_name.lower():
             polygon = shape(feature['geometry'])
             break
+
     if polygon is None:
-        print("State not found")
+        if do_print:
+            print(f"{region_name} not found in {geojson_file}")
         return
 
     # Largest inscribed circle center
@@ -155,64 +166,90 @@ def combined_largest_centers_and_plot(state_name, do_print:bool = False, do_plot
     radius = circle_center_point.distance(boundary_point)
     circle_center = (circle_center_point.x, circle_center_point.y)
 
-    # Largest inscribed rectangle center
-    rect_result = largest_inscribed_rectangle_state(state_name)
-    rect_corners = rect_result['rectangle_corners']
-    rect_center = rect_result['center']
+    # Largest inscribed rectangle center (may fail)
+    rect_result = largest_inscribed_rectangle_state(region_name)
+    if rect_result is not None:
+        rect_corners = rect_result['rectangle_corners']
+        rect_center = rect_result['center']
+    else:
+        rect_corners = None
+        rect_center = None
 
-    # Average center of circle and rectangle centers
-    avg_center_lon = (circle_center[0] + rect_center[0]) / 2
-    avg_center_lat = (circle_center[1] + rect_center[1]) / 2
+    # Average center (handle missing rectangle)
+    if rect_center:
+        avg_center_lon = (circle_center[0] + rect_center[0]) / 2
+        avg_center_lat = (circle_center[1] + rect_center[1]) / 2
+    else:
+        avg_center_lon = circle_center[0]
+        avg_center_lat = circle_center[1]
     avg_center = (avg_center_lon, avg_center_lat)
 
-    # Plot all
-    fig, ax = plt.subplots(figsize=(8,8))
-
-    # Polygon plot
-    if polygon.geom_type == 'MultiPolygon':
-        for poly in polygon.geoms:
-            x, y = poly.exterior.xy
+    # Plotting
+    if do_plot:
+        fig, ax = plt.subplots(figsize=(8,8))
+        # Polygon plot
+        if polygon.geom_type == 'MultiPolygon':
+            for poly in polygon.geoms:
+                x, y = poly.exterior.xy
+                ax.plot(x, y, color='blue')
+        else:
+            x, y = polygon.exterior.xy
             ax.plot(x, y, color='blue')
-    else:
-        x, y = polygon.exterior.xy
-        ax.plot(x, y, color='blue')
+        # Circle plot
+        circle_patch = patches.Circle(circle_center, radius, color='green', alpha=0.3, label="Largest Inscribed Circle")
+        ax.add_patch(circle_patch)
+        ax.plot(circle_center[0], circle_center[1], 'go', label="Circle Center")
+        # Rectangle plot (only if exists)
+        if rect_corners:
+            x1, y1 = rect_corners[0]
+            x2, y2 = rect_corners[1]
+            rect_patch = patches.Rectangle(
+                (x1, y1), x2-x1, y2-y1,
+                edgecolor='red', facecolor='none', linewidth=2,
+                label='Largest Inscribed Rectangle'
+            )
+            ax.add_patch(rect_patch)
+            ax.plot(rect_center[0], rect_center[1], 'ro', label="Rectangle Center")
+        # Average center plot
+        ax.plot(avg_center[0], avg_center[1], 'ko', label="Average Center")
+        ax.set_aspect('equal')
+        ax.legend()
+        ax.set_title(f"Largest Inscribed Circle, Rectangle, and Average Center for {region_name}")
+        plt.tight_layout()
+        plt.show()
 
-    # Circle plot
-    circle_patch = patches.Circle(circle_center, radius, color='green', alpha=0.3, label="Largest Inscribed Circle")
-    ax.add_patch(circle_patch)
-    ax.plot(circle_center[0], circle_center[1], 'go', label="Circle Center")
-
-    # Rectangle plot
-    x1, y1 = rect_corners[0]
-    x2, y2 = rect_corners[1]
-    rect_width = x2 - x1
-    rect_height = y2 - y1
-    rect_patch = patches.Rectangle((x1, y1), rect_width, rect_height, edgecolor='red', facecolor='none', linewidth=2, label='Largest Inscribed Rectangle')
-    ax.add_patch(rect_patch)
-    ax.plot(rect_center[0], rect_center[1], 'ro', label="Rectangle Center")
-
-    # Average center plot
-    ax.plot(avg_center[0], avg_center[1], 'ko', label="Average Center")
-
-    ax.xaxis.set_major_formatter(plt.FuncFormatter(format_longitude))
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_latitude))
-
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
-    ax.set_aspect('equal')
-    ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0)
-    plt.tight_layout()
-    plt.subplots_adjust(right=0.8)
-    ax.set_title(f"Largest Inscribed Circle, Rectangle, and Average Center for {state_name}")
-
-    if do_plot: plt.show()
     if do_print:
-        # Print centers via icecream
-        ic(f"Circle Center (Lat, Lon): ({circle_center[1]}, {circle_center[0]})")
-        ic(f"Rectangle Center (Lat, Lon): ({rect_center[1]}, {rect_center[0]})")
-        ic(f"Average Center (Lat, Lon): ({avg_center_lat}, {avg_center_lon})")
+        ic(f"Circle Center (Lon, Lat): {circle_center}")
+        ic(f"Rectangle Center (Lon, Lat): {rect_center}")
+        ic(f"Average Center (Lon, Lat): {avg_center}")
 
-    return({"circle": circle_center, "rectanle": rect_center, "average": [float(avg_center_lon), float(avg_center_lat)]})
+    return {
+        "circle": circle_center,
+        "rectangle": rect_center,
+        "average": (avg_center_lon, avg_center_lat)
+    }
 
 # Example usage:
-ic(combined_largest_centers_and_plot("Montana")["circle"])
+ic(combined_largest_centers_and_plot(
+    region_name="Texas",
+    geojson_file=DEPENDENCY_DIR / "states.json",
+    name_property="NAME",
+    do_print=True,
+    do_plot=True
+))
+
+ic(combined_largest_centers_and_plot(
+    region_name="France",
+    geojson_file=DEPENDENCY_DIR / "countries.geojson",
+    name_property="name",
+    do_print=True,
+    do_plot=True
+))
+
+ic(combined_largest_centers_and_plot(
+    region_name="Indonesia",
+    geojson_file=DEPENDENCY_DIR / "countries.geojson",
+    name_property="name",
+    do_print=True,
+    do_plot=True
+))
