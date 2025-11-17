@@ -1,13 +1,32 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f7f7f7;
-    color: #333;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+}
+
+header {
+    background-color: #C32026;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+main {
+    max-width: 800px;
+    margin: 20px auto;
 }
 
 .map-div {
-    height: 90vh;
+    height: 88vh;
     width: 100%;
     padding: 0;
     margin: 0;
@@ -31,4 +50,32 @@ body {
     text-align: center;
     padding: 2px 4px;
     border-radius: 3px;
+}
+
+.back-btn {
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.95em;
+    background-color: rgba(0,0,0,0.2);
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.back-btn:hover {
+    background-color: rgba(0,0,0,0.35);
+}
+
+.current-user {
+    font-size: 0.9em;
+    color: white;
+    margin-top: 5px;
+}
+
+.back-div {
+    position: absolute;
+    left: 20px;
+    top: 50%;
 }

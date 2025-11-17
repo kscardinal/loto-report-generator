@@ -1954,7 +1954,10 @@ def map_page(
     if error:
         return error
     
-    return templates.TemplateResponse("map.html", {"request": request})
+    return templates.TemplateResponse("map.html", {
+        "request": request,
+        "current_user": current_user
+    })
 
 COLORS = ["#FF6666", "#66FF66", "#6666FF", "#FFFF66"]
 
