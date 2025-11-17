@@ -1,10 +1,16 @@
-const map = L.map('map').setView([37, -95], 4);
+const map = L.map('map' , {
+    maxBounds: [[-90, -180], [90, 180]],
+    maxBoundsViscosity: 1.0,
+    minZoom: 3,
+    maxZoom: 6
+}).setView([37, -95], 4);
 
 // Minimal tiles
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-attribution: '&copy; OpenStreetMap contributors',
-subdomains: 'abcd',
-maxZoom: 19
+    subdomains: 'abcd',
+    maxZoom: 19,
+    continuousWorld: false, // <- stop horizontal wrapping
+    noWrap: true            // <- stop horizontal wrapping
 }).addTo(map);
 
 fetch('/locations_summary')
