@@ -448,7 +448,7 @@ async def view_report(
         background_tasks=background_tasks
     )
 
-    return templates.TemplateResponse("view_report.html", {"request": request, "report": doc})
+    return templates.TemplateResponse("view_report.html", {"request": request, "report": doc, "current_user": username})
 
 # -----------------------------
 # Fetch individual photo
@@ -523,7 +523,7 @@ async def create_report(
         background_tasks=background_tasks
     )
 
-    return templates.TemplateResponse("input_form.html", {"request": request})
+    return templates.TemplateResponse("input_form.html", {"request": request, "current_user": username})
 
 # -----------------------------
 # Remove a report from the database
