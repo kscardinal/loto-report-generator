@@ -16,56 +16,51 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([37, -95], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: "© OpenStreetMap contributors"
+
+    // Minimal OpenStreetMap tiles (no city/country labels)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
     }).addTo(map);
 
-    // Fetch visited countries and US states from the FastAPI endpoint
-    fetch("/locations_summary")
-      .then(res => res.json())
+    fetch('/locations_summary')
+      .then(r => r.json())
       .then(data => {
         const visitedCountries = data.countries || [];
         const visitedStates = data.us_states || [];
 
-        // --- Load WORLD countries ---
+        // WORLD COUNTRIES
         fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
           .then(r => r.json())
-          .then(geojson => {
-            L.geoJSON(geojson, {
-              style: f => {
-                const name = f.properties.name;
-                const visited = visitedCountries.includes(name);
-                return {
-                  fillColor: visited ? "#ff5555" : "#cccccc",
-                  color: "#333",
-                  weight: 1,
-                  fillOpacity: visited ? 0.5 : 0.2,
-                };
-              },
-              onEachFeature: (f, layer) => layer.bindPopup(f.properties.name)
+          .then(worldGeojson => {
+            L.geoJSON(worldGeojson, {
+              style: f => ({
+                fillColor: visitedCountries.includes(f.properties.name) ? "#ff5555" : "#cccccc",
+                color: "transparent",   // Transparent borders
+                weight: 0,
+                fillOpacity: visitedCountries.includes(f.properties.name) ? 0.5 : 0.2
+              }),
+              onEachFeature: () => {}
             }).addTo(map);
           });
 
-        // --- Load U.S. STATES ---
+        // U.S. STATES
         fetch("https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json")
           .then(r => r.json())
-          .then(geojson => {
-            L.geoJSON(geojson, {
-              style: f => {
-                const name = f.properties.name;
-                const visited = visitedStates.includes(name);
-                return {
-                  fillColor: visited ? "#33cc33" : "#88dd88",
-                  color: "#225522",
-                  weight: 1,
-                  fillOpacity: visited ? 0.5 : 0.3,
-                };
-              },
-              onEachFeature: (f, layer) => layer.bindPopup(f.properties.name)
+          .then(usStatesGeojson => {
+            L.geoJSON(usStatesGeojson, {
+              style: f => ({
+                fillColor: visitedStates.includes(f.properties.name) ? "#33cc33" : "#88dd88",
+                color: "transparent",   // Transparent borders
+                weight: 0,
+                fillOpacity: visitedStates.includes(f.properties.name) ? 0.5 : 0.3
+              }),
+              onEachFeature: () => {}
             }).addTo(map);
           });
       })
-      .catch(err => console.error("Error fetching locations:", err));
+      .catch(err => console.error("Error fetching visited locations:", err));
   </script>
 </body>
 </html>
