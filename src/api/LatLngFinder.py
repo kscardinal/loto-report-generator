@@ -136,7 +136,7 @@ def largest_inscribed_rectangle_state(state_name, resolution=1000):
             }
     return None
 
-def combined_largest_centers_and_plot(state_name, print:bool = False, plot:bool = False):
+def combined_largest_centers_and_plot(state_name, do_print:bool = False, do_plot:bool = False):
     with open(DEPENDENCY_DIR / "states.json") as f:
         data = json.load(f)
     polygon = None
@@ -205,8 +205,8 @@ def combined_largest_centers_and_plot(state_name, print:bool = False, plot:bool 
     plt.subplots_adjust(right=0.8)
     ax.set_title(f"Largest Inscribed Circle, Rectangle, and Average Center for {state_name}")
 
-    if plot: plt.show()
-    if print:
+    if do_plot: plt.show()
+    if do_print:
         # Print centers via icecream
         ic(f"Circle Center (Lat, Lon): ({circle_center[1]}, {circle_center[0]})")
         ic(f"Rectangle Center (Lat, Lon): ({rect_center[1]}, {rect_center[0]})")

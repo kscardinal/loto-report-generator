@@ -30,6 +30,7 @@ from collections import defaultdict
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
+from .LatLngFinder import combined_largest_centers_and_plot 
 
 import gridfs
 from bson.objectid import ObjectId
@@ -2047,10 +2048,11 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
     # Compute geographic centers for visited states
     state_centers = {}
     for s in visited_states:
-        center = get_state_center(s)
-        if center:
+        center_data = combined_largest_centers_and_plot(state_name=s, do_print=False, do_plot=False)
+        if center_data and center_data.get("average"):
             # Leaflet expects [lat, lon] order
-            state_centers[s] = [center[1], center[0]]
+            avg_lon, avg_lat = center_data["average"]
+            state_centers[s] = [avg_lat, avg_lon]
 
     return {
         "countries": list(visited_countries),

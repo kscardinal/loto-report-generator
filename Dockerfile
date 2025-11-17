@@ -4,13 +4,18 @@ FROM python:3.13-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y nginx && apt-get clean
+# Install system dependencies needed for OpenCV + nginx
+RUN apt-get update && apt-get install -y \
+    nginx \
+    libgl1 \
+    libglib2.0-0 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy all project files into the container
 COPY . .
 
-# Install uv and sync the project
+# Install Python dependencies (uv & your requirements)
 RUN pip install uv && uv sync
 
 # Expose FastAPI port
