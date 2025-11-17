@@ -1950,7 +1950,7 @@ def map_page(
         return current_user
     
     # Require owner access
-    error = require_role("owner")(current_user)
+    error = require_role("admin")(current_user)
     if error:
         return error
     
@@ -1978,26 +1978,6 @@ def build_adjacency(features, name_key="name"):
             if bbox_a.intersects(bbox_b):
                 adjacency[name_a].append(name_b)
     return adjacency
-
-def get_state_center(state_name):
-    with open(DEPENDENCY_DIR / "states.json") as f:
-        data = json.load(f)
-    for feature in data['features']:
-        if feature['properties']['NAME'].lower() == state_name.lower():
-            polygon = shape(feature['geometry'])
-            mic_line = maximum_inscribed_circle(polygon)
-
-            center_point = Point(mic_line.coords[0])
-            boundary_point = Point(mic_line.coords[1])
-            # Radius computed if needed, not used here
-            # radius = center_point.distance(boundary_point)
-
-            # Longitude: negative for West (US convention)
-            longitude = -abs(center_point.x) if center_point.x > 0 else center_point.x
-            latitude = center_point.y if center_point.y >= 0 else -center_point.y  # always positive north
-
-            return longitude, latitude
-    return None
 
 @app.get("/locations_summary")
 async def locations_summary(current_user: dict = Depends(get_current_user)):

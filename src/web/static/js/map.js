@@ -2,7 +2,7 @@ const map = L.map('map' , {
     maxBounds: [[-90, -180], [90, 180]],
     maxBoundsViscosity: 1.0,
     minZoom: 3,
-    maxZoom: 6
+    maxZoom: 8
 }).setView([37, -95], 4);
 
 // Minimal tiles
