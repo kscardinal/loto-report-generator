@@ -136,7 +136,7 @@ def largest_inscribed_rectangle_state(state_name, resolution=1000):
             }
     return None
 
-def combined_largest_centers_and_plot(state_name):
+def combined_largest_centers_and_plot(state_name, print:bool = False, plot:bool = False):
     with open(DEPENDENCY_DIR / "states.json") as f:
         data = json.load(f)
     polygon = None
@@ -205,12 +205,14 @@ def combined_largest_centers_and_plot(state_name):
     plt.subplots_adjust(right=0.8)
     ax.set_title(f"Largest Inscribed Circle, Rectangle, and Average Center for {state_name}")
 
-    plt.show()
+    if plot: plt.show()
+    if print:
+        # Print centers via icecream
+        ic(f"Circle Center (Lat, Lon): ({circle_center[1]}, {circle_center[0]})")
+        ic(f"Rectangle Center (Lat, Lon): ({rect_center[1]}, {rect_center[0]})")
+        ic(f"Average Center (Lat, Lon): ({avg_center_lat}, {avg_center_lon})")
 
-    # Print centers via icecream
-    ic(f"Circle Center (Lat, Lon): ({circle_center[1]}, {circle_center[0]})")
-    ic(f"Rectangle Center (Lat, Lon): ({rect_center[1]}, {rect_center[0]})")
-    ic(f"Average Center (Lat, Lon): ({avg_center_lat}, {avg_center_lon})")
+    return({"circle": circle_center, "rectanle": rect_center, "average": [float(avg_center_lon), float(avg_center_lat)]})
 
 # Example usage:
-combined_largest_centers_and_plot("Rhode Island")
+ic(combined_largest_centers_and_plot("Montana")["circle"])
