@@ -1,0 +1,23 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.map-div {
+    height: 90vh;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.title {
+    margin: 10px;
+}
+
+#map { 
+    height: 100%; 
+    width: 100%; 
+}
