@@ -24,7 +24,9 @@ import pytz
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
 from math import ceil
-from shapely.geometry import shape, box
+from shapely.geometry import shape, box, Point
+from shapely import maximum_inscribed_circle
+from collections import defaultdict
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
@@ -1976,6 +1978,26 @@ def build_adjacency(features, name_key="name"):
                 adjacency[name_a].append(name_b)
     return adjacency
 
+def get_state_center(state_name):
+    with open(DEPENDENCY_DIR / "states.json") as f:
+        data = json.load(f)
+    for feature in data['features']:
+        if feature['properties']['NAME'].lower() == state_name.lower():
+            polygon = shape(feature['geometry'])
+            mic_line = maximum_inscribed_circle(polygon)
+
+            center_point = Point(mic_line.coords[0])
+            boundary_point = Point(mic_line.coords[1])
+            # Radius computed if needed, not used here
+            # radius = center_point.distance(boundary_point)
+
+            # Longitude: negative for West (US convention)
+            longitude = -abs(center_point.x) if center_point.x > 0 else center_point.x
+            latitude = center_point.y if center_point.y >= 0 else -center_point.y  # always positive north
+
+            return longitude, latitude
+    return None
+
 @app.get("/locations_summary")
 async def locations_summary(current_user: dict = Depends(get_current_user)):
     # --- Get visited countries and states from DB ---
@@ -1983,14 +2005,23 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
     visited_countries = set()
     visited_states = set()
 
+    # Count unique IPs
+    country_ips = defaultdict(set)
+    state_ips = defaultdict(set)
+
     for doc in docs:
         loc = doc.get("location") or {}
         country = loc.get("country")
         state = loc.get("region")
+        ip = doc.get("ip_address")
         if country:
             visited_countries.add(country)
+            if ip:
+                country_ips[country].add(ip)
         if state:
             visited_states.add(state)
+            if ip:
+                state_ips[state].add(ip)
 
     # --- Load GeoJSON ---
     with open(DEPENDENCY_DIR / "countries.geojson") as f:
@@ -2009,9 +2040,24 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
     visited_countries_colors = {c: countries_colors[c] for c in visited_countries if c in countries_colors}
     visited_states_colors = {s: states_colors[s] for s in visited_states if s in states_colors}
 
+    # Convert IP sets to counts
+    country_counts = {c: len(country_ips[c]) for c in visited_countries}
+    state_counts = {s: len(state_ips[s]) for s in visited_states}
+
+    # Compute geographic centers for visited states
+    state_centers = {}
+    for s in visited_states:
+        center = get_state_center(s)
+        if center:
+            # Leaflet expects [lat, lon] order
+            state_centers[s] = [center[1], center[0]]
+
     return {
         "countries": list(visited_countries),
         "us_states": list(visited_states),
         "countries_colors": visited_countries_colors,
-        "states_colors": visited_states_colors
+        "states_colors": visited_states_colors,
+        "countries_counts": country_counts,
+        "states_counts": state_counts,
+        "states_centers": state_centers
     }

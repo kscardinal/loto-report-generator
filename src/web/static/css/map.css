@@ -21,3 +21,14 @@ body {
     height: 100%; 
     width: 100%; 
 }
+
+.territory-label {
+    background-color: rgba(255,255,255,0.7);
+    border: none;
+    color: #000;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
