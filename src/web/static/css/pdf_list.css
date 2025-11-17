@@ -231,3 +231,17 @@ header {
     .left-div { left: 10px; }
     main { padding: 0 12px; }
 }
+
+.search-container {
+    text-align: center;
+    margin: 15px 0;
+}
+
+#searchInput {
+    width: 90%;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+}
