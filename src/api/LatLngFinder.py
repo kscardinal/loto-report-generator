@@ -229,19 +229,20 @@ def combined_largest_centers_and_plot(
         "average": (avg_center_lon, avg_center_lat)
     }
 
-# Example usage:
-ic(combined_largest_centers_and_plot(
-    region_name="Texas",
-    geojson_file=DEPENDENCY_DIR / "states.json",
-    name_property="NAME",
-    do_print=False,
-    do_plot=False
-))
+if __name__ == "__main__":
+    # Example usage:
+    ic(combined_largest_centers_and_plot(
+        region_name="Texas",
+        geojson_file=DEPENDENCY_DIR / "states.json",
+        name_property="NAME",
+        do_print=False,
+        do_plot=False
+    ))
 
-ic(combined_largest_centers_and_plot(
-    region_name="Italy",
-    geojson_file=DEPENDENCY_DIR / "countries.geojson",
-    name_property="name",
-    do_print=False,
-    do_plot=True
-))
+    ic(combined_largest_centers_and_plot(
+        region_name="Italy",
+        geojson_file=DEPENDENCY_DIR / "countries.geojson",
+        name_property="name",
+        do_print=False,
+        do_plot=True
+    ))

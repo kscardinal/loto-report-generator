@@ -41,7 +41,7 @@ fetch('/locations_summary')
                         const name = f.properties.name;
                         const baseColor = countriesColors[name] || "#cccccc";
                         const count = countriesCounts[name] || 0;
-                        const fill = count > 0 ? darkenColor(baseColor, Math.min(count*10, 100)) : baseColor;
+                        const fill = baseColor;
                         return {
                             fillColor: fill,
                             color: "transparent",
@@ -78,7 +78,7 @@ fetch('/locations_summary')
                         const name = f.properties.NAME;  // make sure backend sets this to match
                         const baseColor = statesColors[name] || "#dddddd";
                         const count = statesCounts[name] || 0;
-                        const fill = count > 0 ? darkenColor(baseColor, Math.min(count*10, 100)) : baseColor;
+                        const fill = baseColor;
                         return {
                             fillColor: fill,
                             color: "transparent",
