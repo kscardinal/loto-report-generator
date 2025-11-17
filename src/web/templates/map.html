@@ -6,23 +6,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
-    #map { height: 600px; width: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .map-div {
+      height: 90vh;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    .title {
+      margin: 10px;
+    }
+    #map { height: 100%; width: 100%; }
   </style>
 </head>
 <body>
-  <h2>Visited Map</h2>
-  <div id="map"></div>
+  <div class="map-div">
+      <h2 class="title">IP Map</h2>
+    <div id="map"></div>
+  </div>
+
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([37, -95], 4);
 
-    // Minimal OpenStreetMap tiles (no city/country labels)
+    // Minimal tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: '&copy; OpenStreetMap contributors',
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
+
+    const COLORS = ["#FF6666", "#66FF66", "#6666FF", "#FFFF66"];
+
+    // Helper: Greedy 4-color assignment
+    function assignColors(features) {
+      const adjacency = {};
+      const featureColors = {};
+
+      // Rough adjacency: if bbox intersects
+      for (let i = 0; i < features.length; i++) {
+        const a = features[i];
+        adjacency[a.properties.name] = [];
+        const bboxA = turf.bbox(a);  // Using Turf.js for bbox
+        for (let j = 0; j < features.length; j++) {
+          if (i === j) continue;
+          const b = features[j];
+          const bboxB = turf.bbox(b);
+          if (!(bboxA[2] < bboxB[0] || bboxA[0] > bboxB[2] || bboxA[3] < bboxB[1] || bboxA[1] > bboxB[3])) {
+            adjacency[a.properties.name].push(b.properties.name);
+          }
+        }
+      }
+
+      // Greedy coloring
+      features.forEach(f => {
+        const used = new Set(adjacency[f.properties.name].map(n => featureColors[n]).filter(c => c));
+        featureColors[f.properties.name] = COLORS.find(c => !used.has(c)) || COLORS[0];
+      });
+
+      return featureColors;
+    }
 
     fetch('/locations_summary')
       .then(r => r.json())
@@ -34,12 +84,13 @@
         fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
           .then(r => r.json())
           .then(worldGeojson => {
+            const colors = assignColors(worldGeojson.features);
             L.geoJSON(worldGeojson, {
               style: f => ({
-                fillColor: visitedCountries.includes(f.properties.name) ? "#ff5555" : "#cccccc",
-                color: "transparent",   // Transparent borders
+                fillColor: visitedCountries.includes(f.properties.name) ? colors[f.properties.name] : "#cccccc",
+                color: "transparent",
                 weight: 0,
-                fillOpacity: visitedCountries.includes(f.properties.name) ? 0.5 : 0.2
+                fillOpacity: visitedCountries.includes(f.properties.name) ? 0.7 : 0.2
               }),
               onEachFeature: () => {}
             }).addTo(map);
@@ -49,18 +100,20 @@
         fetch("https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json")
           .then(r => r.json())
           .then(usStatesGeojson => {
+            const colors = assignColors(usStatesGeojson.features);
             L.geoJSON(usStatesGeojson, {
               style: f => ({
-                fillColor: visitedStates.includes(f.properties.name) ? "#33cc33" : "#88dd88",
-                color: "transparent",   // Transparent borders
+                fillColor: visitedStates.includes(f.properties.name) ? colors[f.properties.name] : "#dddddd",
+                color: "transparent",
                 weight: 0,
-                fillOpacity: visitedStates.includes(f.properties.name) ? 0.5 : 0.3
+                fillOpacity: visitedStates.includes(f.properties.name) ? 0.7 : 0.3
               }),
               onEachFeature: () => {}
             }).addTo(map);
           });
       })
-      .catch(err => console.error("Error fetching visited locations:", err));
+      .catch(err => console.error(err));
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 </body>
 </html>
