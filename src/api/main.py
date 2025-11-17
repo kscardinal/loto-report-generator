@@ -24,9 +24,13 @@ import pytz
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, TrackingSettings, ClickTracking
 from math import ceil
+from shapely.geometry import shape, box, Point
+from shapely import maximum_inscribed_circle
+from collections import defaultdict
 
 from .logging_config import logger, log_requests_json
 from .auth_utils import create_access_token, get_current_user, get_current_user_no_redirect, require_role, log_action, get_client_ip, lookup_ip_with_db
+from .LatLngFinder import combined_largest_centers_and_plot 
 
 import gridfs
 from bson.objectid import ObjectId
@@ -76,6 +80,7 @@ from src.database.db_2 import get_report_entry
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "web" / "static"
 TEMPLATES_DIR = BASE_DIR / "web" / "templates"     # /app/src/web/templates
+DEPENDENCY_DIR = BASE_DIR / "web" / "static" / "dependencies"
 TEMP_DIR = BASE_DIR.parent / "temp"
 PROCESS_DIR = BASE_DIR / "pdf"
 WEB_DIR = BASE_DIR / "src" / "web"
@@ -1935,3 +1940,129 @@ def logout(response: Response):
     # Clear the access_token cookie
     response.delete_cookie(key="access_token", path="/")
     return {"message": "Logged out"}
+
+@app.get("/map")
+def map_page(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    # Require owner access
+    error = require_role("admin")(current_user)
+    if error:
+        return error
+    
+    return templates.TemplateResponse("map.html", {
+        "request": request,
+        "current_user": current_user
+    })
+
+COLORS = ["#FF6666", "#66FF66", "#6666FF", "#FFFF66"]
+
+def greedy_color(adjacency):
+    colors = {}
+    for name in adjacency:
+        used = set(colors.get(n) for n in adjacency[name] if n in colors)
+        colors[name] = next((c for c in COLORS if c not in used), COLORS[0])
+    return colors
+
+def build_adjacency(features, name_key="name"):
+    adjacency = {}
+    # Build bounding boxes for all features
+    bboxes = {f['properties'][name_key]: box(*shape(f['geometry']).bounds) for f in features}
+
+    for name_a, bbox_a in bboxes.items():
+        adjacency[name_a] = []
+        for name_b, bbox_b in bboxes.items():
+            if name_a == name_b:
+                continue
+            if bbox_a.intersects(bbox_b):
+                adjacency[name_a].append(name_b)
+    return adjacency
+
+@app.get("/locations_summary")
+async def locations_summary(current_user: dict = Depends(get_current_user)):
+    # --- Get visited countries and states from DB ---
+    docs = list(known_locations.find({}))
+    visited_countries = set()
+    visited_states = set()
+
+    # Count unique IPs
+    country_ips = defaultdict(set)
+    state_ips = defaultdict(set)
+
+    for doc in docs:
+        loc = doc.get("location") or {}
+        country = loc.get("country")
+        state = loc.get("region")
+        ip = doc.get("ip_address")
+        if country:
+            visited_countries.add(country)
+            if ip:
+                country_ips[country].add(ip)
+        if state:
+            visited_states.add(state)
+            if ip:
+                state_ips[state].add(ip)
+
+    # --- Load GeoJSON ---
+    with open(DEPENDENCY_DIR / "countries.geojson") as f:
+        countries_geo = json.load(f)
+    with open(DEPENDENCY_DIR / "states.json") as f:
+        states_geo = json.load(f)
+
+    # --- Build adjacency & assign colors ---
+    countries_adj = build_adjacency(countries_geo['features'], name_key="name")
+    countries_colors = greedy_color(countries_adj)
+
+    states_adj = build_adjacency(states_geo['features'], name_key="NAME")
+    states_colors = greedy_color(states_adj)
+
+    # Only include visited places
+    visited_countries_colors = {c: countries_colors[c] for c in visited_countries if c in countries_colors}
+    visited_states_colors = {s: states_colors[s] for s in visited_states if s in states_colors}
+
+    # Convert IP sets to counts
+    country_counts = {c: len(country_ips[c]) for c in visited_countries}
+    state_counts = {s: len(state_ips[s]) for s in visited_states}
+
+    # --- Compute geographic centers for visited states ---
+    state_centers = {}
+    for s in visited_states:
+        center_data = combined_largest_centers_and_plot(
+            region_name=s,
+            geojson_file=DEPENDENCY_DIR / "states.json",
+            name_property="NAME",
+            do_print=False,
+            do_plot=False
+        )
+        if center_data and center_data.get("average"):
+            avg_lon, avg_lat = center_data["average"]
+            state_centers[s] = [avg_lat, avg_lon]  # Leaflet expects [lat, lon]
+
+    # --- Compute geographic centers for visited countries ---
+    country_centers = {}
+    for c in visited_countries:
+        center_data = combined_largest_centers_and_plot(
+            region_name=c,
+            geojson_file=DEPENDENCY_DIR / "countries.geojson",
+            name_property="name",
+            do_print=False,
+            do_plot=False
+        )
+        if center_data and center_data.get("average"):
+            avg_lon, avg_lat = center_data["average"]
+            country_centers[c] = [avg_lat, avg_lon]
+
+    return {
+        "countries": list(visited_countries),
+        "us_states": list(visited_states),
+        "countries_colors": visited_countries_colors,
+        "states_colors": visited_states_colors,
+        "countries_counts": country_counts,
+        "states_counts": state_counts,
+        "states_centers": state_centers,
+        "countries_centers": country_centers
+    }

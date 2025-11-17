@@ -12,7 +12,7 @@ header {
     padding: 20px 0;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: relative; /* add this */
+    position: relative;
 }
 
 h1 {
