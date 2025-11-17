@@ -2045,14 +2045,33 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
     country_counts = {c: len(country_ips[c]) for c in visited_countries}
     state_counts = {s: len(state_ips[s]) for s in visited_states}
 
-    # Compute geographic centers for visited states
+    # --- Compute geographic centers for visited states ---
     state_centers = {}
     for s in visited_states:
-        center_data = combined_largest_centers_and_plot(state_name=s, do_print=False, do_plot=False)
+        center_data = combined_largest_centers_and_plot(
+            region_name=s,
+            geojson_file=DEPENDENCY_DIR / "states.json",
+            name_property="NAME",
+            do_print=False,
+            do_plot=False
+        )
         if center_data and center_data.get("average"):
-            # Leaflet expects [lat, lon] order
             avg_lon, avg_lat = center_data["average"]
-            state_centers[s] = [avg_lat, avg_lon]
+            state_centers[s] = [avg_lat, avg_lon]  # Leaflet expects [lat, lon]
+
+    # --- Compute geographic centers for visited countries ---
+    country_centers = {}
+    for c in visited_countries:
+        center_data = combined_largest_centers_and_plot(
+            region_name=c,
+            geojson_file=DEPENDENCY_DIR / "countries.geojson",
+            name_property="name",
+            do_print=False,
+            do_plot=False
+        )
+        if center_data and center_data.get("average"):
+            avg_lon, avg_lat = center_data["average"]
+            country_centers[c] = [avg_lat, avg_lon]
 
     return {
         "countries": list(visited_countries),
@@ -2061,5 +2080,6 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
         "states_colors": visited_states_colors,
         "countries_counts": country_counts,
         "states_counts": state_counts,
-        "states_centers": state_centers
+        "states_centers": state_centers,
+        "countries_centers": country_centers
     }

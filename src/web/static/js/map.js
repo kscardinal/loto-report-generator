@@ -53,11 +53,17 @@ fetch('/locations_summary')
                         const name = feature.properties.name;
                         const count = countriesCounts[name] || 0;
                         if (count > 0) {
-                            layer.bindTooltip(`${count}`, {
-                                permanent: true,
-                                direction: 'center',
-                                className: 'territory-label'
-                            }).openTooltip();
+                            const center = data.countries_centers[name];  // <-- Use center from locations_summary
+                            if (center) {
+                                L.tooltip({
+                                    permanent: true,
+                                    direction: 'center',
+                                    className: 'territory-label'
+                                })
+                                .setLatLng(center)
+                                .setContent(`${count}`)
+                                .addTo(map);
+                            }
                         }
                     }
                 }).addTo(map);
@@ -86,7 +92,6 @@ fetch('/locations_summary')
                         if (count > 0) {
                             const center = data.states_centers[name];
                             if (center) {
-                                console.log(feature.properties.NAME + ": " + center);
                                 L.tooltip({
                                     permanent: true,
                                     direction: 'center',

@@ -234,22 +234,14 @@ ic(combined_largest_centers_and_plot(
     region_name="Texas",
     geojson_file=DEPENDENCY_DIR / "states.json",
     name_property="NAME",
-    do_print=True,
-    do_plot=True
+    do_print=False,
+    do_plot=False
 ))
 
 ic(combined_largest_centers_and_plot(
-    region_name="France",
+    region_name="Italy",
     geojson_file=DEPENDENCY_DIR / "countries.geojson",
     name_property="name",
-    do_print=True,
-    do_plot=True
-))
-
-ic(combined_largest_centers_and_plot(
-    region_name="Indonesia",
-    geojson_file=DEPENDENCY_DIR / "countries.geojson",
-    name_property="name",
-    do_print=True,
+    do_print=False,
     do_plot=True
 ))
