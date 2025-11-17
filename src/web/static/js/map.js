@@ -6,11 +6,11 @@ const map = L.map('map' , {
 }).setView([37, -95], 4);
 
 // Minimal tiles
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd',
     maxZoom: 19,
-    continuousWorld: false, // <- stop horizontal wrapping
-    noWrap: true            // <- stop horizontal wrapping
+    continuousWorld: false,
+    noWrap: true
 }).addTo(map);
 
 fetch('/locations_summary')
