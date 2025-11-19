@@ -335,6 +335,30 @@ pytest -v -s --no-summary src/tests/test_pdf_scripts.py
 
 ---
 
+### Server CRON jobs
+
+1. **Python Interpreter Path:** Find where your Python executable is located.
+```bash
+which python3
+```
+
+2. **Script Path:** Find the full path to your Python file
+```bash
+pwd {SCRIPT_FILE}
+```
+
+3. **Open the Crontab Editor:** This command opens your user-specific cron schedule file.
+```bash
+crontab -e
+```
+
+4. Set up task
+```bash
+0 2 * * * {PYTHON_PATH} {SCRIPT_PATH} >> {LOG_PATH} 2>&1
+```
+
+---
+
 ## Web Interface
 
 1. Get TypeScript running
