@@ -877,6 +877,98 @@ async def users_json(
 # -----------------------------
 # Login Page
 # -----------------------------
+def login_email(user, geo):
+    """
+    Sends a formatted HTML email when a user logs in.
+    `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
+    """
+    to_email = os.getenv("DEFAULT_EMAIL", "")
+    subject = f"LOTO Generator - A new device is using your account"
+
+    # Convert UTC to Eastern Time
+    utc_time = datetime.utcnow()
+    eastern = pytz.timezone("US/Eastern")  # change this to your timezone if needed
+    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+    formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+    # IP
+    if geo is None:
+        location_str = "unknown"
+    else:
+        city = geo["location"].get("city")
+        region = geo["location"].get("region")
+        country = geo["location"].get("country")
+
+        # if all are missing, just say "unknown"
+        if not any([city, region, country]):
+            location_str = "unknown"
+        else:
+            # join non-empty values with commas
+            location_str = ", ".join(filter(None, [city, region, country]))
+
+
+    # Build the HTML content
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+            }}
+            th, td {{
+                text-align: left;
+                padding: 8px;
+                border-bottom: 1px solid #dddddd;
+            }}
+            th {{
+                background-color: #f0f0f0;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>New Login Detected</h2>
+        <p>A new device is using your account:</p>
+        <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>First Name</td><td>{user.get('first_name', '')[:1].upper() + user.get('first_name', '')[1:] if user.get('first_name') else ''}</td></tr>
+            <tr><td>Last Name</td><td>{user.get('last_name', '')[:1].upper() + user.get('last_name', '')[1:] if user.get('last_name') else ''}</td></tr>
+            <tr><td>Username</td><td>{user.get('username', '')}</td></tr>
+            <tr><td>Email</td><td>{user.get('email', '')}</td></tr>
+            <tr><td>Date Created</td><td>{formatted_time}</td></tr>
+            <tr><td>IP Address</td><td>{geo.get('ip_address', 'unknown') if geo else 'unknown'}</td></tr>
+            <tr><td>Location</td><td>{location_str}</td></tr>
+        </table>
+        <p>If this wasn't you, please change password using the link below</p>
+        <p>
+          <a href="https://lotogenerator.app/forgot_password" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Change Password
+          </a>
+        </p>
+        <p class="footer">This is an automated message from LOTO Report Generator. Do not reply.</p>
+    </body>
+    </html>
+    """
+
+    # Send email using your auto function
+    send_email_auto(to_email, subject, html_content)
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
@@ -949,6 +1041,33 @@ async def login_endpoint(
         return JSONResponse({"message": "Account is not active"}, status_code=403)
 
     users.update_one({"_id": user["_id"]}, {"$set": {"last_accessed": datetime.utcnow()}})
+
+    # Detect new login IPs: if current client IP is not in the user's registered list,
+    # persist it and notify the user via email about a new device using their account.
+    try:
+        client_ip = get_client_ip(request)
+        registered_ips = user.get("registered_ips") or []
+        if client_ip and client_ip not in registered_ips:
+            # Persist the new IP
+            users.update_one({"_id": user["_id"]}, {"$push": {"registered_ips": client_ip}})
+
+            # Resolve geo information (best-effort); mirror create_account approach
+            try:
+                geo = known_locations.find_one({"ip_address": client_ip})
+            except Exception:
+                geo = None
+
+            if user.get("is_active") == 1:
+                # Send email notification in background when possible
+                if background_tasks is not None:
+                    background_tasks.add_task(login_email, user, geo)
+                else:
+                    try:
+                        login_email(user, geo)
+                    except Exception:
+                        logger.exception("Failed to send new-IP notification email")
+    except Exception:
+        logger.exception("Error checking/recording client IP for login")
 
     token_data = {"sub": user["username"], "role": user.get("role", "user")}
     token = create_access_token(token_data)
@@ -1176,6 +1295,12 @@ def new_user_welcome_email(user, geo):
             <tr><td>Location</td><td>{location_str}</td></tr>
         </table>
         <p>Once your account is approved by the administrator, you will receive another notification with instructions on how to log in.</p>
+        <p>
+          <a href="https://lotogenerator.app" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Login
+          </a>
+        </p>
         <p class="footer">This is an automated message. Please do not reply to this email.</p>
     </body>
     </html>
@@ -1243,7 +1368,11 @@ async def create_account(
     # Hash password
     hashed_password = ph.hash(password)
 
-    # Insert user
+    # Capture client IP now and include it in the user document as a registered IP
+    client_ip = get_client_ip(request)
+    initial_ips = [client_ip] if client_ip else []
+
+    # Insert user (persist initial registered IPs)
     users.insert_one({
         "first_name": first_name,
         "last_name": last_name,
@@ -1259,17 +1388,18 @@ async def create_account(
         "login_attempts": 0,
         "latest_reset": None,
         "password_resets": 0,
-        "verification_attempts": 0
+        "verification_attempts": 0,
+        "registered_ips": initial_ips
     })
 
-    # IP
-    client_ip = get_client_ip(request)
-    geo = known_locations.find_one({"ip_address": client_ip})
-    if geo:
-        geo = geo
-    else:
-        # Optional: fallback to API if not found
-        geo = await lookup_ip_with_db(client_ip, known_locations)
+    # IP -> try to resolve geo info from DB or fallback to lookup helper
+    geo = known_locations.find_one({"ip_address": client_ip}) if client_ip else None
+    if not geo and client_ip:
+        # lookup_ip_with_db may store/return geo info; use it as a fallback
+        try:
+            geo = await lookup_ip_with_db(client_ip, known_locations)
+        except Exception:
+            geo = None
 
     new_user_activation_email({
         "first_name": first_name,
@@ -1358,6 +1488,12 @@ def status_change_email(user, performed_by, new_status):
         <p><strong>Changed by:</strong> {performed_by}</p>
         <p><strong>Time:</strong> {formatted_time}</p>
         <p>If you did not request this change, please contact support immediately.</p>
+        <p>
+          <a href="https://lotogenerator.app" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Login
+          </a>
+        </p>
         <p class="footer">This is an automated message. Please do not reply.</p>
     </body>
     </html>
@@ -1482,6 +1618,12 @@ def role_update_email(user, performed_by, new_role):
         <p><strong>Changed by:</strong> {performed_by}</p>
         <p><strong>Time:</strong> {formatted_time}</p>
         <p>If you did not request this change, please contact support immediately.</p>
+        <p>
+          <a href="https://lotogenerator.app" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Login
+          </a>
+        </p>
         <p class="footer">This is an automated message. Please do not reply.</p>
     </body>
     </html>
@@ -1579,6 +1721,12 @@ def user_deleted_email(user, performed_by):
         <p><strong>Deleted by:</strong> {performed_by}</p>
         <p><strong>Time:</strong> {formatted_time}</p>
         <p>If you believe this was done in error, please contact support immediately.</p>
+        <p>
+          <a href="https://lotogenerator.app" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+             Login
+          </a>
+        </p>
         <p class="footer">This is an automated message. Please do not reply.</p>
     </body>
     </html>
