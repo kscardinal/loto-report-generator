@@ -4,267 +4,81 @@
     <meta charset="UTF-8">
     <title>LOTO Generator | Report: {{ report.report_name }}</title>
     <link rel="icon" type="image/x-icon" href="/static/includes/pdf_icon.svg">
+    <link rel="stylesheet" href="/static/css/view_report.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #f7f7f7;
-            color: #333;
+        /* Visual state for disabled download link */
+        a.download-link.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+            cursor: default;
         }
-
-        header {
-            background-color: #C32026;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2em;
-        }
-
-        main {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-
-        .section {
-            margin-bottom: 25px;
-            padding: 15px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .section h2 {
-            margin-top: 0;
-            font-size: 1.3em;
-            color: #C32026;
-        }
-
-        .metadata p {
-            margin: 5px 0;
-        }
-
-        .metadata ul {
-            margin: 5px 0 0 20px;
-            padding: 0;
-        }
-
-        .metadata ul li {
-            list-style-type: disc;
-        }
-
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 6px;
-            overflow-x: auto;
-        }
-
-        .photos-container {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 40px; /* increased spacing between photos */
-            padding: 10px 0;
-        }
-
-        .photos-container div {
-            flex: 0 0 auto;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-        }
-
-        .photos-container img {
-            height: clamp(100px, 20vw, 150px);
-            max-width: 350px;    /* cap width to avoid huge panoramas */
-            width: auto;          /* scale width to maintain aspect ratio */
-            object-fit: contain;    /* fills the img box while keeping aspect ratio */
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
-
-
-
-        .photos-container a {
-            text-decoration: none; /* removes underline */
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            height: 100%;
-        }
-
-        .photos-container p {
-            margin: 0;
-            font-size: 0.9em;
-        }
-
-        a.download-link {
-            background-color: #C32026;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 1em;
-            cursor: pointer;
-            margin-right: 10px;
-            margin-top: 10px;
-            transition: background-color 0.2s;
-            text-decoration: none;
-        }
-
-        a.download-link:hover {
-            background-color: #A01D20;
-        }
-
-        .back-btn {
-            transform: translateY(-50%);
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.95em;
-            background-color: rgba(0,0,0,0.2);
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-right: 10px;
-        }
-
-        .back-btn:hover {
-            background-color: rgba(0,0,0,0.35);
-        }
-
-        button {
-            background-color: #C32026;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #A01D20;
-        }
-
-        .current-user {
-            font-size: 0.9em;
-            color: white;
-            margin-top: 5px;
-        }
-
-        .back-div {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-        }
-
     </style>
 </head>
-<body>
-    <header>
-        <h1>Report: {{ report.report_name }}</h1>
-        {% if current_user %}
-            <p class="current-user">
-                Logged in as: {{ current_user.username }} ({{ current_user.role|capitalize }})
-            </p>
-        {% endif %}
-        <div class="back-div">
-          <a href="{{ url_for('pdf_list') }}" class="back-btn">&#8592; Back</a>
+<body data-report-name="{{ report.report_name }}" data-redirect-url="{{ url_for('pdf_list') }}">
+<header>
+    <h1>Report: {{ report.report_name }}</h1>
+    {% if current_user %}
+        <p class="current-user">
+            Logged in as: {{ current_user.username }} ({{ current_user.role|capitalize }})
+        </p>
+    {% endif %}
+    <div class="back-div">
+        <a href="{{ url_for('pdf_list') }}" class="back-btn">&#8592; Back</a>
+    </div>
+</header>
+
+<main>
+    <div class="section metadata">
+        <h2>Metadata</h2>
+        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+        <p><strong>Tags:</strong></p>
+        <ul>
+            {% for tag in report.tags %}
+                <li>{{ tag }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Notes:</strong> {{ report.notes }}</p>
+        <p><strong>Date Added:</strong> {{ report.date_added }}</p>
+        <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
+        <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
+    </div>
+
+    <!-- 
+    <div class="section json-data">
+        <h2>JSON Data</h2>
+        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
+    </div>
+    -->
+
+    <div class="section" id="pdfSection">
+        <h2>PDF</h2>
+        <div id="pdfViewer" style="background:#eee; padding:10px; border-radius:8px; display:flex; flex-direction:column; align-items:center;">
+            <div id="pdfLoading">Preparing PDF viewer...</div>
         </div>
-    </header>
+    </div>
 
-    <main>
-        <div class="section metadata">
-            <h2>Metadata</h2>
-            <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
-            <p><strong>Tags:</strong></p>
-            <ul>
-                {% for tag in report.tags %}
-                    <li>{{ tag }}</li>
-                {% endfor %}
-            </ul>
-            <p><strong>Notes:</strong> {{ report.notes }}</p>
-            <p><strong>Date Added:</strong> {{ report.date_added }}</p>
-            <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
-            <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
+    <div class="section photos">
+        <h2>Photos</h2>
+        <div class="photos-container">
+            {% for photo in report.photos %}
+                <div>
+                    <a href="{{ url_for('get_photo', photo_id=photo.photo_id) }}" target="_blank">
+                        <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
+                        <p>{{ photo.photo_name }}</p>
+                    </a>
+                </div>
+            {% endfor %}
         </div>
+    </div>
 
-        <div class="section json-data">
-            <h2>JSON Data</h2>
-            <pre>{{ report.json_data | tojson(indent=2) }}</pre>
+    <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <a id="downloadPdfAnchor" class="download-link disabled" href="#" role="button" aria-disabled="true" data-server-href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+            <button type="button" id="downloadBtn" data-report="{{ report.report_name }}">Download Assets</button>
         </div>
-
-        <div class="section photos">
-            <h2>Photos</h2>
-            <div class="photos-container">
-                {% for photo in report.photos %}
-                    <div>
-                        <a href="{{ url_for('get_photo', photo_id=photo.photo_id) }}" target="_blank">
-                            <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
-                            <p>{{ photo.photo_name }}</p>
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <a class="download-link" href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
-                <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" >Download Assets</button>
-            </div>
-            <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
-        </div>
-    </main>
-</body>
-<script>
-    const downloadButton = document.getElementById("downloadBtn");
-    const deleteButton = document.getElementById("deleteBtn");
-
-    downloadButton.addEventListener("click", async () => {
-        let reportName = downloadButton.dataset.report;
-
-        // Get list of file URLs
-        const res = await fetch(`/download_report_files/${reportName}`);
-        if (!res.ok) return alert("Failed to get file list");
-        const { files } = await res.json();
-
-        // Download each file
-        for (const file of files) {
-            const response = await fetch(file.url);
-            if (!response.ok) continue;
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = file.filename;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    });
-
-    deleteButton.addEventListener("click", async () => {
-    const reportName = deleteButton.dataset.report;
-    if (!confirm(`Are you sure you want to delete report "${reportName}"?`)) return;
-
-    const res = await fetch(`/remove_report/${reportName}`, { method: "POST" });
-    if (res.ok) {
-        window.location.href = "{{ url_for('pdf_list') }}";
-    } else {
-        alert("Failed to delete report.");
-    }
-});
-</script>
+        <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js"></script>
+<script type="module" src="/static/js/view_report.js"></script>
 </html>
