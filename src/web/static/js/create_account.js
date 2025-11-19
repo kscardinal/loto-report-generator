@@ -342,9 +342,13 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
     const submitButton = document.getElementById("create-Button");
 
     // Show spinner and disable button
-    loadingSpinner.style.display = "inline-block";
+    loadingSpinner.style.display = "flex"; // CHANGE: Use flex to show it
     submitButton.disabled = true;
-    submitButton.textContent = "Creating...";
+    submitButton.textContent = "Creating..."; // Leave this text for the button if you want it to change
+
+    // --- NEW: Update the spinner text itself ---
+    loadingSpinner.querySelector('span').textContent = "Creating Account...";
+    // ---
 
     const formData = new FormData(e.target);
 

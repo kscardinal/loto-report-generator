@@ -136,3 +136,35 @@ body {
     border-radius: 6px;
     font-size: 14px;
 }
+
+/* --- New Styles for Centering the Loader --- */
+
+#loadingSpinner {
+    /* Use Flexbox to align content */
+    display: flex; 
+    
+    /* Center the spinner/text unit horizontally within the login-container */
+    justify-content: center; 
+    
+    /* Vertically center the SVG and text relative to each other */
+    align-items: center; 
+    
+    /* Add vertical spacing and set text color */
+    margin-top: 0; /* Add spacing above the element, similar to your button's margin */
+    margin-bottom: 0; /* Add spacing below the element */
+    font-size: 16px; 
+    
+    /* Initial state hidden (overrides inline style removal) */
+    /* This style will be managed by JavaScript */
+    display: none;
+}
+
+#loadingSpinner svg {
+    /* Add space between the spinner and the text */
+    margin-right: 10px;
+}
+
+/* Ensure the span text is not affected by default margins/styles */
+#loadingSpinner span {
+    line-height: 1;
+}
