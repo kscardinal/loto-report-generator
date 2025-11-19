@@ -631,6 +631,70 @@ async def cleanup_orphan_photos(
         "deleted": deleted_photos
     }
 
+@app.get("/photos_info")
+async def photos_info(
+    request: Request, 
+    username: dict = Depends(get_current_user_no_redirect)
+):
+    # Require admin access
+    error = require_role("admin")(username)
+    if error:
+        return JSONResponse(status_code=403, content={"error": "forbidden"})
+
+    photos = []
+
+    # Use the default GridFS collections (fs.files and fs.chunks)
+    files_coll = db.get_collection("fs.files")
+    chunks_coll = db.get_collection("fs.chunks")
+
+    # Iterate GridFS entries via files collection for predictable metadata
+    for file_doc in files_coll.find({}, sort=[("uploadDate", -1)]):
+        file_id = file_doc.get("_id")
+        filename = file_doc.get("filename")
+        length = file_doc.get("length")
+        chunk_size = file_doc.get("chunkSize")
+        upload_date = file_doc.get("uploadDate")
+        md5 = file_doc.get("md5")
+        metadata = file_doc.get("metadata")
+
+        # Get chunks for this file
+        chunk_docs = list(chunks_coll.find({"files_id": file_id}).sort([("n", 1)]))
+        chunk_ids = [str(c.get("_id")) for c in chunk_docs]
+        num_chunks = len(chunk_ids)
+
+        # Find reports referencing this photo id
+        related_reports_cursor = uploads.find({"photos.photo_id": file_id}, {"report_name": 1, "_id": 0})
+        related_reports = [r.get("report_name") for r in related_reports_cursor]
+
+        photos.append({
+            "photo_id": str(file_id),
+            "filename": filename,
+            "size_bytes": int(length) if length is not None else None,
+            "chunk_size": int(chunk_size) if chunk_size is not None else None,
+            "num_chunks": num_chunks,
+            "chunk_ids": chunk_ids,
+            "upload_date": upload_date.isoformat() if upload_date is not None else None,
+            "md5": md5,
+            "metadata": metadata,
+            "related_reports": related_reports,
+        })
+
+    # Summary statistics
+    total_photos = len(photos)
+    total_chunks = sum(p.get("num_chunks", 0) for p in photos)
+    total_size_bytes = sum(p.get("size_bytes", 0) or 0 for p in photos)
+    photos_without_report = [p["photo_id"] for p in photos if not p.get("related_reports")]
+
+    summary = {
+        "total_photos": total_photos,
+        "total_chunks": total_chunks,
+        "total_size_bytes": total_size_bytes,
+        "photos_without_report_count": len(photos_without_report),
+        "photos_without_report_ids": photos_without_report,
+    }
+
+    return JSONResponse(content={"summary": summary, "photos": photos})
+
 # -----------------------------
 # JSON endpoints - Server-side pagination
 # -----------------------------
@@ -1605,13 +1669,17 @@ async def audit_logs_page(
     })
 
 @app.get("/audit_logs_json")
-async def audit_logs_json(current_user: dict = Depends(get_current_user_no_redirect)):
+async def audit_logs_json(
+    current_user: dict = Depends(get_current_user_no_redirect),
+    limit: int = Query(500, ge=1, le=2500)
+):
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
         return error
 
-    logs_cursor = audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(500)
+    # Respect client-requested limit (default 500, capped at 2500)
+    logs_cursor = audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(limit)
     log_list = []
 
     for doc in logs_cursor:
