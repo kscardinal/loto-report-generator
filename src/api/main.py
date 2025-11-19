@@ -312,6 +312,11 @@ def download_pdf(
 
         pdf_bytes = pdf_file_path.read_bytes()
 
+        uploads.update_one(
+            {"_id": doc["_id"]},
+            {"$set": {"last_generated": datetime.now()}}
+        )
+
         # Clear TEMP_DIR
         for item in TEMP_DIR.iterdir():
             if item.is_file():
