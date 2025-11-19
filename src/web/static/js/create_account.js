@@ -338,17 +338,20 @@ confirmPassword.addEventListener("input", function() {
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const loadingSpinner = document.getElementById("loadingSpinner");
+    // REMOVED: const loadingSpinner = document.getElementById("loadingSpinner");
     const submitButton = document.getElementById("create-Button");
+    
+    // NEW: Get the internal spans
+    const buttonText = document.getElementById("button-text");
+    const spinnerContent = document.getElementById("spinner-content");
 
-    // Show spinner and disable button
-    loadingSpinner.style.display = "flex"; // CHANGE: Use flex to show it
+    // Show spinner state: Disable button, hide static text, show spinner content
     submitButton.disabled = true;
-    submitButton.textContent = "Creating..."; // Leave this text for the button if you want it to change
-
-    // --- NEW: Update the spinner text itself ---
-    loadingSpinner.querySelector('span').textContent = "Creating Account...";
-    // ---
+    submitButton.style.padding = "10px";
+    buttonText.classList.add("hidden-spinner");
+    spinnerContent.classList.remove("hidden-spinner");
+    
+    // REMOVED/CLEANED UP: Old loadingSpinner logic is no longer needed
 
     const formData = new FormData(e.target);
 
@@ -371,16 +374,20 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
             } else {
                 alert("Account creation failed. Please try again.");
             }
-            // Hide spinner & re-enable button on error
-            loadingSpinner.style.display = "none";
+            // Hide spinner & re-enable button on error/failure
+            submitButton.style.padding = "13px";
+            spinnerContent.classList.add("hidden-spinner");
+            buttonText.classList.remove("hidden-spinner");
             submitButton.disabled = false;
-            submitButton.textContent = "Create Account";
         }
     } catch (error) {
         console.error("Error submitting form: ", error);
         alert("Failed to create account due to network error.");
-        loadingSpinner.style.display = "none";
+        
+        // Hide spinner & re-enable button on network error
+        submitButton.style.padding = "13px";
+        spinnerContent.classList.add("hidden-spinner");
+        buttonText.classList.remove("hidden-spinner");
         submitButton.disabled = false;
-        submitButton.textContent = "Create Account";
     }
 });
