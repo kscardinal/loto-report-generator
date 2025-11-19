@@ -62,7 +62,14 @@ async function initPdfViewer() {
     // Fetch PDF as blob, load into PDF.js from memory (ArrayBuffer)
     async function loadPdf() {
         console.log("Starting PDF load:", pdfUrl);
-        if (pdfLoading) pdfLoading.textContent = "Loading PDF...";
+        
+        // Get the <p> element within pdfLoading to update the text *only*, 
+        // preserving the spinner structure.
+        const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
+
+        // Update the status text at the beginning of the load
+        if (loadingText) loadingText.textContent = "Loading PDF data...";
+        
         try {
             const resp = await fetch(pdfUrl, { credentials: 'include' });
             if (!resp.ok) {
@@ -80,7 +87,7 @@ async function initPdfViewer() {
             pdfDoc = await loadingTask.promise;
             console.log("PDF loaded from blob. Number of pages:", pdfDoc.numPages);
 
-            // Remove loading message and render
+            // Remove loading message (including the spinner) and render
             if (pdfLoading) pdfLoading.remove();
             renderAllPages();
 
@@ -92,7 +99,19 @@ async function initPdfViewer() {
 
         } catch (err) {
             console.error("Error loading PDF:", err);
-            if (pdfLoading) pdfLoading.textContent = "Failed to load PDF.";
+            
+            // Handle error: remove the spinner and display the error message
+            if (pdfLoading) {
+                const spinner = pdfLoading.querySelector('.spinner');
+                if (spinner) spinner.remove();
+
+                if (loadingText) {
+                    loadingText.textContent = "Failed to load PDF.";
+                } else {
+                    // Fallback in case loadingText couldn't be found/defined
+                    pdfLoading.textContent = "Failed to load PDF.";
+                }
+            }
         }
     }
 
