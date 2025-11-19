@@ -1,4 +1,4 @@
-// view_report.js - moved from inline template
+// view_report.js (Complete file with spinner logic)
 
 let pendingAction = null; // Stored callback for modal confirm
 
@@ -162,7 +162,6 @@ function formatFriendlyETDate(isoStr) {
 
 // --- Dynamic Date Update Helper (MOVED TO GLOBAL SCOPE) ---
 function updateDateDisplay(id, newIsoDate) {
-    // formatFriendlyETDate is now globally accessible
     const element = document.getElementById(id);
     if (element) {
         // 1. Update the raw data attribute
@@ -170,25 +169,24 @@ function updateDateDisplay(id, newIsoDate) {
         
         // 2. Re-format and update the displayed text
         const formattedDate = formatFriendlyETDate(newIsoDate);
-        // Assuming the label is wrapped in <strong> for extraction
         const labelElement = element.querySelector('strong'); 
         const label = labelElement ? labelElement.textContent : 'Last Generated: ';
         
         element.innerHTML = `<strong>${label}</strong> ${formattedDate}`;
-        // date display updated
     }
 }
 // --------------------------------------------------------
 
 async function initPdfViewer() {
-    // Initializing PDF viewer
+    console.log("Initializing PDF viewer...");
 
     // Ensure pdfjsLib is available.
     if (typeof window.pdfjsLib === 'undefined') {
-        // pdfjsLib not found; loading fallback UMD build from cdnjs
+        console.warn('pdfjsLib not found; loading fallback UMD build from cdnjs...');
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js');
         window.pdfjsLib = window.pdfjsLib || window.pdfjsDistPdfjs || window['pdfjs-dist/build/pdf'];
         if (!window.pdfjsLib) {
+            console.error('Fallback PDF.js did not expose pdfjsLib');
             return;
         }
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js';
@@ -227,9 +225,8 @@ async function initPdfViewer() {
 
     // Fetch PDF as blob, load into PDF.js from memory (ArrayBuffer)
     async function loadPdf() {
-        // Starting PDF load
+        console.log("Starting PDF load:", pdfUrl);
         
-        // Get the <p> element within pdfLoading to update the text *only*, 
         const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
 
         if (loadingText) loadingText.textContent = "Loading PDF ...";
@@ -245,44 +242,43 @@ async function initPdfViewer() {
             cachedPdfBlob = blob;
             const arrayBuffer = await blob.arrayBuffer();
 
-            // 🌟 FETCH UPDATED METADATA 🌟
+            // FETCH UPDATED METADATA
             try {
-                // Call your existing metadata endpoint
                 const metadataResp = await fetch(`/metadata/${encodeURIComponent(reportName)}`, { credentials: 'include' });
                 if (metadataResp.ok) {
                     const metadata = await metadataResp.json();
-                    
-                    // Update the Last Generated date field in the DOM
                     if (metadata.last_generated) {
                         updateDateDisplay("lastGenerated", metadata.last_generated);
                     }
                 } else {
-                    // Could not fetch updated metadata
+                    console.warn("Could not fetch updated metadata. Status:", metadataResp.status);
                 }
             } catch (metaErr) {
-                // Error fetching report metadata
+                console.error("Error fetching report metadata:", metaErr);
             }
-            // 🌟 END METADATA FETCH 🌟
 
-            // Load PDF from in-memory data to avoid another network request
+            // Load PDF
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             pdfDoc = await loadingTask.promise;
-            // PDF loaded from blob
+            console.log("PDF loaded from blob. Number of pages:", pdfDoc.numPages);
 
             // Remove loading message (including the spinner) and render
             if (pdfLoading) pdfLoading.remove();
             renderAllPages();
 
-            // Enable the download anchor now that we have the blob
+            // Enable the buttons
+            const downloadButton = document.getElementById("downloadBtn");
+            const deleteButton = document.getElementById("deleteBtn");
             if (downloadAnchor) {
                 downloadAnchor.classList.remove('disabled');
-                document.getElementById('downloadBtn').classList.remove('disabled');
-                document.getElementById('deleteBtn').classList.remove('disabled');
                 downloadAnchor.setAttribute('aria-disabled', 'false');
             }
+            if (downloadButton) downloadButton.classList.remove('disabled');
+            if (deleteButton) deleteButton.classList.remove('disabled');
+
 
         } catch (err) {
-            // Error loading PDF
+            console.error("Error loading PDF:", err);
             
             // Handle error
             if (pdfLoading) {
@@ -299,7 +295,7 @@ async function initPdfViewer() {
     }
 
     async function renderPage(pageNum) {
-        // rendering page
+        console.log("Rendering page:", pageNum);
         const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: currentScale });
         const canvas = document.createElement("canvas");
@@ -325,13 +321,13 @@ async function initPdfViewer() {
     }
 
     async function renderAllPages() {
-        // rendering all pages
+        console.log("Rendering all pages...");
         // clear any existing canvases
         pdfViewer.innerHTML = "";
         for (let i = 1; i <= pdfDoc.numPages; i++) {
             await renderPage(i);
         }
-        // all pages rendered
+        console.log("All pages rendered");
     }
 
     function downloadCachedPdf() {
@@ -351,7 +347,7 @@ async function initPdfViewer() {
     }
 
     window.addEventListener("load", () => {
-        // window loaded, calling loadPdf
+        console.log("Window loaded, calling loadPdf...");
         loadPdf();
     });
 
@@ -360,25 +356,51 @@ async function initPdfViewer() {
     const deleteButton = document.getElementById("deleteBtn");
 
     if (downloadButton) {
+        // Get the new spinner elements
+        const buttonText = document.getElementById("download-button-text");
+        const spinnerContent = document.getElementById("download-spinner-content");
+
         downloadButton.addEventListener("click", async () => {
             let reportNameLocal = downloadButton.dataset.report;
-            // download button clicked
-            const res = await fetch(`/download_report_files/${reportNameLocal}`);
-            if (!res.ok) {
-                return alert("Failed to get file list");
-            }
-            const { files } = await res.json();
-            for (const file of files) {
-                // downloading file
-                const response = await fetch(file.url);
-                if (!response.ok) continue;
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = file.filename;
-                a.click();
-                URL.revokeObjectURL(url);
+            console.log("Download button clicked for report:", reportNameLocal);
+            
+            // 1. Show spinner state
+            downloadButton.disabled = true;
+            buttonText.classList.add("hidden-spinner");
+            spinnerContent.classList.remove("hidden-spinner");
+			document.getElementById('downloadPdfAnchor').classList.add('disabled');
+			document.getElementById('deleteBtn').classList.add('disabled');
+
+            try {
+                const res = await fetch(`/download_report_files/${reportNameLocal}`);
+                if (!res.ok) {
+                    console.error("Failed to get file list");
+                    alert("Failed to get file list");
+                    return;
+                }
+                const { files } = await res.json();
+                for (const file of files) {
+                    console.log("Downloading file:", file.filename, file.url);
+                    const response = await fetch(file.url);
+                    if (!response.ok) continue;
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = file.filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            } catch (error) {
+                console.error("Error during asset download:", error);
+                alert("An error occurred during download.");
+            } finally {
+                // 2. Hide spinner state (must happen in finally block)
+                spinnerContent.classList.add("hidden-spinner");
+                buttonText.classList.remove("hidden-spinner");
+                downloadButton.disabled = false;
+				document.getElementById('downloadPdfAnchor').classList.remove('disabled');
+				document.getElementById('deleteBtn').classList.remove('disabled');
             }
         });
     }
@@ -386,7 +408,7 @@ async function initPdfViewer() {
     if (deleteButton) {
         deleteButton.addEventListener("click", () => {
             const reportNameLocal = deleteButton.dataset.report;
-            // delete button clicked
+            console.log("Delete button clicked for report:", reportNameLocal);
             
             // Use the custom confirm action (UPDATED)
             confirmAction("delete", reportNameLocal, () => deleteReport(reportNameLocal, redirectUrl));
@@ -430,7 +452,6 @@ document.addEventListener("DOMContentLoaded", function() {
         const element = document.getElementById(id);
         if (element) {
             const rawDate = element.dataset.rawDate; 
-            // formatFriendlyETDate is accessed from the global scope
             const formattedDate = formatFriendlyETDate(rawDate);
             element.innerHTML = `<strong>${label}: </strong> ${formattedDate}`;
         }

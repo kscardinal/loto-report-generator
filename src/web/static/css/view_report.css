@@ -1,3 +1,5 @@
+/* view_report.css */
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -78,17 +80,15 @@ pre {
 
 .photos-container img {
     height: clamp(100px, 20vw, 150px);
-    max-width: 350px;    /* cap width to avoid huge panoramas */
-    width: auto;          /* scale width to maintain aspect ratio */
-    object-fit: contain;    /* fills the img box while keeping aspect ratio */
+    max-width: 350px; 
+    width: auto; 
+    object-fit: contain;
     border-radius: 4px;
     margin-bottom: 5px;
 }
 
-
-
 .photos-container a {
-    text-decoration: none; /* removes underline */
+    text-decoration: none;
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -102,6 +102,14 @@ pre {
     font-size: 0.9em;
 }
 
+/* --- FIX: Download Buttons Container Layout --- */
+.section.download > div {
+    /* This targets the <div> holding both download buttons */
+    display: flex;
+    align-items: center; /* Vertically align the PDF link and the Assets button */
+    gap: 10px; /* Space between the two download elements */
+}
+
 a.download-link {
     background-color: #C32026;
     color: white;
@@ -110,10 +118,11 @@ a.download-link {
     border-radius: 6px;
     font-size: 1em;
     cursor: pointer;
-    margin-right: 10px;
-    margin-top: 10px;
     transition: background-color 0.2s;
     text-decoration: none;
+    /* FIX: Remove custom margins inherited from the old structure */
+    margin-right: 0; 
+    margin-top: 0; 
 }
 
 a.download-link:hover {
@@ -136,11 +145,13 @@ a.download-link:hover {
     background-color: rgba(0,0,0,0.35);
 }
 
+/* Button styles apply to all buttons, including Remove Report */
 button {
     background-color: #C32026;
     color: white;
     border: none;
-    padding: 10px 15px;
+    /* FIX: Standardize padding for buttons */
+    padding: 10px 15px; 
     border-radius: 6px;
     font-size: 1em;
     cursor: pointer;
@@ -148,7 +159,7 @@ button {
 }
 
 button:hover {
-	filter: brightness(0.90);
+    filter: brightness(0.90);
 }
 
 .current-user {
@@ -176,34 +187,32 @@ button.disabled {
     cursor: default;
 }
 
-
+/* --- PDF Viewer Loading Spinner Styles --- */
 #pdfLoading {
-    /* Center the *entire* loading block horizontally within pdfViewer */
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%; /* Ensure it spans the width of its parent (#pdfViewer) */
-    min-height: 50px; /* Provide minimum height for vertical centering */
+    width: 100%;
+    min-height: 50px;
 }
 
 .loading-content {
-    display: flex; /* Makes the spinner and text side-by-side */
-    align-items: center; /* Vertically centers the spinner (SVG) and the text */
-    gap: 10px; /* Adds space between the spinner and the text */
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: #555;
     font-size: 1.1em;
 }
 
 .spinner {
-    /* ensures the spinner doesn't have any extra margin/padding */
     line-height: 0; 
 }
 
 .loading-content p {
-    margin: 0; /* Remove default paragraph margin */
-    /* You can add more text styling here if needed */
+    margin: 0;
 }
 
+/* --- Modal Styles (Unchanged) --- */
 .modal { 
     display: none; 
     position: fixed; 
@@ -235,3 +244,34 @@ button.disabled {
 
 .modal-yes { background: #28a745; color: white; }
 .modal-no { background: #dc3545; color: white; }
+
+/* --- Download Assets Button Spinner Styles (Revised) --- */
+
+.section.download button {
+    /* Ensure button is a flex container to center text/spinner */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; 
+
+    /* Standard Button Styles applied above, ensuring consistency */
+    padding: 10px 15px; /* Use the same padding as a.download-link */
+    font-size: 1em;
+}
+
+/* Base style for the hidden state */
+.hidden-spinner {
+    display: none !important; 
+}
+
+/* Style for the visible spinner content */
+#download-spinner-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Spinner SVG size assurance */
+#download-spinner-content svg {
+    flex-shrink: 0;
+}
