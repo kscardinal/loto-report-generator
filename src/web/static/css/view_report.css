@@ -162,3 +162,10 @@ button:hover {
     left: 20px;
     top: 50%;
 }
+
+/* Visual state for disabled download link */
+a.download-link.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: default;
+}
