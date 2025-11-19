@@ -53,8 +53,6 @@ uploadButton.addEventListener("click", async () => {
         const data = await response.json();
 
         if (response.ok) {
-            alert(`Upload successful! Report: ${data.report_name}\nFiles: ${data.photos.join(", ")}`);
-
             // Clear temp files on server after successful upload
             await fetch("/clear/", { method: "POST" });
 
