@@ -42,6 +42,101 @@
 <script>
 let pendingAction = null;   // holds a function to execute after confirmation
 
+// --- Helper function to add ordinal suffix (st, nd, rd, th) ---
+function getOrdinalDate(date) {
+    const day = date.getDate();
+    if (day > 3 && day < 21) return day + 'th'; 
+    switch (day % 10) {
+        case 1: return day + 'st';
+        case 2: return day + 'nd';
+        case 3: return day + 'rd';
+        default: return day + 'th';
+    }
+}
+
+// ------------------------------
+// Date Formatting Logic (From previous discussion)
+// ------------------------------
+function formatFriendlyETDate(isoStr) { 
+    if (!isoStr) return "N/A";
+    
+    // Assumes backend provides ISO format (e.g., 2025-11-19T18:33:22.867000)
+    // Clean the ISO string to be reliably parsed by Date()
+    const cleanIsoStr = isoStr.replace(/\.\d{3,}(\+\d{2}:\d{2})?/, 'Z');
+    
+    const dt = new Date(cleanIsoStr);
+    
+    if (isNaN(dt.getTime())) { 
+        console.error("Date constructor failed on string:", cleanIsoStr);
+        return "Invalid Date";
+    }
+    
+    const now = new Date();
+    const ET_OPTIONS = { timeZone: "America/New_York" };
+
+    // --- Day Difference Calculation (based on ET midnight) ---
+    
+    const getDateComponent = (dateObj, part) => {
+         return dateObj.toLocaleString('en-US', { [part]: 'numeric', ...ET_OPTIONS });
+    };
+
+    const dtYear = getDateComponent(dt, 'year');
+    const dtMonth = getDateComponent(dt, 'month');
+    const dtDay = getDateComponent(dt, 'day');
+
+    const nowYear = getDateComponent(now, 'year');
+    const nowMonth = getDateComponent(now, 'month');
+    const nowDay = getDateComponent(now, 'day');
+
+    const dtDayStart = new Date(`${dtYear}-${dtMonth}-${dtDay}T00:00:00`); 
+    const nowDayStart = new Date(`${nowYear}-${nowMonth}-${nowDay}T00:00:00`); 
+    
+    const diffTime = nowDayStart.getTime() - dtDayStart.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // --- Formatting ---
+    
+    // Time part (always formatted in ET)
+    const timeStr = dt.toLocaleTimeString("en-US", { 
+        hour12: true, 
+        hour: "numeric", 
+        minute: "2-digit", 
+        second: "2-digit",
+        ...ET_OPTIONS
+    });
+    
+    const numericDateET = dt.toLocaleDateString("en-US", { 
+        month: "2-digit", 
+        day: "2-digit", 
+        year: "2-digit", 
+        ...ET_OPTIONS 
+    });
+
+    if (diffDays === 0) {
+        return `Today (${numericDateET}) at ${timeStr.toLowerCase()}`;
+    }
+    if (diffDays === 1) {
+        return `Yesterday (${numericDateET}) at ${timeStr.toLowerCase()}`;
+    }
+    
+    if (diffDays < 7) {
+        const weekday = dt.toLocaleDateString("en-US", { weekday: "long", ...ET_OPTIONS });
+        return `${weekday} (${numericDateET}) at ${timeStr.toLowerCase()}`;
+    }
+    
+    // For 7+ days old: "November 14th, 2025 at..."
+    const monthYearStr = dt.toLocaleDateString("en-US", { 
+        month: "long", 
+        year: "numeric", 
+        ...ET_OPTIONS 
+    });
+
+    const ordinalDay = getOrdinalDate(dt);
+    const friendlyDate = `${monthYearStr.split(' ')[0]} ${ordinalDay}, ${monthYearStr.split(' ')[1]}`;
+
+    return `${friendlyDate} at ${timeStr.toLowerCase()}`;
+}
+
 /** ----------------------------
  *   Fetch and Render Users
  * ---------------------------- */
@@ -77,16 +172,10 @@ async function fetchUsers() {
             div.classList.add("current"); // applies pastel red background
         }
 
-        const options = {
-            timeZone: "America/New_York",
-            year: "numeric", month: "long", day: "numeric",
-            hour: "numeric", minute: "numeric", second: "numeric",
-            hour12: true
-        };
-
-        const dateCreatedEST = user.date_created ? new Date(user.date_created).toLocaleString("en-US", options) : "N/A";
-        const lastAccessedEST = user.last_accessed ? new Date(user.last_accessed).toLocaleString("en-US", options) : "N/A";
-        const latestResetEST = user.latest_reset ? new Date(user.latest_reset).toLocaleString("en-US", options) : "N/A";
+        // Use the custom formatting function
+        const dateCreatedEST = user.date_created ? formatFriendlyETDate(user.date_created) : "N/A";
+        const lastAccessedEST = user.last_accessed ? formatFriendlyETDate(user.last_accessed) : "N/A";
+        const latestResetEST = user.latest_reset ? formatFriendlyETDate(user.latest_reset) : "N/A";
 
         let actionButtonsHTML = "";
 
