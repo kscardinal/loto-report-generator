@@ -295,49 +295,43 @@ initPdfViewer();
 
 document.addEventListener("DOMContentLoaded", function() {
 
-    // ------------------------------
-    // Date Formatting Logic (FIXED for Python string)
-    // ------------------------------
+    // --- Helper function to add ordinal suffix (st, nd, rd, th) ---
+    function getOrdinalDate(date) {
+        const day = date.getDate();
+        if (day > 3 && day < 21) return day + 'th'; // 11th, 12th, 13th, etc.
+        switch (day % 10) {
+            case 1: return day + 'st';
+            case 2: return day + 'nd';
+            case 3: return day + 'rd';
+            default: return day + 'th';
+        }
+    }
 
     function formatFriendlyETDate(isoStr) { 
         if (!isoStr) return "N/A";
         
-        // 1. CLEAN THE DATE STRING: Convert Python string 'YYYY-MM-DD HH:MM:SS.microseconds' 
-        //    into a reliable ISO format 'YYYY-MM-DDTHH:MM:SSZ'.
-        
-        let cleanIsoStr = isoStr.trim();
-        
-        // Replace the space with 'T'
-        cleanIsoStr = cleanIsoStr.replace(' ', 'T'); 
+        // 1. CLEAN THE DATE STRING: Use a single, reliable step to clean the microseconds and offset.
+        // This removes the microseconds (if they exist) and the timezone offset (+00:00) 
+        // to create a clean string the Date constructor loves, appended with 'Z' for UTC.
+        // Example: '2025-11-19T18:33:22.867000+00:00' -> '2025-11-19T18:33:22Z'
+        const cleanIsoStr = isoStr.replace(/\.\d{3,}(\+00:00)?/, 'Z');
 
-        // If microseconds exist (6 digits), trim them down or remove them.
-        // We'll remove all digits after the period and add the 'Z'.
-        if (cleanIsoStr.includes('.')) {
-            cleanIsoStr = cleanIsoStr.substring(0, cleanIsoStr.indexOf('.'));
-        }
-        
-        // Append 'Z' to explicitly mark the time as UTC (Zulu time)
-        cleanIsoStr = cleanIsoStr + 'Z'; 
-
-        // Debug check (The console will now show what's being passed to Date())
-        console.log("Cleaned ISO String:", cleanIsoStr); // Should output: 2025-11-19T18:33:22Z
-        
-        // 2. Create the Date object
         const dt = new Date(cleanIsoStr);
         
-        // Check if the Date object is valid
+        // Validate the date object
         if (isNaN(dt.getTime())) { 
             console.error("Date constructor failed on string:", cleanIsoStr);
             return "Invalid Date";
         }
         
         const now = new Date();
-        const options = { timeZone: "America/New_York" };
+        const ET_OPTIONS = { timeZone: "America/New_York" };
 
         // --- Day Difference Calculation (based on ET midnight) ---
         
+        // Helper to extract ET date parts
         const getDateComponent = (dateObj, part) => {
-             return dateObj.toLocaleString('en-US', { [part]: 'numeric', timeZone: 'America/New_York' });
+             return dateObj.toLocaleString('en-US', { [part]: 'numeric', ...ET_OPTIONS });
         };
 
         const dtYear = getDateComponent(dt, 'year');
@@ -348,9 +342,11 @@ document.addEventListener("DOMContentLoaded", function() {
         const nowMonth = getDateComponent(now, 'month');
         const nowDay = getDateComponent(now, 'day');
 
+        // Create Date objects representing the start of the day in ET (00:00:00)
         const dtDayStart = new Date(`${dtYear}-${dtMonth}-${dtDay}T00:00:00`); 
         const nowDayStart = new Date(`${nowYear}-${nowMonth}-${nowDay}T00:00:00`); 
         
+        // Calculate difference in full days
         const diffTime = nowDayStart.getTime() - dtDayStart.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -362,32 +358,39 @@ document.addEventListener("DOMContentLoaded", function() {
             hour: "numeric", 
             minute: "2-digit", 
             second: "2-digit",
-            timeZone: "America/New_York"
+            ...ET_OPTIONS
         });
 
-        const dayOptions = { timeZone: "America/New_York" };
-
-        if (diffDays === 0) return `Today, ${timeStr}`;
-        if (diffDays === 1) return `Yesterday, ${timeStr}`;
-        
-        if (diffDays < 30) {
-             const shortDate = dt.toLocaleDateString("en-US", { 
-                 weekday: "long", 
-                 ...dayOptions 
-             });
-             // Remove the comma if it exists, then append the time
-             return `${shortDate.replace(/, /g, '')}, ${timeStr}`; 
-        }
-        
-        // For 30+ days ago, show full numeric date (MM/DD/YY)
-        const numericDate = dt.toLocaleDateString("en-US", { 
+		// Helper to get the short numeric date (MM/DD/YY) in ET
+        const numericDateET = dt.toLocaleDateString("en-US", { 
             month: "2-digit", 
             day: "2-digit", 
             year: "2-digit", 
-            ...dayOptions 
-        });
+            ...ET_OPTIONS
+		});
+
+        if (diffDays === 0) {
+            return `Today (${numericDateET}) at ${timeStr.toLowerCase()}`;
+        }
+        if (diffDays === 1) {
+            return `Yesterday (${numericDateET}) at ${timeStr.toLowerCase()}`;
+        }
         
-        return `${numericDate}, ${timeStr}`;
+        if (diffDays < 7) {
+            const weekday = dt.toLocaleDateString("en-US", { weekday: "long", ...ET_OPTIONS });
+            return `${weekday} (${numericDateET}) at ${timeStr.toLowerCase()}`;
+        }
+        
+        const monthYearStr = dt.toLocaleDateString("en-US", { 
+            month: "long", 
+            year: "numeric", 
+            ...ET_OPTIONS 
+        });
+
+        const ordinalDay = getOrdinalDate(dt);
+        const friendlyDate = `${monthYearStr.split(' ')[0]} ${ordinalDay}, ${monthYearStr.split(' ')[1]}`;
+        return `${friendlyDate} at ${timeStr.toLowerCase()}`;
+        
     }
 
     // --- EXECUTION ---
@@ -401,7 +404,6 @@ document.addEventListener("DOMContentLoaded", function() {
     elementsToFormat.forEach(({ id, label }) => {
         const element = document.getElementById(id);
         if (element) {
-            // Raw date is pulled from data-raw-date attribute
             const rawDate = element.dataset.rawDate; 
             const formattedDate = formatFriendlyETDate(rawDate);
             element.innerHTML = `<strong>${label}: </strong> ${formattedDate}`;

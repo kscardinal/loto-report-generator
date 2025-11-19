@@ -443,6 +443,10 @@ async def view_report(
         background_tasks=background_tasks
     )
 
+    for key in ["date_added", "last_modified", "last_generated"]:
+        if key in doc and isinstance(doc[key], datetime):
+            doc[key] = doc[key].isoformat()
+
     return templates.TemplateResponse("view_report.html", {"request": request, "report": doc, "current_user": username})
 
 # -----------------------------
@@ -473,7 +477,7 @@ async def get_metadata(
 
     for key in ["date_added", "last_modified", "last_generated"]:
         if key in doc and isinstance(doc[key], datetime):
-            doc[key] = doc[key].strftime("%A, %B %d, %Y, %I:%M:%S %p")
+            doc[key] = doc[key].isoformat()
 
     return JSONResponse(content=doc)
 
