@@ -178,8 +178,6 @@ function updateDateDisplay(id, newIsoDate) {
 // --------------------------------------------------------
 
 async function initPdfViewer() {
-    console.log("Initializing PDF viewer...");
-
     // Ensure pdfjsLib is available.
     if (typeof window.pdfjsLib === 'undefined') {
         console.warn('pdfjsLib not found; loading fallback UMD build from cdnjs...');
@@ -224,9 +222,7 @@ async function initPdfViewer() {
     }
 
     // Fetch PDF as blob, load into PDF.js from memory (ArrayBuffer)
-    async function loadPdf() {
-        console.log("Starting PDF load:", pdfUrl);
-        
+    async function loadPdf() {        
         const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
 
         if (loadingText) loadingText.textContent = "Loading PDF ...";
@@ -260,7 +256,6 @@ async function initPdfViewer() {
             // Load PDF
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             pdfDoc = await loadingTask.promise;
-            console.log("PDF loaded from blob. Number of pages:", pdfDoc.numPages);
 
             // Remove loading message (including the spinner) and render
             if (pdfLoading) pdfLoading.remove();
@@ -295,7 +290,6 @@ async function initPdfViewer() {
     }
 
     async function renderPage(pageNum) {
-        console.log("Rendering page:", pageNum);
         const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: currentScale });
         const canvas = document.createElement("canvas");
@@ -321,13 +315,11 @@ async function initPdfViewer() {
     }
 
     async function renderAllPages() {
-        console.log("Rendering all pages...");
         // clear any existing canvases
         pdfViewer.innerHTML = "";
         for (let i = 1; i <= pdfDoc.numPages; i++) {
             await renderPage(i);
         }
-        console.log("All pages rendered");
     }
 
     function downloadCachedPdf() {
@@ -347,7 +339,6 @@ async function initPdfViewer() {
     }
 
     window.addEventListener("load", () => {
-        console.log("Window loaded, calling loadPdf...");
         loadPdf();
     });
 
@@ -362,7 +353,6 @@ async function initPdfViewer() {
 
         downloadButton.addEventListener("click", async () => {
             let reportNameLocal = downloadButton.dataset.report;
-            console.log("Download button clicked for report:", reportNameLocal);
             
             // 1. Show spinner state
             downloadButton.disabled = true;
@@ -380,7 +370,6 @@ async function initPdfViewer() {
                 }
                 const { files } = await res.json();
                 for (const file of files) {
-                    console.log("Downloading file:", file.filename, file.url);
                     const response = await fetch(file.url);
                     if (!response.ok) continue;
                     const blob = await response.blob();
@@ -408,7 +397,6 @@ async function initPdfViewer() {
     if (deleteButton) {
         deleteButton.addEventListener("click", () => {
             const reportNameLocal = deleteButton.dataset.report;
-            console.log("Delete button clicked for report:", reportNameLocal);
             
             // Use the custom confirm action (UPDATED)
             confirmAction("delete", reportNameLocal, () => deleteReport(reportNameLocal, redirectUrl));
