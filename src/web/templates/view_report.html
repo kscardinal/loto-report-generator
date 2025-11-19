@@ -57,6 +57,7 @@
         </div>
     </div>
 
+    {% if report.photos %}
     <div class="section photos">
         <h2>Photos</h2>
         <div class="photos-container">
@@ -70,6 +71,7 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
         <div>

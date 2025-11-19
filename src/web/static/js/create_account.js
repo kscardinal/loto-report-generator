@@ -107,7 +107,7 @@ async function validateForm() {
 
     if (isValid) {
         createButton.disabled = false;
-        createButton.style.backgroundColor = "#4CAF50"; // green when active
+        createButton.style.backgroundColor = "#C32026"; // green when active
         createButton.style.cursor = "pointer";         // change cursor
     } else {
         createButton.disabled = true;
