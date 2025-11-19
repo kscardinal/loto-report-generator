@@ -297,3 +297,22 @@ function escapeHtml(s) {
 // Initial load
 // ------------------------------
 loadAndRender(currentPage, perPage);
+
+// ------------------------------
+// Close modal with Escape key
+// ------------------------------
+document.addEventListener("keydown", (e) => {
+	// Check if the Escape key was pressed and the modal is currently visible
+	if (e.key === "Escape" && confirmModal.style.display === "flex") {
+		// Prevent default browser actions (like scrolling)
+		e.preventDefault(); 
+		
+		// This executes the same logic as hitting "Cancel"
+		pendingAction = null;
+		confirmModal.style.display = "none";
+		
+		// Optional: refocus on the delete button or the element that opened the modal
+		const deleteButton = document.getElementById("deleteBtn");
+		if (deleteButton) deleteButton.focus();
+	}
+});
