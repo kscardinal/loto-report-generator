@@ -48,12 +48,12 @@ async function deleteReport(reportName, redirectUrl) {
             alert(`Failed to delete report: ${data.detail || data.error || resp.status}`);
         } else {
             // Success: Redirect to list page
-            console.log("Report deleted successfully, redirecting...");
+            // report deleted, redirecting
             if (redirectUrl) window.location.href = redirectUrl; else window.location.reload();
         }
     } catch (err) {
-        console.error(err);
-        alert("Delete failed - see console.");
+        // log removed for production; show user-friendly alert
+        alert("Delete failed. See server logs for details.");
     }
 }
 
@@ -94,7 +94,6 @@ function formatFriendlyETDate(isoStr) {
     
     // Validate the date object
     if (isNaN(dt.getTime())) { 
-        console.error("Date constructor failed on string:", cleanIsoStr);
         return "Invalid Date";
     }
     
@@ -176,21 +175,20 @@ function updateDateDisplay(id, newIsoDate) {
         const label = labelElement ? labelElement.textContent : 'Last Generated: ';
         
         element.innerHTML = `<strong>${label}</strong> ${formattedDate}`;
-        console.log(`Updated ${id} to: ${formattedDate}`);
+        // date display updated
     }
 }
 // --------------------------------------------------------
 
 async function initPdfViewer() {
-    console.log("Initializing PDF viewer...");
+    // Initializing PDF viewer
 
     // Ensure pdfjsLib is available.
     if (typeof window.pdfjsLib === 'undefined') {
-        console.warn('pdfjsLib not found; loading fallback UMD build from cdnjs...');
+        // pdfjsLib not found; loading fallback UMD build from cdnjs
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js');
         window.pdfjsLib = window.pdfjsLib || window.pdfjsDistPdfjs || window['pdfjs-dist/build/pdf'];
         if (!window.pdfjsLib) {
-            console.error('Fallback PDF.js did not expose pdfjsLib');
             return;
         }
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js';
@@ -229,7 +227,7 @@ async function initPdfViewer() {
 
     // Fetch PDF as blob, load into PDF.js from memory (ArrayBuffer)
     async function loadPdf() {
-        console.log("Starting PDF load:", pdfUrl);
+        // Starting PDF load
         
         // Get the <p> element within pdfLoading to update the text *only*, 
         const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
@@ -259,17 +257,17 @@ async function initPdfViewer() {
                         updateDateDisplay("lastGenerated", metadata.last_generated);
                     }
                 } else {
-                    console.warn("Could not fetch updated metadata. Status:", metadataResp.status);
+                    // Could not fetch updated metadata
                 }
             } catch (metaErr) {
-                console.error("Error fetching report metadata:", metaErr);
+                // Error fetching report metadata
             }
             // 🌟 END METADATA FETCH 🌟
 
             // Load PDF from in-memory data to avoid another network request
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             pdfDoc = await loadingTask.promise;
-            console.log("PDF loaded from blob. Number of pages:", pdfDoc.numPages);
+            // PDF loaded from blob
 
             // Remove loading message (including the spinner) and render
             if (pdfLoading) pdfLoading.remove();
@@ -284,7 +282,7 @@ async function initPdfViewer() {
             }
 
         } catch (err) {
-            console.error("Error loading PDF:", err);
+            // Error loading PDF
             
             // Handle error
             if (pdfLoading) {
@@ -301,7 +299,7 @@ async function initPdfViewer() {
     }
 
     async function renderPage(pageNum) {
-        console.log("Rendering page:", pageNum);
+        // rendering page
         const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: currentScale });
         const canvas = document.createElement("canvas");
@@ -327,13 +325,13 @@ async function initPdfViewer() {
     }
 
     async function renderAllPages() {
-        console.log("Rendering all pages...");
+        // rendering all pages
         // clear any existing canvases
         pdfViewer.innerHTML = "";
         for (let i = 1; i <= pdfDoc.numPages; i++) {
             await renderPage(i);
         }
-        console.log("All pages rendered");
+        // all pages rendered
     }
 
     function downloadCachedPdf() {
@@ -353,7 +351,7 @@ async function initPdfViewer() {
     }
 
     window.addEventListener("load", () => {
-        console.log("Window loaded, calling loadPdf...");
+        // window loaded, calling loadPdf
         loadPdf();
     });
 
@@ -364,15 +362,14 @@ async function initPdfViewer() {
     if (downloadButton) {
         downloadButton.addEventListener("click", async () => {
             let reportNameLocal = downloadButton.dataset.report;
-            console.log("Download button clicked for report:", reportNameLocal);
+            // download button clicked
             const res = await fetch(`/download_report_files/${reportNameLocal}`);
             if (!res.ok) {
-                console.error("Failed to get file list");
                 return alert("Failed to get file list");
             }
             const { files } = await res.json();
             for (const file of files) {
-                console.log("Downloading file:", file.filename, file.url);
+                // downloading file
                 const response = await fetch(file.url);
                 if (!response.ok) continue;
                 const blob = await response.blob();
@@ -389,7 +386,7 @@ async function initPdfViewer() {
     if (deleteButton) {
         deleteButton.addEventListener("click", () => {
             const reportNameLocal = deleteButton.dataset.report;
-            console.log("Delete button clicked for report:", reportNameLocal);
+            // delete button clicked
             
             // Use the custom confirm action (UPDATED)
             confirmAction("delete", reportNameLocal, () => deleteReport(reportNameLocal, redirectUrl));

@@ -1,4 +1,4 @@
-console.log("input_form.js");
+// input_form.js
 
 // ===============
 // ACTION BUTTONS

@@ -292,7 +292,6 @@ sendButton.addEventListener("click", async function() {
                 code.classList.add("error");
 
                 codeAttempts = codeAttempts + 1;
-                console.log(codeAttempts)
 
                 return;
             }
@@ -348,7 +347,6 @@ sendButton.addEventListener("click", async function() {
             const data = await res.json();
 
             if (res.ok) {
-                console.log("Redirecting…");
                 window.location.href = "/login";
             } else {
                 alert(result.message || "Failed to update password.");
