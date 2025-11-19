@@ -126,7 +126,7 @@ async function initPdfViewer() {
 		const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
 
 		// Update the status text at the beginning of the load
-		if (loadingText) loadingText.textContent = "Loading PDF data...";
+		if (loadingText) loadingText.textContent = "Loading PDF ...";
 		
 		try {
 			const resp = await fetch(pdfUrl, { credentials: 'include' });
