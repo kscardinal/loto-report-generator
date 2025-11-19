@@ -231,3 +231,18 @@ header {
     .left-div { left: 10px; }
     main { padding: 0 12px; }
 }
+
+button {
+    background-color: #C32026;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+	filter: brightness(0.90);
+}

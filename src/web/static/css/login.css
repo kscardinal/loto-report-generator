@@ -71,7 +71,7 @@ main {
 }
 
 .login-container button:hover {
-    background: #A01D20;
+	filter: brightness(0.90);
 }
 
 .login-container a {

@@ -5,107 +5,6 @@
 <title>LOTO Generator | Users</title>
 <link rel="stylesheet" href="/static/css/user_list.css">
 <link rel="icon" type="image/x-icon" href="/static/includes/users_icon.svg">
-<style>
-    .action-buttons {
-        margin-top: 10px;
-        display: flex;
-        justify-content: space-between; /* left vs right */
-        align-items: center;
-    }
-
-    .action-buttons .left-buttons,
-    .action-buttons .right-buttons {
-        display: flex;
-        gap: 10px; /* spacing between buttons */
-    }
-
-    .btn {
-        padding: 6px 12px;
-        border: none;
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-
-    .btn-activate { background-color: #28a745; color: white; }
-    .btn-deactivate { background-color: #dc3545; color: white; }
-    .btn-promote { background-color: #007bff; color: white; }
-    .btn-demote { background-color: #dc3545; color: white; }
-    .btn-delete { background-color: #dc3545; color: white; }
-
-
-    /* Modal */
-    #confirmModal {
-        display: none; 
-        position: fixed; 
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5);
-        justify-content: center;
-        align-items: center;
-    }
-    #confirmBox {
-        background: white;
-        padding: 20px;
-        border-radius: 6px;
-        max-width: 400px;
-        text-align: center;
-    }
-    #confirmBox button {
-        margin-top: 10px;
-        padding: 8px 16px;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-    }
-    #confirmYes { background-color: #28a745; color: white; }
-    #confirmNo { background-color: #dc3545; color: white; margin-left: 10px; }
-
-    .current-user {
-        font-size: 0.9em;
-        color: white;
-        margin-top: 5px;
-    }
-
-    /* inside your <style> block or CSS file */
-    .user-card.current {
-        background-color: #ffebec; /* pastel/muted red */
-        border: 1px solid #f5c2c7; /* optional border */
-    }
-
-    .btn-delete {
-        padding: 6px 12px;
-        border: none;
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-
-    .back-div {
-        position: absolute;
-        left: 20px;
-        top: 50%;
-    }
-
-    .back-btn {
-        transform: translateY(-50%);
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 0.95em;
-        background-color: rgba(0,0,0,0.2);
-        padding: 5px 10px;
-        border-radius: 5px;
-        margin-right: 10px;
-    }
-
-    .back-btn:hover {
-        background-color: rgba(0,0,0,0.35);
-    }
-
-
-
-</style>
 </head>
 
 <body>
@@ -321,6 +220,25 @@ async function deleteUser(username) {
 }
 
 fetchUsers();
+
+// ------------------------------
+// Close modal with Escape key
+// ------------------------------
+document.addEventListener("keydown", (e) => {
+	// Check if the Escape key was pressed and the modal is currently visible
+	if (e.key === "Escape" && confirmModal.style.display === "flex") {
+		// Prevent default browser actions (like scrolling)
+		e.preventDefault(); 
+		
+		// This executes the same logic as hitting "Cancel"
+		pendingAction = null;
+		confirmModal.style.display = "none";
+		
+		// Optional: refocus on the delete button or the element that opened the modal
+		const deleteButton = document.getElementById("deleteBtn");
+		if (deleteButton) deleteButton.focus();
+	}
+});
 </script>
 </body>
 </html>
