@@ -30,9 +30,9 @@
             {% endfor %}
         </ul>
         <p><strong>Notes:</strong> {{ report.notes }}</p>
-        <p><strong>Date Added:</strong> {{ report.date_added }}</p>
-        <p><strong>Last Modified:</strong> {{ report.last_modified }}</p>
-        <p><strong>Last Generated:</strong> {{ report.last_generated }}</p>
+        <p id="dateAdded" data-raw-date="{{ report.date_added }}">...</p>
+        <p id="dateModified" data-raw-date="{{ report.last_modified }}">...</p>
+        <p id="lastGenerated" data-raw-date="{{ report.last_generated }}">...</p>
     </div>
 
     <!-- 

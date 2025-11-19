@@ -289,4 +289,122 @@ document.addEventListener("keydown", (e) => {
 	}
 });
 
+
+
 initPdfViewer();
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    // ------------------------------
+    // Date Formatting Logic (FIXED for Python string)
+    // ------------------------------
+
+    function formatFriendlyETDate(isoStr) { 
+        if (!isoStr) return "N/A";
+        
+        // 1. CLEAN THE DATE STRING: Convert Python string 'YYYY-MM-DD HH:MM:SS.microseconds' 
+        //    into a reliable ISO format 'YYYY-MM-DDTHH:MM:SSZ'.
+        
+        let cleanIsoStr = isoStr.trim();
+        
+        // Replace the space with 'T'
+        cleanIsoStr = cleanIsoStr.replace(' ', 'T'); 
+
+        // If microseconds exist (6 digits), trim them down or remove them.
+        // We'll remove all digits after the period and add the 'Z'.
+        if (cleanIsoStr.includes('.')) {
+            cleanIsoStr = cleanIsoStr.substring(0, cleanIsoStr.indexOf('.'));
+        }
+        
+        // Append 'Z' to explicitly mark the time as UTC (Zulu time)
+        cleanIsoStr = cleanIsoStr + 'Z'; 
+
+        // Debug check (The console will now show what's being passed to Date())
+        console.log("Cleaned ISO String:", cleanIsoStr); // Should output: 2025-11-19T18:33:22Z
+        
+        // 2. Create the Date object
+        const dt = new Date(cleanIsoStr);
+        
+        // Check if the Date object is valid
+        if (isNaN(dt.getTime())) { 
+            console.error("Date constructor failed on string:", cleanIsoStr);
+            return "Invalid Date";
+        }
+        
+        const now = new Date();
+        const options = { timeZone: "America/New_York" };
+
+        // --- Day Difference Calculation (based on ET midnight) ---
+        
+        const getDateComponent = (dateObj, part) => {
+             return dateObj.toLocaleString('en-US', { [part]: 'numeric', timeZone: 'America/New_York' });
+        };
+
+        const dtYear = getDateComponent(dt, 'year');
+        const dtMonth = getDateComponent(dt, 'month');
+        const dtDay = getDateComponent(dt, 'day');
+
+        const nowYear = getDateComponent(now, 'year');
+        const nowMonth = getDateComponent(now, 'month');
+        const nowDay = getDateComponent(now, 'day');
+
+        const dtDayStart = new Date(`${dtYear}-${dtMonth}-${dtDay}T00:00:00`); 
+        const nowDayStart = new Date(`${nowYear}-${nowMonth}-${nowDay}T00:00:00`); 
+        
+        const diffTime = nowDayStart.getTime() - dtDayStart.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        // --- Formatting ---
+        
+        // Time part (always formatted in ET)
+        const timeStr = dt.toLocaleTimeString("en-US", { 
+            hour12: true, 
+            hour: "numeric", 
+            minute: "2-digit", 
+            second: "2-digit",
+            timeZone: "America/New_York"
+        });
+
+        const dayOptions = { timeZone: "America/New_York" };
+
+        if (diffDays === 0) return `Today, ${timeStr}`;
+        if (diffDays === 1) return `Yesterday, ${timeStr}`;
+        
+        if (diffDays < 30) {
+             const shortDate = dt.toLocaleDateString("en-US", { 
+                 weekday: "long", 
+                 ...dayOptions 
+             });
+             // Remove the comma if it exists, then append the time
+             return `${shortDate.replace(/, /g, '')}, ${timeStr}`; 
+        }
+        
+        // For 30+ days ago, show full numeric date (MM/DD/YY)
+        const numericDate = dt.toLocaleDateString("en-US", { 
+            month: "2-digit", 
+            day: "2-digit", 
+            year: "2-digit", 
+            ...dayOptions 
+        });
+        
+        return `${numericDate}, ${timeStr}`;
+    }
+
+    // --- EXECUTION ---
+    
+    const elementsToFormat = [
+        { id: "dateAdded", label: "Date Added" },
+        { id: "dateModified", label: "Last Modified" },
+        { id: "lastGenerated", label: "Last Generated" }
+    ];
+
+    elementsToFormat.forEach(({ id, label }) => {
+        const element = document.getElementById(id);
+        if (element) {
+            // Raw date is pulled from data-raw-date attribute
+            const rawDate = element.dataset.rawDate; 
+            const formattedDate = formatFriendlyETDate(rawDate);
+            element.innerHTML = `<strong>${label}: </strong> ${formattedDate}`;
+        }
+    });
+});

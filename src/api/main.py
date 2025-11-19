@@ -433,11 +433,6 @@ async def view_report(
     if not doc:
         return HTMLResponse(f"<h1>Report '{report_name}' not found</h1>", status_code=404)
 
-    # Format datetime fields
-    for key in ["date_added", "last_modified", "last_generated"]:
-        if key in doc and isinstance(doc[key], datetime):
-            doc[key] = format_datetime_with_ordinal(doc[key], tz_offset)
-
     log_action(
         request=request,
         audit_logs_collection=audit_logs,
