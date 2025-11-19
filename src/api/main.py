@@ -950,7 +950,7 @@ def login_email(user, geo):
             <tr><td>Last Name</td><td>{user.get('last_name', '')[:1].upper() + user.get('last_name', '')[1:] if user.get('last_name') else ''}</td></tr>
             <tr><td>Username</td><td>{user.get('username', '')}</td></tr>
             <tr><td>Email</td><td>{user.get('email', '')}</td></tr>
-            <tr><td>Date Created</td><td>{formatted_time}</td></tr>
+            <tr><td>Date Accessed</td><td>{formatted_time}</td></tr>
             <tr><td>IP Address</td><td>{geo.get('ip_address', 'unknown') if geo else 'unknown'}</td></tr>
             <tr><td>Location</td><td>{location_str}</td></tr>
         </table>
