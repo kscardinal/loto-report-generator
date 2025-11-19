@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Configuration ---
-API_URL = "http://localhost:8000/cleanup_orphan_photos"
+API_URL = os.getenv("CLEANUP_URL")
 CRON_SECRET_KEY = os.getenv("ADMIN_JWT") 
 
 def execute_cleanup_endpoint():
     print(f"[{datetime.now()}] Attempting to trigger FastAPI cleanup endpoint...")
+    print(f"[{datetime.now()}] Connecting to {API_URL}")
     
     if not CRON_SECRET_KEY:
         print("ERROR: ADMIN_JWT is not set. Cannot authenticate.")
