@@ -1669,13 +1669,17 @@ async def audit_logs_page(
     })
 
 @app.get("/audit_logs_json")
-async def audit_logs_json(current_user: dict = Depends(get_current_user_no_redirect)):
+async def audit_logs_json(
+    current_user: dict = Depends(get_current_user_no_redirect),
+    limit: int = Query(500, ge=1, le=2500)
+):
     # Require owner access
     error = require_role("owner")(current_user)
     if error:
         return error
 
-    logs_cursor = audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(500)
+    # Respect client-requested limit (default 500, capped at 2500)
+    logs_cursor = audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).limit(limit)
     log_list = []
 
     for doc in logs_cursor:

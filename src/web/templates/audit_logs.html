@@ -110,23 +110,24 @@ function formatLocation(location) {
     return parts.length ? parts.join(", ") : "unknown";
 }
 
-// Read ?page= and ?per_page= from URL
+// Read ?page=, ?per_page= and ?limit= from URL
 const urlParams = new URLSearchParams(window.location.search);
 let currentPage = parseInt(urlParams.get("page")) || 1;
 let logsPerPage = parseInt(urlParams.get("per_page")) || 25;
+let logsFetchLimit = parseInt(urlParams.get("limit")) || 500; // default 500, capped server-side at 2500
 let logs = [];
 
 async function fetchLogs() {
-    const response = await fetch("/audit_logs_json", { credentials: "include" });
+    const response = await fetch(`/audit_logs_json?limit=${logsFetchLimit}`, { credentials: "include" });
     const data = await response.json();
     logs = data.logs || [];
     renderPage(currentPage);
-    // set dropdown to URL value
+    // set dropdowns to URL value
     document.getElementById("perPageSelect").value = logsPerPage;
 }
 
 function updateURL() {
-    const newUrl = `${window.location.pathname}?page=${currentPage}&per_page=${logsPerPage}`;
+    const newUrl = `${window.location.pathname}?page=${currentPage}&per_page=${logsPerPage}&limit=${logsFetchLimit}`;
     window.history.replaceState(null, "", newUrl);
 }
 
