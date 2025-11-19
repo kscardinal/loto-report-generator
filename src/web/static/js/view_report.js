@@ -152,6 +152,8 @@ async function initPdfViewer() {
 			// Enable the download anchor now that we have the blob
 			if (downloadAnchor) {
 				downloadAnchor.classList.remove('disabled');
+				document.getElementById('downloadBtn').classList.remove('disabled');
+				document.getElementById('deleteBtn').classList.remove('disabled');
 				downloadAnchor.setAttribute('aria-disabled', 'false');
 			}
 

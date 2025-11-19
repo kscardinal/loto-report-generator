@@ -79,9 +79,9 @@
     <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <a id="downloadPdfAnchor" class="download-link disabled" href="#" role="button" aria-disabled="true" data-server-href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
-            <button type="button" id="downloadBtn" data-report="{{ report.report_name }}">Download Assets</button>
+            <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" class="disabled">Download Assets</button>
         </div>
-        <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
+        <button type="button" id="deleteBtn" data-report="{{ report.report_name }}" class="disabled">Remove Report</button>
     </div>
 </main>
 

@@ -170,6 +170,12 @@ a.download-link.disabled {
     cursor: default;
 }
 
+button.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: default;
+}
+
 
 #pdfLoading {
     /* Center the *entire* loading block horizontally within pdfViewer */
