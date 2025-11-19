@@ -600,14 +600,19 @@ async def cleanup_orphan_photos(
 
     deleted_photos = {}
     total_bytes = 0
+    errors = []
     for grid_out in fs.find():
         photo_id = grid_out._id
         photo_name = grid_out.filename
         usage_count = uploads.count_documents({"photos.photo_id": photo_id})
         if usage_count == 0:
-            fs.delete(photo_id)
-            deleted_photos[str(photo_id)] = photo_name
-            total_bytes += grid_out.length  # Get file size in bytes
+            try:
+                fs.delete(photo_id)
+                deleted_photos[str(photo_id)] = photo_name
+                total_bytes += grid_out.length  # Get file size in bytes
+            except Exception as e:
+                # Record an error for reporting
+                errors.append({"photo_id": str(photo_id), "filename": photo_name, "error": str(e)})
 
     details = {}
     if not deleted_photos:
@@ -629,10 +634,79 @@ async def cleanup_orphan_photos(
         details=details,
         background_tasks=background_tasks
     )
+    # Send summary email to DEFAULT_EMAIL
+    try:
+        to_email = os.getenv("DEFAULT_EMAIL", "")
+        subject = "LOTO Generator - Orphaned Photos Cleanup Report"
+        utc_time = datetime.utcnow()
+        eastern = pytz.timezone("US/Eastern")
+        local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
+        formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
+
+        # Build rows for removed files
+        removed_rows = ""
+        if deleted_photos:
+            for pid, name in deleted_photos.items():
+                removed_rows += f"<tr><td>{pid}</td><td>{name}</td></tr>"
+        else:
+            removed_rows = "<tr><td colspan=2>No orphaned photos removed</td></tr>"
+
+        # Build rows for errors if any
+        error_rows = ""
+        if errors:
+            for err in errors:
+                error_rows += f"<tr><td>{err.get('photo_id')}</td><td>{err.get('filename')}</td><td>{err.get('error')}</td></tr>"
+        else:
+            error_rows = "<tr><td colspan=3>No errors reported</td></tr>"
+
+        size_str = sizeof_fmt(total_bytes) if total_bytes else "0 B"
+
+        html_content = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin-right:5%; margin-left:5%; padding:0; }}
+                h2 {{ color: #C32026; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+                th, td {{ text-align: left; padding: 8px; border-bottom: 1px solid #dddddd; }}
+                th {{ background-color: #f0f0f0; }}
+                .footer {{ margin-top: 20px; font-size: 12px; color: #777777; }}
+            </style>
+        </head>
+        <body>
+            <h2>Orphaned Photos Cleanup Report</h2>
+            <p>Cleanup run time: <strong>{formatted_time}</strong></p>
+            <p>Summary: <strong>{len(deleted_photos)} files removed</strong> — total size {size_str}.</p>
+
+            <h3>Removed Files</h3>
+            <table>
+                <tr><th>Photo ID</th><th>Filename</th></tr>
+                {removed_rows}
+            </table>
+
+            <h3>Errors</h3>
+            <table>
+                <tr><th>Photo ID</th><th>Filename</th><th>Error</th></tr>
+                {error_rows}
+            </table>
+
+            <p class="footer">This is an automated report from LOTO Report Generator.</p>
+        </body>
+        </html>
+        """
+
+        if to_email:
+            try:
+                send_email_auto(to_email, subject, html_content)
+            except Exception:
+                logger.exception("Failed to send cleanup email report")
+    except Exception:
+        logger.exception("Failed while preparing or sending cleanup email report")
 
     return {
         "message": f"Cleanup complete. {len(deleted_photos)} orphaned photos deleted.",
-        "deleted": deleted_photos
+        "deleted": deleted_photos,
+        "errors": errors
     }
 
 @app.get("/photos_info")
