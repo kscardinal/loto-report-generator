@@ -148,7 +148,7 @@ button {
 }
 
 button:hover {
-    background-color: #A01D20;
+	filter: brightness(0.90);
 }
 
 .current-user {
@@ -197,3 +197,35 @@ a.download-link.disabled {
     margin: 0; /* Remove default paragraph margin */
     /* You can add more text styling here if needed */
 }
+
+.modal { 
+    display: none; 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.45); 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 2000; 
+}
+.modal-box {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    width: min(460px, 92%);
+    text-align: center;
+}
+.modal-actions { 
+    display:flex; 
+    gap:12px; 
+    justify-content:center; 
+    margin-top: 12px; 
+}
+.modal-yes, .modal-no {
+    padding: 8px 14px; 
+    border-radius: 6px; 
+    border: none; 
+    cursor: pointer;
+}
+
+.modal-yes { background: #28a745; color: white; }
+.modal-no { background: #dc3545; color: white; }

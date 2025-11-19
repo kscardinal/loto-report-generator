@@ -85,7 +85,7 @@ button {
 }
 
 button:hover {
-    background-color: #A01D20;
+	filter: brightness(0.90);
 }
 
 #output {

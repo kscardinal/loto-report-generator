@@ -84,6 +84,17 @@
         <button type="button" id="deleteBtn" data-report="{{ report.report_name }}">Remove Report</button>
     </div>
 </main>
+
+<div id="confirmModal" class="modal">
+    <div id="confirmBox" class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+        <p id="confirmText"></p>
+        <div class="modal-actions">
+            <button id="confirmYes" class="modal-yes">Yes</button>
+            <button id="confirmNo" class="modal-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js"></script>
 <script type="module" src="/static/js/view_report.js"></script>
 </html>
