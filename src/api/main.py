@@ -867,7 +867,7 @@ async def users_json(
     for doc in users_cursor:
         for key, value in doc.items():
             if isinstance(value, datetime):
-                doc[key] = value.isoformat() + "Z"  # send as UTC ISO string
+                doc[key] = value.isoformat()
         user_list.append(doc)
 
     return {"users": user_list}
