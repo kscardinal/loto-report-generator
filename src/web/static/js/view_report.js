@@ -1,15 +1,28 @@
-// view_report.js (Complete file with spinner logic)
+// view_report.js (Full file with AbortController, back button logic, and spinner handling)
+
+// Global scope variable to hold the AbortController
+let pdfLoadController = new AbortController();
+
+function cancelPdfLoading() {
+    console.log("Attempting to cancel PDF loading...");
+    
+    // Abort the network request (if one is pending)
+    pdfLoadController.abort();
+    
+    // Create a NEW controller for the next time the page is loaded (e.g., if user returns)
+    pdfLoadController = new AbortController();
+}
 
 let pendingAction = null; // Stored callback for modal confirm
 
-// DOM elements for Modal (NEW)
+// DOM elements for Modal
 const confirmModal = document.getElementById("confirmModal");
 const confirmText = document.getElementById("confirmText");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
 
 // ------------------------------
-// Confirm modal (NEW)
+// Confirm modal
 // ------------------------------
 function confirmAction(actionText, targetName, callbackFn) {
     confirmText.textContent = `Are you sure you want to ${actionText} "${targetName}"?`;
@@ -34,7 +47,7 @@ if (confirmYes) {
 }
 
 // ------------------------------
-// Delete report (UPDATED)
+// Delete report
 // ------------------------------
 async function deleteReport(reportName, redirectUrl) {
     try {
@@ -48,11 +61,9 @@ async function deleteReport(reportName, redirectUrl) {
             alert(`Failed to delete report: ${data.detail || data.error || resp.status}`);
         } else {
             // Success: Redirect to list page
-            // report deleted, redirecting
             if (redirectUrl) window.location.href = redirectUrl; else window.location.reload();
         }
     } catch (err) {
-        // log removed for production; show user-friendly alert
         alert("Delete failed. See server logs for details.");
     }
 }
@@ -69,7 +80,7 @@ function loadScript(url) {
 }
 
 // --------------------------------------------------------
-// --- DATE UTILITY FUNCTIONS (MOVED TO GLOBAL SCOPE) ---
+// --- DATE UTILITY FUNCTIONS ---
 // --------------------------------------------------------
 
 // --- Helper function to add ordinal suffix (st, nd, rd, th) ---
@@ -160,7 +171,6 @@ function formatFriendlyETDate(isoStr) {
     return `${friendlyDate} at ${timeStr.toLowerCase()}`;
 }
 
-// --- Dynamic Date Update Helper (MOVED TO GLOBAL SCOPE) ---
 function updateDateDisplay(id, newIsoDate) {
     const element = document.getElementById(id);
     if (element) {
@@ -175,7 +185,6 @@ function updateDateDisplay(id, newIsoDate) {
         element.innerHTML = `<strong>${label}</strong> ${formattedDate}`;
     }
 }
-// --------------------------------------------------------
 
 async function initPdfViewer() {
     // Ensure pdfjsLib is available.
@@ -222,13 +231,17 @@ async function initPdfViewer() {
     }
 
     // Fetch PDF as blob, load into PDF.js from memory (ArrayBuffer)
-    async function loadPdf() {        
+    async function loadPdf() {
+        // Get the signal from the current controller
+        const signal = pdfLoadController.signal; // ABORT SIGNAL ACQUIRED
+
         const loadingText = pdfLoading ? pdfLoading.querySelector('p') : null;
 
         if (loadingText) loadingText.textContent = "Loading PDF ...";
         
         try {
-            const resp = await fetch(pdfUrl, { credentials: 'include' });
+            // PASS THE SIGNAL TO THE FETCH CALL
+            const resp = await fetch(pdfUrl, { credentials: 'include', signal }); 
             if (!resp.ok) {
                 const txt = await resp.text().catch(() => null);
                 throw new Error(txt || `HTTP ${resp.status}`);
@@ -273,6 +286,13 @@ async function initPdfViewer() {
 
 
         } catch (err) {
+            // Check specifically for the AbortError
+            if (err.name === 'AbortError') {
+                 console.log('PDF load cancelled successfully by user.');
+                 // Do not show an error to the user, just stop processing.
+                 return; 
+            }
+            
             console.error("Error loading PDF:", err);
             
             // Handle error
@@ -345,6 +365,21 @@ async function initPdfViewer() {
     // Download & delete buttons
     const downloadButton = document.getElementById("downloadBtn");
     const deleteButton = document.getElementById("deleteBtn");
+    
+    const backBtn = document.querySelector('.back-btn');
+
+    if (backBtn) {
+        backBtn.addEventListener('click', (event) => {
+            // 1. Prevent the default navigation immediately
+            event.preventDefault(); 
+            
+            // 2. Cancel the current PDF loading process
+            cancelPdfLoading();
+            
+            // 3. Immediately redirect the browser to the desired endpoint
+            window.location.href = backBtn.href; 
+        });
+    }
 
     if (downloadButton) {
         // Get the new spinner elements
@@ -398,7 +433,7 @@ async function initPdfViewer() {
         deleteButton.addEventListener("click", () => {
             const reportNameLocal = deleteButton.dataset.report;
             
-            // Use the custom confirm action (UPDATED)
+            // Use the custom confirm action
             confirmAction("delete", reportNameLocal, () => deleteReport(reportNameLocal, redirectUrl));
         });
     }
