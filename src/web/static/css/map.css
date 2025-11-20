@@ -79,3 +79,53 @@ main {
     left: 20px;
     top: 50%;
 }
+
+/* --- Reused Spinner Styles from view_report.css --- */
+.loading-content {
+    display: flex;
+    flex-direction: column; /* Stack spinner and text */
+    align-items: center;
+    gap: 15px; /* Increased gap */
+    color: #333; /* Dark text for contrast on white box */
+    font-size: 1.2em; /* Slightly larger text */
+    padding: 20px;
+    background-color: white; /* White box for the spinner */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Subtle shadow */
+}
+
+.spinner {
+    line-height: 0;
+}
+
+.loading-content svg {
+    /* Set larger size for center-screen spinner */
+    width: 60px;
+    height: 60px;
+}
+
+.loading-content p {
+    margin: 0;
+}
+
+/* --- New Overlay Styles for the Map Page --- */
+#mapLoadingOverlay {
+    position: fixed; /* Fixed position to cover the whole viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Darken background slightly */
+    background-color: rgba(0, 0, 0, 0.4); 
+    display: flex; /* Use flexbox to center the content */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Ensure it's on top of everything */
+    transition: opacity 0.3s ease; /* Optional: for fade out effect */
+}
+
+/* Optional: Class to hide the overlay */
+.hidden-overlay {
+    opacity: 0;
+    pointer-events: none; /* Allows clicks to pass through when hidden */
+}
