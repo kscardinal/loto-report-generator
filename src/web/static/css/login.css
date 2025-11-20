@@ -23,19 +23,21 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: calc(100vh - 80px); /* subtract header height */
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 10px;
+    min-height: 100vh; /* Use 100vh for full viewport height */
+    padding: 10px; /* Add some padding around the content */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
 }
 
+/* Removed max-width on main to allow it to stretch, and let the container control its size */
 
 .login-container {
     background: #fff;
     padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    width: 300px;
+    width: 90%; /* Use percentage for responsiveness */
+    max-width: 300px; /* Set a max-width for desktop/larger screens */
+    min-width: 200px; /* Set a minimum width for very small screens */
     text-align: center;
 }
 
@@ -50,7 +52,8 @@ main {
 }
 
 .login-container input {
-    width: 275px;
+    width: 100%; /* Make input take up full width of container padding */
+    box-sizing: border-box; /* Crucial for percentage widths with padding */
     padding: 10px;
     margin: 8px 0;
     border: 1px solid #ccc;
@@ -59,7 +62,8 @@ main {
 }
 
 .login-container button {
-    width: 200px;
+    width: 100%; /* Make button full width on mobile for easier tapping */
+    max-width: 200px; /* Constrain max width for desktop */
     padding: 10px;
     margin: 20px 0;
     background: #C32026;
@@ -71,7 +75,7 @@ main {
 }
 
 .login-container button:hover {
-	filter: brightness(0.90);
+    filter: brightness(0.90);
 }
 
 .login-container a {
@@ -91,7 +95,7 @@ main {
 }
 
 .confirm-input {
-    border: 2px solid C32026;
+    border: 2px solid #C32026;
     background-color: #ffecec;
 }
 
@@ -109,20 +113,34 @@ main {
 .check {
     display: none;
     font-size: 12px;
-    text-align:  left;
+    text-align: left;
     margin: 0;
     transition: 1s ease-in-out;
 }
 
+/* --- Media Query for Mobile Optimization --- */
+@media (max-width: 500px) {
+    .login-container {
+        padding: 1.5rem 1rem; /* Less padding on smaller screens */
+        box-shadow: none; /* Can remove box shadow on very small screens to feel more native */
+    }
+
+    .login-container button {
+        max-width: 250px; /* Keep button a manageable size */
+    }
+}
+
+/* Other classes that weren't the focus but are still needed */
+
 .entropy-container {
-    margin:  20px 5px;
+    margin: 20px 5px;
     align-items: start;
     display: none;
-    text-align:  left;
+    text-align: left;
 }
 
 .entropy-container p {
-    font-size:  12px;
+    font-size: 12px;
     margin: 8px 0;
 }
 
