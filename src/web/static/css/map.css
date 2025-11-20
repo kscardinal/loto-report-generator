@@ -13,6 +13,8 @@ header {
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: relative;
+    /* NEW: Ensure the header is always on top of the overlay */
+    z-index: 1001; 
 }
 
 h1 {
@@ -30,6 +32,9 @@ main {
     width: 100%;
     padding: 0;
     margin: 0;
+    /* NEW: Must be relative so the absolutely positioned overlay is constrained to this area */
+    position: relative; 
+    z-index: 1; 
 }
 
 .title {
@@ -110,7 +115,8 @@ main {
 
 /* --- New Overlay Styles for the Map Page --- */
 #mapLoadingOverlay {
-    position: fixed; /* Fixed position to cover the whole viewport */
+    /* CHANGED: absolute position makes it cover only its parent (.map-div) */
+    position: absolute; 
     top: 0;
     left: 0;
     width: 100%;
@@ -120,7 +126,8 @@ main {
     display: flex; /* Use flexbox to center the content */
     justify-content: center;
     align-items: center;
-    z-index: 10000; /* Ensure it's on top of everything */
+    /* IMPORTANT: High z-index to cover the map, but still lower than the header (1001) */
+    z-index: 1000; 
     transition: opacity 0.3s ease; /* Optional: for fade out effect */
 }
 

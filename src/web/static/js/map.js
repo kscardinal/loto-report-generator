@@ -1,3 +1,20 @@
+// Global Abort Controller for map data fetches
+let mapLoadController = new AbortController();
+
+/**
+ * Function to cancel the current map data loading operation
+ */
+function cancelMapLoading() {
+    console.log("Attempting to cancel map data loading...");
+    
+    // Abort any pending network requests
+    mapLoadController.abort();
+    
+    // Create a NEW controller for the next time the page is loaded
+    mapLoadController = new AbortController();
+}
+
+
 // Get the loading overlay element
 const loadingOverlay = document.getElementById('mapLoadingOverlay');
 // Initially, the overlay is visible (as there is no .hidden-overlay class in HTML)
@@ -27,12 +44,14 @@ const checkLoadStatus = () => {
         // Optional: Remove the element from the DOM after transition for maximum cleanup
         setTimeout(() => {
             if (loadingOverlay) {
-                 loadingOverlay.style.display = 'none';
+                loadingOverlay.style.display = 'none';
             }
         }, 300); // 300ms matches the CSS transition time
     }
 };
 
+// Get the abort signal
+const signal = mapLoadController.signal;
 
 fetch('/locations_summary')
     .then(r => r.json())
@@ -54,7 +73,8 @@ fetch('/locations_summary')
         }
 
         // Draw countries
-        fetch('/static/dependencies/countries.geojson')
+        // PASS SIGNAL TO FETCH
+        fetch('/static/dependencies/countries.geojson', { signal })
             .then(r => r.json())
             .then(worldGeojson => {
                 L.geoJSON(worldGeojson, {
@@ -93,13 +113,18 @@ fetch('/locations_summary')
                 checkLoadStatus(); 
             })
             .catch(err => {
-                console.error("Error loading countries GeoJSON:", err);
+                if (err.name !== 'AbortError') {
+                    console.error("Error loading countries GeoJSON:", err);
+                } else {
+                    console.log("Countries GeoJSON load cancelled.");
+                }
                 // Call check status even on error to prevent infinite spin
                 checkLoadStatus(); 
             });
 
         // Draw US states
-        fetch('/static/dependencies/states.json')
+        // PASS SIGNAL TO FETCH
+        fetch('/static/dependencies/states.json', { signal })
             .then(r => r.json())
             .then(usStatesGeojson => {
                 L.geoJSON(usStatesGeojson, {
@@ -138,19 +163,48 @@ fetch('/locations_summary')
                 checkLoadStatus(); 
             })
             .catch(err => {
-                console.error("Error loading states GeoJSON:", err);
+                if (err.name !== 'AbortError') {
+                    console.error("Error loading states GeoJSON:", err);
+                } else {
+                    console.log("States GeoJSON load cancelled.");
+                }
                 // Call check status even on error to prevent infinite spin
                 checkLoadStatus();
             });
     })
     .catch(err => {
-        console.error("Error loading map data:", err);
-        // If the initial data load fails, hide the spinner
+        if (err.name !== 'AbortError') {
+            console.error("Error loading map data summary:", err);
+        } else {
+            console.log("Map data summary fetch cancelled.");
+        }
+        
+        // If the initial data load fails or is cancelled, hide the spinner
         layersToLoad = 0; // Ensure it hides immediately
         loadingOverlay.classList.add('hidden-overlay');
         setTimeout(() => {
             if (loadingOverlay) {
-                 loadingOverlay.style.display = 'none';
+                loadingOverlay.style.display = 'none';
             }
         }, 300);
     });
+
+// -----------------------------------------------------------------
+// BACK BUTTON LISTENER
+// -----------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+    const backBtn = document.querySelector('.back-btn');
+
+    if (backBtn) {
+        backBtn.addEventListener('click', (event) => {
+            // 1. Prevent the default navigation immediately
+            event.preventDefault(); 
+            
+            // 2. Cancel the current map loading process
+            cancelMapLoading();
+            
+            // 3. Immediately redirect the browser to the desired endpoint
+            window.location.href = backBtn.href; 
+        });
+    }
+});
