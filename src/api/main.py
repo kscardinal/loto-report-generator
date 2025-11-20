@@ -960,7 +960,9 @@ def login_email(user, geo):
     Sends a formatted HTML email when a user logs in.
     `user` is a dictionary with first_name, last_name, email, username, date_created, etc.
     """
-    to_email = os.getenv("DEFAULT_EMAIL", "")
+    to_email = user.get("email")
+    if not to_email:
+        return
     subject = f"LOTO Generator - A new device is using your account"
 
     # Convert UTC to Eastern Time
