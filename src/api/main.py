@@ -1802,9 +1802,9 @@ def user_deleted_email(user, performed_by):
         <p><strong>Time:</strong> {formatted_time}</p>
         <p>If you believe this was done in error, please contact support immediately.</p>
         <p>
-          <a href="https://lotogenerator.app" 
+          <a href="mailto:support@lotogenerator.app" 
              style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
-             Login
+             Contact Support
           </a>
         </p>
         <p class="footer">This is an automated message. Please do not reply.</p>
