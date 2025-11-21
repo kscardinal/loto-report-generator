@@ -80,14 +80,6 @@ TOTAL_COUNT=0
 # and print the second word (the name). This filters out the 'Network' entry.
 CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep '^Container ' | awk '{print $2}' | sort -u)
 
-# 🚨 DIAGNOSTIC LINE: Print the names extracted for debugging (KEEP THIS FOR NOW)
-echo -e "${SKIP_COLOR}--- DIAGNOSTIC: Extracted Container Names ---${NC}"
-echo "$CONTAINER_NAMES"
-echo -e "${SKIP_COLOR}---------------------------------------------${NC}"
-# 🚨 END DIAGNOSTIC
-
-echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
-
 # Loop through each container name found
 for NAME in $CONTAINER_NAMES; do
     # Skip non-container names like 'Network' or empty strings
