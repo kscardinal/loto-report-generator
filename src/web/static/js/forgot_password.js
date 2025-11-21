@@ -36,7 +36,7 @@ email.addEventListener("input", async function() {
         emailCheckMessage.style.display = "none";
         email.classList.remove("error");
         sendButton.disabled = false;
-        sendButton.style.backgroundColor = "#4CAF50";
+        sendButton.style.backgroundColor = "#C32026";
         sendButton.style.cursor = "pointer";
     } else {
         email.classList.add("error");
@@ -444,7 +444,7 @@ async function validateForm() {
 
     if (isValid) {
         sendButton.disabled = false;
-        sendButton.style.backgroundColor = "#4CAF50"; // green when active
+        sendButton.style.backgroundColor = "#C32026"; // green when active
         sendButton.style.cursor = "pointer";         // change cursor
     } else {
         sendButton.disabled = true;
