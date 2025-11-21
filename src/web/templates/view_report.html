@@ -20,82 +20,83 @@
 </header>
 
 <main>
-    <div class="section" id="pdfSection">
-        <h2>PDF</h2>
-        <div class="download" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div>
-                <a id="downloadPdfAnchor" class="download-link disabled" href="#" role="button" aria-disabled="true" data-server-href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
-                
-                <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" class="disabled">
-                    <span id="download-button-text">Download Assets</span> 
-                    
-                    <span id="download-spinner-content" class="hidden-spinner">
-                        Downloading...
-                        <svg width="18" height="18" viewBox="0 0 50 50">
-                            <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
-                                <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
-                            </circle>
-                        </svg>
-                    </span>
-                </button>
+    <div class="content-wrapper"> 
+        
+        <div class="main-content-column">
+            <div class="section" id="pdfSection">
+                <h2>PDF</h2>
+                <div class="download" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <a id="downloadPdfAnchor" class="download-link disabled" href="#" role="button" aria-disabled="true" data-server-href="{{ url_for('download_pdf', report_name=report.report_name) }}">Download PDF</a>
+                        
+                        <button type="button" id="downloadBtn" data-report="{{ report.report_name }}" class="disabled">
+                            <span id="download-button-text">Download Assets</span> 
+                            
+                            <span id="download-spinner-content" class="hidden-spinner">
+                                Downloading...
+                                <svg width="18" height="18" viewBox="0 0 50 50">
+                                    <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
+                                        <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+                                    </circle>
+                                </svg>
+                            </span>
+                        </button>
+                        </div>
+                    <button type="button" id="deleteBtn" data-report="{{ report.report_name }}" class="disabled">Remove Report</button>
                 </div>
-            <button type="button" id="deleteBtn" data-report="{{ report.report_name }}" class="disabled">Remove Report</button>
-        </div>
-        <div id="pdfViewer" style="background:#eee; padding:10px; border-radius:8px; display:flex; flex-direction:column; align-items:center;">
-            <div id="pdfLoading">
-                <div class="loading-content">
-                    <div class="spinner">
-                        <svg width="24" height="24" viewBox="0 0 50 50">
-                            <circle cx="25" cy="25" r="20" fill="none" stroke="#C32026" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
-                                <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
-                            </circle>
-                        </svg>
+                <div id="pdfViewer" style="background:#eee; padding:10px; border-radius:8px; display:flex; flex-direction:column; align-items:center;">
+                    <div id="pdfLoading">
+                        <div class="loading-content">
+                            <div class="spinner">
+                                <svg width="24" height="24" viewBox="0 0 50 50">
+                                    <circle cx="25" cy="25" r="20" fill="none" stroke="#C32026" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(0 25 25)">
+                                        <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+                                    </circle>
+                                </svg>
+                            </div>
+                            <p>Preparing PDF viewer...</p>
+                        </div>
                     </div>
-                    <p>Preparing PDF viewer...</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {% if report.photos %}
-    <div class="section photos">
-        <h2>Photos</h2>
-        <div class="photos-container">
-            {% for photo in report.photos %}
-                <div>
-                    <a href="{{ url_for('get_photo', photo_id=photo.photo_id) }}" target="_blank">
-                        <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
-                        <p>{{ photo.photo_name }}</p>
-                    </a>
+            {% if report.photos %}
+            <div class="section photos">
+                <h2>Photos</h2>
+                <div class="photos-container">
+                    {% for photo in report.photos %}
+                        <div>
+                            <a href="{{ url_for('get_photo', photo_id=photo.photo_id) }}" target="_blank">
+                                <img src="{{ url_for('get_photo', photo_id=photo.photo_id) }}" alt="{{ photo.photo_name }}">
+                                <p>{{ photo.photo_name }}</p>
+                            </a>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            </div>
+            {% endif %}
+        </div> 
+        
+        <div class="metadata-column">
+            <div class="section metadata full-height-container"> 
+                <h2>Metadata</h2>
+                <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+                <p><strong>Tags:</strong></p>
+                <ul>
+                    {% for tag in report.tags %}
+                        <li>{{ tag }}</li>
+                    {% endfor %}
+                </ul>
+                <p><strong>Notes:</strong><br> {{ report.notes }}</p>
+                <p id="dateAdded" data-raw-date="{{ report.date_added }}"><br>...</p>
+                <p id="dateModified" data-raw-date="{{ report.last_modified }}"><br>...</p>
+                <p id="lastGenerated" data-raw-date="{{ report.last_generated }}"><br>...</p>
+            </div>
         </div>
-    </div>
-    {% endif %}
 
-    <div class="section metadata">
-        <h2>Metadata</h2>
-        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
-        <p><strong>Tags:</strong></p>
-        <ul>
-            {% for tag in report.tags %}
-                <li>{{ tag }}</li>
-            {% endfor %}
-        </ul>
-        <p><strong>Notes:</strong> {{ report.notes }}</p>
-        <p id="dateAdded" data-raw-date="{{ report.date_added }}">...</p>
-        <p id="dateModified" data-raw-date="{{ report.last_modified }}">...</p>
-        <p id="lastGenerated" data-raw-date="{{ report.last_generated }}">...</p>
-    </div>
-
-    <!-- 
-    <div class="section json-data">
-        <h2>JSON Data</h2>
-        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
-    </div>
-    -->
-
-</main>
+    </div> 
+    
+    </main>
 
 <div id="confirmModal" class="modal">
     <div id="confirmBox" class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirmText">

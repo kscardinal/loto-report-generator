@@ -22,9 +22,19 @@ header h1 {
 }
 
 main {
+    /* Default max-width for mobile/tablet */
     max-width: 800px;
     margin: 20px auto;
     padding: 0 20px;
+}
+
+/* Default mobile/tablet stacking layout */
+.content-wrapper {
+    display: block; 
+}
+.main-content-column, .metadata-column {
+    /* Default columns stack vertically */
+    width: 100%; 
 }
 
 .section {
@@ -65,7 +75,7 @@ pre {
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
-    gap: 40px; /* increased spacing between photos */
+    gap: 40px;
     padding: 10px 0;
 }
 
@@ -106,8 +116,8 @@ pre {
 .section.download > div {
     /* This targets the <div> holding both download buttons */
     display: flex;
-    align-items: center; /* Vertically align the PDF link and the Assets button */
-    gap: 10px; /* Space between the two download elements */
+    align-items: center; 
+    gap: 10px; 
 }
 
 a.download-link {
@@ -120,7 +130,6 @@ a.download-link {
     cursor: pointer;
     transition: background-color 0.2s;
     text-decoration: none;
-    /* FIX: Remove custom margins inherited from the old structure */
     margin-right: 0; 
     margin-top: 0; 
 }
@@ -150,7 +159,6 @@ button {
     background-color: #C32026;
     color: white;
     border: none;
-    /* FIX: Standardize padding for buttons */
     padding: 10px 15px; 
     border-radius: 6px;
     font-size: 1em;
@@ -253,9 +261,7 @@ button.disabled {
     justify-content: center;
     align-items: center;
     gap: 8px; 
-
-    /* Standard Button Styles applied above, ensuring consistency */
-    padding: 10px 15px; /* Use the same padding as a.download-link */
+    padding: 10px 15px; 
     font-size: 1em;
 }
 
@@ -274,4 +280,47 @@ button.disabled {
 /* Spinner SVG size assurance */
 #download-spinner-content svg {
     flex-shrink: 0;
+}
+
+
+/* 🖥️ MEDIA QUERY FOR WIDE SCREENS (DESKTOP) 🖥️ */
+@media (min-width: 1400px) {
+    
+    /* 1. Increase max width to 1400px */
+    main {
+        max-width: 1400px; 
+    }
+
+    /* 3. Ensure both columns stretch to the height of the tallest content */
+    .content-wrapper {
+        display: flex;
+        gap: 20px; 
+        align-items: stretch; /* Makes the column children stretch to equal height */
+    }
+
+    /* 2. Left Column: PDF and Photos - 75% width (Flex: 3) */
+    .main-content-column {
+        flex: 3; 
+        min-width: 0; 
+    }
+    
+    /* 2. Right Column: Metadata - 25% width (Flex: 1) */
+    .metadata-column {
+        flex: 1; 
+        min-width: 250px; 
+    }
+
+    /* Make the entire metadata container stretch to fill the height of the main column */
+    .section.metadata {
+        margin-bottom: 0; 
+        display: flex;
+        flex-direction: column;
+        /* This is the key change: makes the section expand to fill the available height in the column */
+        flex-grow: 1; 
+    }
+    
+    /* Ensure the main content sections stack vertically with correct spacing */
+    .main-content-column .section {
+        margin-bottom: 20px;
+    }
 }

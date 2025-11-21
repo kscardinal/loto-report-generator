@@ -182,7 +182,7 @@ function updateDateDisplay(id, newIsoDate) {
         const labelElement = element.querySelector('strong'); 
         const label = labelElement ? labelElement.textContent : 'Last Generated: ';
         
-        element.innerHTML = `<strong>${label}</strong> ${formattedDate}`;
+        element.innerHTML = `<strong>${label}</strong><br> ${formattedDate}`;
     }
 }
 
@@ -476,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (element) {
             const rawDate = element.dataset.rawDate; 
             const formattedDate = formatFriendlyETDate(rawDate);
-            element.innerHTML = `<strong>${label}: </strong> ${formattedDate}`;
+            element.innerHTML = `<strong>${label}: </strong><br> ${formattedDate}`;
         }
     });
 });
