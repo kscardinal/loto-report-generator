@@ -37,6 +37,7 @@ error_handler() {
 trap error_handler ERR
 
 # --- Start of Script ---
+START_TIME_0=$(date +%s.%N)
 echo -e "${COLOR}🚀 Starting intuitive server deployment process...${NC}"
 echo "----------------------------------------------------"
 
@@ -62,6 +63,7 @@ echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 
 # Capture output quietly without echoing it to the screen
 DC_DOWN_OUTPUT=$(docker compose down 2>&1)
+echo "$DC_DOWN_OUTPUT"
 
 # Initialize counters
 STOPPED_COUNT=0
@@ -291,4 +293,4 @@ STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
 # --- Final Message ---
-echo -e "${PASS_COLOR}🎉 Deployment script finished successfully! ${NC}"
+echo -e "${PASS_COLOR}🎉 Deployment script finished successfully! ${print_duration $START_TIME_0}${NC}"
