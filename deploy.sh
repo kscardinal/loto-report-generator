@@ -49,14 +49,15 @@ GIT_OUTPUT=$(git pull 2>&1)
 
 if echo "$GIT_OUTPUT" | grep -q "Already up to date."; then
     # Used $() for inline printing
-    echo -e "${SKIP_COLOR}✅ SUMMARY $STEP_COUNT: No new changes found. Already up to date.$(print_duration $START_TIME_1)${NC}"
+    echo -e "${SKIP_COLOR}✅ SUMMARY $STEP_COUNT: No new changes found. Already up to date.${NC}"
 elif echo "$GIT_OUTPUT" | grep -q "Updating"; then
     # Used $() for inline printing
-    echo -e "${PASS_COLOR}🚀 SUMMARY $STEP_COUNT: New code was successfully pulled and merged.$(print_duration $START_TIME_1)${NC}"
+    echo -e "${PASS_COLOR}🚀 SUMMARY $STEP_COUNT: New code was successfully pulled and merged.${NC}"
 else
     # Used $() for inline printing
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Git pull completed. Check output for specific details.$(print_duration $START_TIME_1)${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Git pull completed. Check output for specific details.${NC}"
 fi
+print_duration $START_TIME_1
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -66,6 +67,8 @@ echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 
 # Capture output quietly without echoing it to the screen
 DC_DOWN_OUTPUT=$(docker compose down 2>&1)
+
+# Echo the raw output here (since your last provided test output included it)
 echo "$DC_DOWN_OUTPUT"
 
 # Initialize counters
@@ -73,10 +76,11 @@ STOPPED_COUNT=0
 REMOVED_COUNT=0
 TOTAL_COUNT=0
 
-# Extract unique container names that were processed (stopped or removed)
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container|Stopping|Stopped|Removing|Removed)' | awk '{print $2}' | sort -u)
+# NEW EXTRACTION: Only look for lines starting with 'Container'
+# and print the second word (the name). This filters out the 'Network' entry.
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep '^Container ' | awk '{print $2}' | sort -u)
 
-# 🚨 DIAGNOSTIC LINE: Print the names extracted for debugging
+# 🚨 DIAGNOSTIC LINE: Print the names extracted for debugging (KEEP THIS FOR NOW)
 echo -e "${SKIP_COLOR}--- DIAGNOSTIC: Extracted Container Names ---${NC}"
 echo "$CONTAINER_NAMES"
 echo -e "${SKIP_COLOR}---------------------------------------------${NC}"
@@ -94,14 +98,12 @@ for NAME in $CONTAINER_NAMES; do
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     STATUS=""
     
-    # Check if the container was stopped
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
         STATUS+="stopped"
         STOPPED_COUNT=$((STOPPED_COUNT + 1))
     fi
     
-    # Check if the container was removed
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -111,21 +113,20 @@ for NAME in $CONTAINER_NAMES; do
 
     # Print the custom status line
     if [ -n "$STATUS" ]; then
-        echo -e "${PASS_COLOR}    ✔ $NAME - $STATUS${NC}"
+        echo -e "${PASS_COLOR}    ✔ $NAME - $STATUS${NC}"
     fi
 done
 
 # Summary Logic
 if [ $TOTAL_COUNT -eq 0 ]; then
-    # Used $() for inline printing
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.$(print_duration $START_TIME_2)${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.${NC}"
 elif [ $STOPPED_COUNT -eq $TOTAL_COUNT ] && [ $REMOVED_COUNT -eq $TOTAL_COUNT ]; then
-    # Used $() for inline printing
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).$(print_duration $START_TIME_2)${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 else
-    # Used $() for inline printing
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).$(print_duration $START_TIME_2)${NC}"
+    # Changed to FAIL_COLOR since a partial shutdown is usually an issue
+    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 fi
+print_duration $START_TIME_2
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -151,12 +152,13 @@ if echo "$DC_BUILD_OUTPUT" | grep -q '^#11 DONE'; then
     fi
     
     # Used $() for inline printing
-    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images ${BUILD_SUMMARY} rebuilt.$(print_duration $START_TIME_3)${NC}"
+    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images ${BUILD_SUMMARY} rebuilt.${NC}"
 else
     # This block executes if the build command fails to report a final DONE.
     # Used $() for inline printing
-    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Build FAILED. Review output for error messages.$(print_duration $START_TIME_3)${NC}"
+    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Build FAILED. Review output for error messages.${NC}"
 fi
+print_duration $START_TIME_3
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -188,13 +190,13 @@ for NAME in $CONTAINER_NAMES; do
     STATUS=""
     
     # Check if the container was created
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Created"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Created"; then
         STATUS+="created"
         CREATED_COUNT=$((CREATED_COUNT + 1))
     fi
     
     # Check if the container was started
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Started"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Started"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -210,15 +212,13 @@ done
 
 # Summary Logic
 if [ $TOTAL_COUNT -eq 0 ]; then
-    # Used $() for inline printing
-    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.$(print_duration $START_TIME_4)${NC}"
+    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${NC}"
 elif [ $CREATED_COUNT -eq $TOTAL_COUNT ] && [ $STARTED_COUNT -eq $TOTAL_COUNT ]; then
-    # Used $() for inline printing
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).$(print_duration $START_TIME_4)${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
 else
-    # Used $() for inline printing
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).$(print_duration $START_TIME_4)${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
 fi
+print_duration $START_TIME_4
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -238,11 +238,12 @@ if [ "$DELETED_COUNT" -gt 0 ]; then
     RECLAIMED=$(echo "$IMAGE_PRUNE_OUTPUT" | awk '/Total reclaimed space: / {print $4}')
     
     # Use the extracted count in the success summary, and $() for inline printing
-    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} image(s) deleted. Reclaimed: ${RECLAIMED}.$(print_duration $START_TIME_5)${NC}"
+    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} image(s) deleted. Reclaimed: ${RECLAIMED}.${NC}"
 else
     # Used $() for inline printing
-    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.$(print_duration $START_TIME_5)${NC}"
+    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.${NC}"
 fi
+print_duration $START_TIME_5
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -258,11 +259,12 @@ RECLAIMED=$(echo "$BUILDER_PRUNE_OUTPUT" | awk '/^Total:/ {print $2}' | tail -n 
 # Check if RECLAIMED is empty, which implies nothing was reclaimed
 if [ -z "$RECLAIMED" ]; then
     # Used $() for inline printing
-    echo -e "${SKIP_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. No cache space reclaimed.$(print_duration $START_TIME_6)${NC}"
+    echo -e "${SKIP_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. No cache space reclaimed.${NC}"
 else
     # Used $() for inline printing
-    echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}.$(print_duration $START_TIME_6)${NC}"
+    echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}.${NC}"
 fi
+print_duration $START_TIME_6
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -273,12 +275,13 @@ SYSTEM_PRUNE_OUTPUT=$(docker system prune -f 2>&1)
 
 if echo "$SYSTEM_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
     # Used $() for inline printing
-    echo -e "${SKIP_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.$(print_duration $START_TIME_7)${NC}"
+    echo -e "${SKIP_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${NC}"
 else
     RECLAIMED=$(echo "$SYSTEM_PRUNE_OUTPUT" | tail -n 1 | grep "Total reclaimed space" | awk '{print $4}')
     # Used $() for inline printing
-    echo -e "${PASS_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. Total reclaimed: ${RECLAIMED}.$(print_duration $START_TIME_7)${NC}"
+    echo -e "${PASS_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. Total reclaimed: ${RECLAIMED}.${NC}"
 fi
+print_duration $START_TIME_7
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -290,21 +293,20 @@ STARTUP_WAIT_OUTPUT=$(timeout 60 docker compose logs -f 2>&1 | grep -m 1 "Applic
 echo "$STARTUP_WAIT_OUTPUT"
 
 if [ -n "$STARTUP_WAIT_OUTPUT" ]; then
-    # Used $() for inline printing
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: Application reported successful startup!$(print_duration $START_TIME_8)${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: Application reported successful startup!${NC}"
 else
     if [ $? -eq 124 ]; then
         # Used $() for inline printing
-        echo -e "${SKIP_COLOR}⏳ SUMMARY $STEP_COUNT: Application startup message not detected within 60 seconds.$(print_duration $START_TIME_8)${NC}"
+        echo -e "${SKIP_COLOR}⏳ SUMMARY $STEP_COUNT: Application startup message not detected within 60 seconds.${NC}"
         echo -e "${SKIP_COLOR}   Check service logs manually to confirm status: ${COLOR}docker compose logs -f${NC}"
     else
         # Used $() for inline printing
-        echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Log check failed or message was missed. Check output.$(print_duration $START_TIME_8)${NC}"
+        echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Log check failed or message was missed. Check output.${NC}"
     fi
 fi
+print_duration $START_TIME_8
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
-# --- Final Message (MODIFIED) ---
-# Used $() for inline printing
+# --- Final Message ---
 echo -e "${PASS_COLOR}🎉 Deployment script finished successfully! $(print_duration $START_TIME_0)${NC}"
