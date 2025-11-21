@@ -76,8 +76,6 @@ TOTAL_COUNT=0
 # Extract unique container names that were processed (stopped or removed)
 CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
 
-echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
-
 # Loop through each container name found
 for NAME in $CONTAINER_NAMES; do
     # Skip non-container names like 'Network' or empty strings
