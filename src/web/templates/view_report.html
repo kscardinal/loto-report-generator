@@ -20,28 +20,6 @@
 </header>
 
 <main>
-    <div class="section metadata">
-        <h2>Metadata</h2>
-        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
-        <p><strong>Tags:</strong></p>
-        <ul>
-            {% for tag in report.tags %}
-                <li>{{ tag }}</li>
-            {% endfor %}
-        </ul>
-        <p><strong>Notes:</strong> {{ report.notes }}</p>
-        <p id="dateAdded" data-raw-date="{{ report.date_added }}">...</p>
-        <p id="dateModified" data-raw-date="{{ report.last_modified }}">...</p>
-        <p id="lastGenerated" data-raw-date="{{ report.last_generated }}">...</p>
-    </div>
-
-    <!-- 
-    <div class="section json-data">
-        <h2>JSON Data</h2>
-        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
-    </div>
-    -->
-
     <div class="section" id="pdfSection">
         <h2>PDF</h2>
         <div id="pdfViewer" style="background:#eee; padding:10px; border-radius:8px; display:flex; flex-direction:column; align-items:center;">
@@ -75,6 +53,28 @@
         </div>
     </div>
     {% endif %}
+
+    <div class="section metadata">
+        <h2>Metadata</h2>
+        <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+        <p><strong>Tags:</strong></p>
+        <ul>
+            {% for tag in report.tags %}
+                <li>{{ tag }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Notes:</strong> {{ report.notes }}</p>
+        <p id="dateAdded" data-raw-date="{{ report.date_added }}">...</p>
+        <p id="dateModified" data-raw-date="{{ report.last_modified }}">...</p>
+        <p id="lastGenerated" data-raw-date="{{ report.last_generated }}">...</p>
+    </div>
+
+    <!-- 
+    <div class="section json-data">
+        <h2>JSON Data</h2>
+        <pre>{{ report.json_data | tojson(indent=2) }}</pre>
+    </div>
+    -->
 
     <div class="section download" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
