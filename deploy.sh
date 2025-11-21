@@ -22,7 +22,7 @@ print_duration() {
     # Use awk for floating-point math to calculate the difference and format it to 3 decimal places
     local duration=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN {printf "%.3f", end - start}')
     # Added -n to suppress the trailing newline
-    echo -e -n "${TIME_COLOR}   [Duration: ${duration}s]${NC}"
+    echo -e "${TIME_COLOR}   [Duration: ${duration}s]${NC}"
 }
 
 # --- Error Handling Function (TRAP) ---
@@ -98,11 +98,13 @@ for NAME in $CONTAINER_NAMES; do
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     STATUS=""
     
+    # Check if the container was stopped
     if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
         STATUS+="stopped"
         STOPPED_COUNT=$((STOPPED_COUNT + 1))
     fi
     
+    # Check if the container was removed
     if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
