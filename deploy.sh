@@ -47,13 +47,13 @@ echo -e "${COLOR}--- $STEP_COUNT. Pulling new changes from GitHub...${NC}"
 GIT_OUTPUT=$(git pull 2>&1)
 
 if echo "$GIT_OUTPUT" | grep -q "Already up to date."; then
-    echo -e "${SKIP_COLOR}✅ SUMMARY $STEP_COUNT: No new changes found. Already up to date.${NC}"
+    echo -e "${SKIP_COLOR}✅ SUMMARY $STEP_COUNT: No new changes found. Already up to date.${print_duration $START_TIME_1}${NC}"
 elif echo "$GIT_OUTPUT" | grep -q "Updating"; then
-    echo -e "${PASS_COLOR}🚀 SUMMARY $STEP_COUNT: New code was successfully pulled and merged.${NC}"
+    echo -e "${PASS_COLOR}🚀 SUMMARY $STEP_COUNT: New code was successfully pulled and merged.${print_duration $START_TIME_1}${NC}"
 else
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Git pull completed. Check output for specific details.${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Git pull completed. Check output for specific details.${print_duration $START_TIME_1}${NC}"
 fi
-print_duration $START_TIME_1
+
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -114,14 +114,14 @@ done
 
 # Summary Logic
 if [ $TOTAL_COUNT -eq 0 ]; then
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.${print_duration $START_TIME_2}${NC}"
 elif [ $STOPPED_COUNT -eq $TOTAL_COUNT ] && [ $REMOVED_COUNT -eq $TOTAL_COUNT ]; then
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${print_duration $START_TIME_2}${NC}"
 else
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${print_duration $START_TIME_2}${NC}"
 fi
 
-print_duration $START_TIME_2
+ $START_TIME_2
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -146,13 +146,12 @@ if echo "$DC_BUILD_OUTPUT" | grep -q '^#11 DONE'; then
         BUILD_SUMMARY="successfully"
     fi
     
-    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images ${BUILD_SUMMARY} rebuilt.${NC}"
+    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images ${BUILD_SUMMARY} rebuilt.${print_duration $START_TIME_3}${NC}"
 else
     # This block executes if the build command fails to report a final DONE.
-    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Build FAILED. Review output for error messages.${NC}"
+    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Build FAILED. Review output for error messages.${print_duration $START_TIME_3}${NC}"
 fi
 
-print_duration $START_TIME_3
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -206,14 +205,13 @@ done
 
 # Summary Logic
 if [ $TOTAL_COUNT -eq 0 ]; then
-    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${NC}"
+    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${print_duration $START_TIME_4}${NC}"
 elif [ $CREATED_COUNT -eq $TOTAL_COUNT ] && [ $STARTED_COUNT -eq $TOTAL_COUNT ]; then
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${print_duration $START_TIME_4}${NC}"
 else
-    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${print_duration $START_TIME_4}${NC}"
 fi
 
-print_duration $START_TIME_4
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -233,12 +231,11 @@ if [ "$DELETED_COUNT" -gt 0 ]; then
     RECLAIMED=$(echo "$IMAGE_PRUNE_OUTPUT" | awk '/Total reclaimed space: / {print $4}')
     
     # Use the extracted count in the success summary
-    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} image(s) deleted. Reclaimed: ${RECLAIMED}${NC}"
+    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} image(s) deleted. Reclaimed: ${RECLAIMED}${print_duration $START_TIME_5}${NC}"
 else
-    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.${NC}"
+    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.${print_duration $START_TIME_5}${NC}"
 fi
 
-print_duration $START_TIME_5
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -253,12 +250,11 @@ RECLAIMED=$(echo "$BUILDER_PRUNE_OUTPUT" | awk '/^Total:/ {print $2}' | tail -n 
 
 # Check if RECLAIMED is empty, which implies nothing was reclaimed
 if [ -z "$RECLAIMED" ]; then
-    echo -e "${SKIP_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. No cache space reclaimed.${NC}"
+    echo -e "${SKIP_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. No cache space reclaimed.${print_duration $START_TIME_6}${NC}"
 else
-    echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}${NC}"
+    echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}${print_duration $START_TIME_6}${NC}"
 fi
 
-print_duration $START_TIME_6
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -268,12 +264,12 @@ echo -e "${COLOR}--- $STEP_COUNT. Performing full system prune (containers, netw
 SYSTEM_PRUNE_OUTPUT=$(docker system prune -f 2>&1)
 
 if echo "$SYSTEM_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
-    echo -e "${SKIP_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${NC}"
+    echo -e "${SKIP_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${print_duration $START_TIME_7}${NC}"
 else
     RECLAIMED=$(echo "$SYSTEM_PRUNE_OUTPUT" | tail -n 1 | grep "Total reclaimed space" | awk '{print $4}')
-    echo -e "${PASS_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. Total reclaimed: ${RECLAIMED}${NC}"
+    echo -e "${PASS_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. Total reclaimed: ${RECLAIMED}${print_duration $START_TIME_7}${NC}"
 fi
-print_duration $START_TIME_7
+
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
@@ -285,16 +281,15 @@ STARTUP_WAIT_OUTPUT=$(timeout 60 docker compose logs -f 2>&1 | grep -m 1 "Applic
 echo "$STARTUP_WAIT_OUTPUT"
 
 if [ -n "$STARTUP_WAIT_OUTPUT" ]; then
-    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: Application reported successful startup!${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: Application reported successful startup!${print_duration $START_TIME_8}${NC}"
 else
     if [ $? -eq 124 ]; then
         echo -e "${SKIP_COLOR}⏳ SUMMARY $STEP_COUNT: Application startup message not detected within 60 seconds.${NC}"
-        echo -e "${SKIP_COLOR}   Check service logs manually to confirm status: ${COLOR}docker compose logs -f${NC}"
+        echo -e "${SKIP_COLOR}   Check service logs manually to confirm status: ${COLOR}docker compose logs -f${print_duration $START_TIME_8}${NC}"
     else
-        echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Log check failed or message was missed. Check output.${NC}"
+        echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Log check failed or message was missed. Check output.${print_duration $START_TIME_8}${NC}"
     fi
 fi
-print_duration $START_TIME_8
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
