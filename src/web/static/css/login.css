@@ -118,7 +118,6 @@ main {
     transition: 1s ease-in-out;
 }
 
-/* --- Media Query for Mobile Optimization --- */
 @media (max-width: 500px) {
     .login-container {
         padding: 1.5rem 1rem; /* Less padding on smaller screens */
@@ -129,8 +128,6 @@ main {
         max-width: 250px; /* Keep button a manageable size */
     }
 }
-
-/* Other classes that weren't the focus but are still needed */
 
 .entropy-container {
     margin: 20px 5px;
