@@ -73,6 +73,12 @@ TOTAL_COUNT=0
 # Extract unique container names that were processed (stopped or removed)
 CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container|Stopping|Stopped|Removing|Removed)' | awk '{print $2}' | sort -u)
 
+# 🚨 DIAGNOSTIC LINE: Print the names extracted for debugging
+echo -e "${SKIP_COLOR}--- DIAGNOSTIC: Extracted Container Names ---${NC}"
+echo "$CONTAINER_NAMES"
+echo -e "${SKIP_COLOR}---------------------------------------------${NC}"
+# 🚨 END DIAGNOSTIC
+
 echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
 
 # Loop through each container name found
@@ -81,8 +87,6 @@ for NAME in $CONTAINER_NAMES; do
     if [[ "$NAME" == "Network" || -z "$NAME" ]]; then
         continue
     fi
-
-    echo "$NAME"
     
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     STATUS=""
