@@ -1,15 +1,18 @@
 import requests
 import time
 import threading
+import urllib3
 
-TARGET_URL = "https://lotogenerator.app/"
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+TARGET_URL = "https://lotogenerator.app/login"
 NUM_REQUESTS = 20
 REQUESTS_PER_SECOND = 20  # This is the rate we are testing (20r/s > 5r/s limit)
 
 def make_request(url, request_id):
     try:
         # Use HEAD or GET, HEAD is often faster as it doesn't download the body
-        response = requests.head(url, verify=False, timeout=5) 
+        response = requests.get(url, verify=False, timeout=5) 
         print(f"Request #{request_id}: Status Code {response.status_code}")
     except requests.exceptions.RequestException as e:
         print(f"Request #{request_id}: Error - {e}")
