@@ -81,6 +81,8 @@ for NAME in $CONTAINER_NAMES; do
     if [[ "$NAME" == "Network" || -z "$NAME" ]]; then
         continue
     fi
+
+    echo "$NAME"
     
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     STATUS=""
