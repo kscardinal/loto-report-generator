@@ -299,4 +299,5 @@ STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
 # --- Final Message ---
-echo -e "${PASS_COLOR}🎉 Deployment script finished successfully! $(print_duration $START_TIME_0)${NC}"
+echo -e "${PASS_COLOR}🎉 Deployment script finished successfully!${NC}"
+print_duration $START_TIME_0
