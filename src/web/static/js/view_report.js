@@ -207,7 +207,7 @@ async function initPdfViewer() {
     const redirectUrl = document.body.dataset.redirectUrl;
     const pdfUrl = `/download_pdf/${reportName}`;
     let pdfDoc = null;
-    let currentScale = 1.1;
+    let currentScale = 2; // Change the initial scale of the PDF, right now it is downsized on the page with the CSS but this changes the max it will be
     let cachedPdfBlob = null; // cached blob for quick downloads
 
     // Grab the download anchor and keep it disabled until we have the blob
