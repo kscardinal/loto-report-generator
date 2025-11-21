@@ -268,6 +268,7 @@ sendButton.addEventListener("click", async function() {
                 // Further resends locked out until page reload
                 resendLink.classList.add("disabled");
                 resendLink.textContent = "Locked out for a while";
+                resendLink.style.textDecoration = "none";
             }
 
             return data;
