@@ -68,17 +68,15 @@ echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 # Capture output quietly without echoing it to the screen
 DC_DOWN_OUTPUT=$(docker compose down 2>&1)
 
-# Echo the raw output here (since your last provided test output included it)
-echo "$DC_DOWN_OUTPUT"
-
 # Initialize counters
 STOPPED_COUNT=0
 REMOVED_COUNT=0
 TOTAL_COUNT=0
 
-# NEW EXTRACTION: Only look for lines starting with 'Container'
-# and print the second word (the name). This filters out the 'Network' entry.
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep '^Container ' | awk '{print $2}' | sort -u)
+# Extract unique container names that were processed (stopped or removed)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container|Stopping|Stopped|Removing|Removed)' | awk '{print $2}' | sort -u)
+
+echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
 
 # Loop through each container name found
 for NAME in $CONTAINER_NAMES; do
