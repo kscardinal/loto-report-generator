@@ -44,7 +44,6 @@ echo "----------------------------------------------------"
 START_TIME_1=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Pulling new changes from GitHub...${NC}"
 GIT_OUTPUT=$(git pull 2>&1)
-echo "$GIT_OUTPUT"
 
 if echo "$GIT_OUTPUT" | grep -q "Already up to date."; then
     echo -e "${SKIP_COLOR}✅ SUMMARY $STEP_COUNT: No new changes found. Already up to date.${NC}"
@@ -60,16 +59,60 @@ echo "----------------------------------------------------"
 # --- STEP 2: Docker Compose Down ---
 START_TIME_2=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
-DC_DOWN_OUTPUT=$(docker compose down 2>&1)
-echo "$DC_DOWN_OUTPUT"
 
-if echo "$DC_DOWN_OUTPUT" | grep -q "No services were started"; then
+# Capture output quietly without echoing it to the screen
+DC_DOWN_OUTPUT=$(docker compose down 2>&1)
+
+# Initialize counters
+STOPPED_COUNT=0
+REMOVED_COUNT=0
+TOTAL_COUNT=0
+
+# Extract unique container names that were processed (stopped or removed)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container|Stopping|Stopped|Removing|Removed)' | awk '{print $2}' | sort -u)
+
+echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
+
+# Loop through each container name found
+for NAME in $CONTAINER_NAMES; do
+    # Skip non-container names like 'Network' or empty strings
+    if [[ "$NAME" == "Network" || -z "$NAME" ]]; then
+        continue
+    fi
+    
+    TOTAL_COUNT=$((TOTAL_COUNT + 1))
+    STATUS=""
+    
+    # Check if the container was stopped
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME Stopped"; then
+        STATUS+="stopped"
+        STOPPED_COUNT=$((STOPPED_COUNT + 1))
+    fi
+    
+    # Check if the container was removed
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME Removed"; then
+        if [ -n "$STATUS" ]; then
+            STATUS+=" and "
+        fi
+        STATUS+="removed"
+        REMOVED_COUNT=$((REMOVED_COUNT + 1))
+    fi
+
+    # Print the custom status line
+    if [ -n "$STATUS" ]; then
+        echo -e "${PASS_COLOR}    ✔ $NAME - $STATUS${NC}"
+    fi
+done
+
+# Summary Logic
+if [ $TOTAL_COUNT -eq 0 ]; then
     echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.${NC}"
-elif echo "$DC_DOWN_OUTPUT" | grep -q "Stopping" && echo "$DC_DOWN_OUTPUT" | grep -q "Removing"; then
-    echo -e "${PASS_COLOR}✅ SUMMARY $STEP_COUNT: Existing services successfully stopped and removed.${NC}"
+elif [ $STOPPED_COUNT -eq $TOTAL_COUNT ] && [ $REMOVED_COUNT -eq $TOTAL_COUNT ]; then
+    echo -e "${PASS_COLOR}🛑 SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 else
-    echo -e "${PASS_COLOR}✅ SUMMARY $STEP_COUNT: Docker services brought down. Check output for details.${NC}"
+    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 fi
+
 print_duration $START_TIME_2
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
@@ -108,24 +151,58 @@ echo "----------------------------------------------------"
 # --- STEP 4: Docker Compose Up ---
 START_TIME_4=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Starting new application services in detached mode...${NC}"
+
+# Capture output quietly
 DC_UP_OUTPUT=$(docker compose up -d --remove-orphans 2>&1)
-echo "$DC_UP_OUTPUT"
 
-# 1. Check for the preferred modern status line: [+] Running X/Y
-RUNNING_STATUS_LINE=$(echo "$DC_UP_OUTPUT" | grep '^\[+\] Running [0-9]\+/[0-9]\+' | tail -n 1)
+# Initialize counters
+CREATED_COUNT=0
+STARTED_COUNT=0
+TOTAL_COUNT=0
 
-if [ -n "$RUNNING_STATUS_LINE" ]; then
-    # (Keep previous successful extraction logic here if needed for other servers)
-    ...
-else
-    # 2. Fallback logic: Count how many containers were reported as 'Started'
-    STARTED_COUNT=$(echo "$DC_UP_OUTPUT" | grep -c 'Started')
-    
-    if [ "$STARTED_COUNT" -gt 0 ]; then
-        echo -e "${PASS_COLOR}✨ SUMMARY $STEP_COUNT: ${STARTED_COUNT} service(s) successfully started/updated.${NC}"
-    else
-        echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Service startup FAILED. Review output immediately.${NC}"
+# Extract unique container names that were processed (created or started)
+CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E 'Container .* Created|Container .* Starting|Container .* Started' | awk '{print $2}' | sort -u)
+
+echo -e "\n${COLOR}--- Container Startup Report ---${NC}"
+
+# Loop through each container name found
+for NAME in $CONTAINER_NAMES; do
+    # Skip non-container names like 'Network' or empty strings
+    if [[ "$NAME" == "Network" || -z "$NAME" ]]; then
+        continue
     fi
+    
+    TOTAL_COUNT=$((TOTAL_COUNT + 1))
+    STATUS=""
+    
+    # Check if the container was created
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME Created"; then
+        STATUS+="created"
+        CREATED_COUNT=$((CREATED_COUNT + 1))
+    fi
+    
+    # Check if the container was started
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME Started"; then
+        if [ -n "$STATUS" ]; then
+            STATUS+=" and "
+        fi
+        STATUS+="started"
+        STARTED_COUNT=$((STARTED_COUNT + 1))
+    fi
+
+    # Print the custom status line
+    if [ -n "$STATUS" ]; then
+        echo -e "${PASS_COLOR}    ✔ $NAME - $STATUS${NC}"
+    fi
+done
+
+# Summary Logic
+if [ $TOTAL_COUNT -eq 0 ]; then
+    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${NC}"
+elif [ $CREATED_COUNT -eq $TOTAL_COUNT ] && [ $STARTED_COUNT -eq $TOTAL_COUNT ]; then
+    echo -e "${PASS_COLOR}✨ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
+else
+    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
 fi
 
 print_duration $START_TIME_4
@@ -136,7 +213,6 @@ echo "----------------------------------------------------"
 START_TIME_5=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Cleaning up unused Docker images...${NC}"
 IMAGE_PRUNE_OUTPUT=$(docker image prune -f 2>&1)
-echo "$IMAGE_PRUNE_OUTPUT"
 
 # Count the number of deleted images by counting lines starting with "sha256:" 
 # that follow "Deleted Images:" (since the output format is slightly variable)
@@ -162,7 +238,6 @@ echo "----------------------------------------------------"
 START_TIME_6=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Cleaning up unused Docker build cache...${NC}"
 BUILDER_PRUNE_OUTPUT=$(docker builder prune --force 2>&1)
-echo "$BUILDER_PRUNE_OUTPUT"
 
 # Extract the total reclaimed space from the "Total: [size]" line
 # This looks for the line starting with "Total:" and prints the second field (the size)
@@ -183,7 +258,6 @@ echo "----------------------------------------------------"
 START_TIME_7=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Performing full system prune (containers, networks, dangling images/volumes)...${NC}"
 SYSTEM_PRUNE_OUTPUT=$(docker system prune -f 2>&1)
-echo "$SYSTEM_PRUNE_OUTPUT"
 
 if echo "$SYSTEM_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
     echo -e "${SKIP_COLOR}🗑️ SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${NC}"
