@@ -8,7 +8,7 @@ COLOR='\e[95m'
 PASS_COLOR='\e[32m'
 FAIL_COLOR='\e[31m'
 SKIP_COLOR='\e[33m'
-TIME_COLOR='\e[94m' # Blue for timing
+TIME_COLOR='\e[34m'
 NC='\e[0m'
 
 # --- Counter for Summary ---
