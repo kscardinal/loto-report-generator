@@ -84,13 +84,13 @@ for NAME in $CONTAINER_NAMES; do
     STATUS=""
     
     # Check if the container was stopped
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME Stopped"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
         STATUS+="stopped"
         STOPPED_COUNT=$((STOPPED_COUNT + 1))
     fi
     
     # Check if the container was removed
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME Removed"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -108,9 +108,9 @@ done
 if [ $TOTAL_COUNT -eq 0 ]; then
     echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: No active services found to stop. Continuing.${NC}"
 elif [ $STOPPED_COUNT -eq $TOTAL_COUNT ] && [ $REMOVED_COUNT -eq $TOTAL_COUNT ]; then
-    echo -e "${PASS_COLOR}🛑 SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 else
-    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 fi
 
 print_duration $START_TIME_2
@@ -176,13 +176,13 @@ for NAME in $CONTAINER_NAMES; do
     STATUS=""
     
     # Check if the container was created
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME Created"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Created"; then
         STATUS+="created"
         CREATED_COUNT=$((CREATED_COUNT + 1))
     fi
     
     # Check if the container was started
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME Started"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Started"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -198,11 +198,11 @@ done
 
 # Summary Logic
 if [ $TOTAL_COUNT -eq 0 ]; then
-    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${NC}"
+    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Service startup FAILED. No containers processed. Review logs.${NC}"
 elif [ $CREATED_COUNT -eq $TOTAL_COUNT ] && [ $STARTED_COUNT -eq $TOTAL_COUNT ]; then
-    echo -e "${PASS_COLOR}✨ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services created and started (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
 else
-    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup. Check output for details (${CREATED_COUNT}/${TOTAL_COUNT} created, ${STARTED_COUNT}/${TOTAL_COUNT} started).${NC}"
 fi
 
 print_duration $START_TIME_4
@@ -277,7 +277,7 @@ STARTUP_WAIT_OUTPUT=$(timeout 60 docker compose logs -f 2>&1 | grep -m 1 "Applic
 echo "$STARTUP_WAIT_OUTPUT"
 
 if [ -n "$STARTUP_WAIT_OUTPUT" ]; then
-    echo -e "${PASS_COLOR}✅ SUMMARY $STEP_COUNT: Application reported successful startup!${NC}"
+    echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: Application reported successful startup!${NC}"
 else
     if [ $? -eq 124 ]; then
         echo -e "${SKIP_COLOR}⏳ SUMMARY $STEP_COUNT: Application startup message not detected within 60 seconds.${NC}"
