@@ -74,7 +74,7 @@ REMOVED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed (stopped or removed)
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container|Stopping|Stopped|Removing|Removed)' | awk '{print $2}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
 
 echo -e "\n${COLOR}--- Container Shutdown Report ---${NC}"
 
@@ -116,7 +116,7 @@ elif [ $STOPPED_COUNT -eq $TOTAL_COUNT ] && [ $REMOVED_COUNT -eq $TOTAL_COUNT ];
     echo -e "${PASS_COLOR}✔ SUMMARY $STEP_COUNT: All ${TOTAL_COUNT} services stopped and removed (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 else
     # Changed to FAIL_COLOR since a partial shutdown is usually an issue
-    echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
+    echo -e "${FAIL_COLOR}🛑 SUMMARY $STEP_COUNT: Partial shutdown. Check output for details (${STOPPED_COUNT}/${TOTAL_COUNT} stopped, ${REMOVED_COUNT}/${TOTAL_COUNT} removed).${NC}"
 fi
 print_duration $START_TIME_2
 STEP_COUNT=$((STEP_COUNT + 1))
