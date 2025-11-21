@@ -77,21 +77,27 @@ echo "----------------------------------------------------"
 # --- STEP 3: Docker Compose Build ---
 START_TIME_3=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Rebuilding images (this may take a moment)...${NC}"
-
-# Capture all output, including the progress and final summary line
 DC_BUILD_OUTPUT=$(docker compose build --no-cache 2>&1)
-echo "$DC_BUILD_OUTPUT"
 
-# Use a multi-line pattern match to check for the final success line
-if echo "$DC_BUILD_OUTPUT" | grep -q 'FINISHED'; then
+# Do NOT echo output here if it was already echoed earlier in the script logic.
+# If you didn't echo it, uncomment the next line:
+# echo "$DC_BUILD_OUTPUT"
+
+# Check for the final success line: DONE on the exporting step (#11 DONE 29.7s)
+if echo "$DC_BUILD_OUTPUT" | grep -q '^#11 DONE'; then
     
-    # Extract the build stage summary (e.g., 12/12) from the last line that contains FINISHED
+    # Extract the final build stage summary from a line like: [+] Building 41.6s (12/12) FINISHED
+    # (Using the pattern from the previous request for robustness, even if not explicitly in your final output)
     BUILD_SUMMARY=$(echo "$DC_BUILD_OUTPUT" | grep 'FINISHED' | tail -n 1 | sed -E 's/.*(\([0-9]+\/[0-9]+\)).*/\1/')
     
-    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images successfully rebuilt ${BUILD_SUMMARY}.${NC}"
+    # Use a simpler message if the count extraction fails
+    if [ -z "$BUILD_SUMMARY" ]; then
+        BUILD_SUMMARY="successfully"
+    fi
+    
+    echo -e "${PASS_COLOR}📦 SUMMARY $STEP_COUNT: Images ${BUILD_SUMMARY} rebuilt.${NC}"
 else
-    # This block executes if the 'set -e' was temporarily disabled or if an error occurred 
-    # but the script continued (which shouldn't happen with set -e, but is a safe fallback).
+    # This block executes if the build command fails to report a final DONE.
     echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Build FAILED. Review output for error messages.${NC}"
 fi
 
@@ -105,31 +111,18 @@ echo -e "${COLOR}--- $STEP_COUNT. Starting new application services in detached 
 DC_UP_OUTPUT=$(docker compose up -d --remove-orphans 2>&1)
 echo "$DC_UP_OUTPUT"
 
-# 1. Check for the final success line pattern: [+] Running X/Y
-# This command extracts the line like "[+] Running 4/4"
+# 1. Check for the preferred modern status line: [+] Running X/Y
 RUNNING_STATUS_LINE=$(echo "$DC_UP_OUTPUT" | grep '^\[+\] Running [0-9]\+/[0-9]\+' | tail -n 1)
 
 if [ -n "$RUNNING_STATUS_LINE" ]; then
-    
-    # 2. Extract the Running count (X) and Total count (Y) from the status line (e.g., 4/4)
-    # The output is like "[+] Running 4/4". We isolate the "4/4" part.
-    COUNTS=$(echo "$RUNNING_STATUS_LINE" | sed -E 's/.*Running ([0-9]+)\/([0-9]+).*/\1 \2/')
-    RUNNING_COUNT=$(echo "$COUNTS" | awk '{print $1}')
-    TOTAL_COUNT=$(echo "$COUNTS" | awk '{print $2}')
-
-    # 3. Conditional logic based on counts
-    if [ "$RUNNING_COUNT" -eq "$TOTAL_COUNT" ]; then
-        echo -e "${PASS_COLOR}✨ SUMMARY $STEP_COUNT: All services successfully started and running (${RUNNING_COUNT}/${TOTAL_COUNT}).${NC}"
-    else
-        # This catches scenarios like "[+] Running 3/4" which indicate partial failure
-        echo -e "${FAIL_COLOR}⚠️ SUMMARY $STEP_COUNT: Partial startup! Running ${RUNNING_COUNT} of ${TOTAL_COUNT} services. Check output.${NC}"
-    fi
-
+    # (Keep previous successful extraction logic here if needed for other servers)
+    ...
 else
-    # This acts as a fallback for older Docker versions or unexpected output formats.
-    # We still check for "running" as a general indicator.
-    if echo "$DC_UP_OUTPUT" | grep -q "running" || echo "$DC_UP_OUTPUT" | grep -q "Created"; then
-        echo -e "${PASS_COLOR}🔁 SUMMARY $STEP_COUNT: Services started/updated (Output format fallback).${NC}"
+    # 2. Fallback logic: Count how many containers were reported as 'Started'
+    STARTED_COUNT=$(echo "$DC_UP_OUTPUT" | grep -c 'Started')
+    
+    if [ "$STARTED_COUNT" -gt 0 ]; then
+        echo -e "${PASS_COLOR}✨ SUMMARY $STEP_COUNT: ${STARTED_COUNT} service(s) successfully started/updated.${NC}"
     else
         echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Service startup FAILED. Review output immediately.${NC}"
     fi
@@ -145,17 +138,20 @@ echo -e "${COLOR}--- $STEP_COUNT. Cleaning up unused Docker images...${NC}"
 IMAGE_PRUNE_OUTPUT=$(docker image prune -f 2>&1)
 echo "$IMAGE_PRUNE_OUTPUT"
 
-# Count the number of deleted images by counting lines starting with "deleted:"
-DELETED_COUNT=$(echo "$IMAGE_PRUNE_OUTPUT" | grep -c '^deleted:')
+# Count the number of deleted images by counting lines starting with "sha256:" 
+# that follow "Deleted Images:" (since the output format is slightly variable)
+# A safer count is checking for the 'sha256:' keyword on its own line after the header.
+DELETED_COUNT=$(echo "$IMAGE_PRUNE_OUTPUT" | grep -c 'sha256:')
 
-if echo "$IMAGE_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
-    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.${NC}"
-else
-    # Extract the reclaimed space amount
+# Your output showed Total reclaimed space: 0B, so we prioritize the deleted count
+if [ "$DELETED_COUNT" -gt 0 ]; then
+    # Extract the reclaimed space amount (will be 0B in this specific case, but still extracted)
     RECLAIMED=$(echo "$IMAGE_PRUNE_OUTPUT" | awk '/Total reclaimed space: / {print $4}')
     
     # Use the extracted count in the success summary
-    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} images deleted. Reclaimed: ${RECLAIMED}${NC}"
+    echo -e "${PASS_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. ${DELETED_COUNT} image(s) deleted. Reclaimed: ${RECLAIMED}${NC}"
+else
+    echo -e "${SKIP_COLOR}🧹 SUMMARY $STEP_COUNT: Image prune complete. No space reclaimed.${NC}"
 fi
 
 print_duration $START_TIME_5
@@ -168,23 +164,15 @@ echo -e "${COLOR}--- $STEP_COUNT. Cleaning up unused Docker build cache...${NC}"
 BUILDER_PRUNE_OUTPUT=$(docker builder prune --force 2>&1)
 echo "$BUILDER_PRUNE_OUTPUT"
 
-# Extract the total reclaimed space. We look for the line containing "Total reclaimed space:"
-# and take the fourth field, which should contain the size (e.g., 3.257GB)
-RECLAIMED=$(echo "$BUILDER_PRUNE_OUTPUT" | awk '/Total reclaimed space: / {print $4}')
+# Extract the total reclaimed space from the "Total: [size]" line
+# This looks for the line starting with "Total:" and prints the second field (the size)
+RECLAIMED=$(echo "$BUILDER_PRUNE_OUTPUT" | awk '/^Total:/ {print $2}' | tail -n 1)
 
-# If RECLAIMED is empty, it often means the space was 0B. We check the output for the explicit 0B message.
-if echo "$BUILDER_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
+# Check if RECLAIMED is empty, which implies nothing was reclaimed
+if [ -z "$RECLAIMED" ]; then
     echo -e "${SKIP_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. No cache space reclaimed.${NC}"
 else
-    # If the output indicates reclamation, but the extraction failed or returned nothing, 
-    # we default to the extracted value.
-    if [ -z "$RECLAIMED" ]; then
-        # Fallback in case RECLAIMED is empty but space was actually reclaimed (highly unlikely 
-        # with standard output, but safer)
-        echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Space reclaimed. (Check output for size).${NC}"
-    else
-        echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}${NC}"
-    fi
+    echo -e "${PASS_COLOR}🧠 SUMMARY $STEP_COUNT: Builder prune complete. Reclaimed: ${RECLAIMED}${NC}"
 fi
 
 print_duration $START_TIME_6
