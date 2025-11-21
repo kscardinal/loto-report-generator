@@ -22,6 +22,10 @@ const entropyBar = document.getElementById("entropy-bar")
 const entropyWords = document.getElementById("entropy-words")
 
 const sendButton = document.getElementById("sendButton")
+const resendLink = document.getElementById("resendLink");
+const resendCountdown = document.getElementById("resendCountdown");
+let resendIntervalId = null;
+let sendTimestamps = []; // track send times in ms; resets on page reload
 
 
 email.addEventListener("input", async function() {
@@ -190,6 +194,7 @@ confirmPassword.addEventListener("input", function() {
 let codeSent = false; // track whether the backup code has been sent
 let verifyCode = false;
 let codeAttempts = 0;
+let codesSent = 0;
 
 sendButton.addEventListener("click", async function() {
     const emailValue = email.value.trim();
@@ -244,6 +249,26 @@ sendButton.addEventListener("click", async function() {
             code.style.display = "block";
             code.required = true;
             codeSent = true; // update state
+            codesSent = codesSent + 1;
+            sendTimestamps.push(Date.now());
+
+            // Show resend UI and start the first cooldown before allowing resend
+            const resendContainer = document.getElementById("resendContainer");
+            if (resendContainer) resendContainer.style.display = "block";
+            if (codesSent <= 1) {
+                // After the initial send, require 15s before the next resend
+                startResendCountdown(15);
+            } else if (codesSent === 2) {
+                // After the second send, require 90s (1.5 minutes) before the third
+                startResendCountdown(90);
+            } else if (codesSent === 3) {
+                // After the second send, require 900s (15 minutes) before the fourth
+                startResendCountdown(900);
+            } else {
+                // Further resends locked out until page reload
+                resendLink.classList.add("disabled");
+                resendLink.textContent = "Locked out for a while";
+            }
 
             return data;
 
@@ -452,3 +477,100 @@ async function validateForm() {
         sendButton.style.cursor = "not-allowed";     // indicate disabled
     }
 }
+
+// Start a countdown (seconds) before enabling the resend link
+function startResendCountdown(seconds) {
+    // clear any existing interval
+    if (resendIntervalId) {
+        clearInterval(resendIntervalId);
+        resendIntervalId = null;
+    }
+
+    const link = resendLink;
+    const countdownEl = resendCountdown;
+    if (!link || !countdownEl) return;
+
+    link.style.display = 'none';
+    link.classList.add('disabled');
+    countdownEl.style.display = 'inline';
+
+    let remaining = seconds;
+    countdownEl.textContent = `Resend in ${remaining}s`;
+
+    resendIntervalId = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+            clearInterval(resendIntervalId);
+            resendIntervalId = null;
+            countdownEl.style.display = 'none';
+            link.style.display = 'inline';
+            link.classList.remove('disabled');
+        } else {
+            countdownEl.textContent = `Resend in ${remaining}s`;
+        }
+    }, 1000);
+}
+
+// Resend link click handler
+    if (resendLink) {
+        resendLink.addEventListener('click', async function (e) {
+            e.preventDefault();
+            if (resendLink.classList.contains('disabled')) return;
+
+            const emailValue = email.value.trim();
+            if (!emailValue) {
+                return;
+            }
+
+            try {
+                // Client-side enforces cooldown stages; server may still respond with 429,
+                // so handle server-side retry_after if present.
+                const res = await fetch('/send_backup_code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailValue })
+                });
+
+                if (res.status === 429) {
+                    const data = await res.json().catch(()=>({}));
+                    const retry = data.retry_after || 900; // fallback to longest cooldown
+                    startResendCountdown(retry);
+                    return;
+                }
+
+                if (!res.ok) {
+                    const data = await res.json().catch(()=>({}));
+                    alert(data.detail || data.message || 'Failed to resend code');
+                    return;
+                }
+
+                // Success: record timestamp and advance stage
+                sendTimestamps.push(Date.now());
+                codesSent = codesSent + 1;
+
+                // After second send (codesSent===2) start the shorter 90s cooldown,
+                // after third send lock out.
+                if (sendTimestamps.length === 1) {
+                    // shouldn't happen — initial send already recorded, but be safe
+                    startResendCountdown(15);
+                } else if (sendTimestamps.length === 2) {
+                    startResendCountdown(90);
+                } else if (sendTimestamps.length === 3) {
+                    startResendCountdown(900);
+                } else {
+                    // Lock out UI until reload
+                    clearInterval(resendIntervalId);
+                    resendIntervalId = null;
+                    resendCountdown.style.display = 'none';
+                    resendLink.style.display = 'inline';
+                    resendLink.classList.add('disabled');
+                    resendLink.textContent = 'Locked out for a while';
+                }
+
+                return;
+            } catch (err) {
+                // Non-fatal client-side error — show a simple alert
+                alert('Error resending backup code. Please try again later.');
+            }
+        });
+    }

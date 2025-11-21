@@ -1986,9 +1986,14 @@ async def send_backup_code(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    backup_code = user.get("backup_code")
-    if not backup_code:
-        raise HTTPException(status_code=400, detail="User has no backup code stored")
+    # Regenerate a fresh backup code for every send so codes are never repeated
+    new_code = generate_backup_code()
+    try:
+        users.update_one({"email": target_email}, {"$set": {"backup_code": new_code}})
+    except Exception:
+        logger.exception("Failed to persist new backup code for send_backup_code")
+
+    backup_code = new_code
 
     # Email template
     html_body = f"""

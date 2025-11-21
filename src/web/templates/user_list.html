@@ -225,7 +225,6 @@ async function fetchUsers() {
             <p><span>Last Accessed:</span> ${lastAccessedEST}</p>
             <p><span>Active:</span> ${user.is_active ? "Active" : "Inactive"}</p>
             <p><span>Login Attempts:</span> ${user.login_attempts || 0}</p>
-            <p><span>Backup Code:</span> ${user.backup_code || "None"}</p>
             <p><span>Password Resets:</span> ${user.password_resets || 0}</p>
             <p><span>Latest Reset:</span> ${latestResetEST}</p>
             <p><span>Verification Attempts:</span> ${user.verification_attempts || 0}</p>
