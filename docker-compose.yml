@@ -2,7 +2,6 @@ services:
   backend:
     build: .
     restart: always
-    env_file: .env
     depends_on:
       - mongo
     # **HOST PORTS REMOVED** - Mapped in dev, test, and prod files
@@ -22,7 +21,6 @@ services:
   mongo:
     image: mongo:7
     restart: always
-    env_file: .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
