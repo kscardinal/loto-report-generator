@@ -6,6 +6,8 @@ services:
   mongo:
     container_name: mongo_db_prod
     env_file: .env
+    ports:
+    - "27017:27017"
 
   nginx:
     container_name: nginx_proxy_prod
