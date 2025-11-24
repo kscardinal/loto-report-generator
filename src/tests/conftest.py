@@ -105,7 +105,7 @@ def test_environment():
 
         # --- Wait for Backend Service (e.g., FastAPI) ---
         url = "http://localhost:8100/health"
-        timeout_seconds = 120
+        timeout_seconds = 240
         
         print(f"\n⏳ Waiting for backend at {url} (Timeout: {timeout_seconds}s)...")
 

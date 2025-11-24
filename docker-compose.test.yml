@@ -1,6 +1,11 @@
 services:
   backend:
     container_name: fastapi_app_test
+    build:
+      context: .
+      dockerfile: Dockerfile 
+      args:
+        BUILD_FOR_TEST: "true" # This tells the Dockerfile to skip installing heavy dependencies
     environment:
       APP_ENV: test
       MONGO_URL: mongodb://mongo:27017
