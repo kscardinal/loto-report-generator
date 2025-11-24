@@ -2,7 +2,7 @@ repos:
   - repo: local
     hooks:
       - id: pytest-generated
-        name: pytest (generated PDF tests)
+        name: python scripts (create pdf)
         entry: uv run pytest -q src/tests/test_pdf_scripts.py
         language: system
         pass_filenames: false
