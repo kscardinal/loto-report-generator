@@ -1,4 +1,4 @@
-name: Python Tests
+name: Server Endpoint Tests
 
 on:
   push:
@@ -52,14 +52,6 @@ jobs:
             pdf-cache-
 
       # 8️⃣.1️⃣ Run tests
-      - name: Run pytest - python scripts (create pdf)
-        run: uv run pytest -q src/tests/test_pdf_scripts.py
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
-
-      # 8️⃣.2️⃣ Run tests
       - name: endpoints (admin)
         run: uv run pytest -q src/tests/test_endpoints_admin.py
         env:
@@ -67,7 +59,7 @@ jobs:
           MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
           MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
 
-      # 8️⃣.3️⃣ Run tests
+      # 8️⃣.2️⃣ Run tests
       - name: endpoints (auth pages)
         run: uv run pytest -q src/tests/test_endpoints_auth_pages.py
         env:
