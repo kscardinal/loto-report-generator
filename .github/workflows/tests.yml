@@ -56,6 +56,8 @@ jobs:
         run: uv run pytest -q
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
 
       # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)

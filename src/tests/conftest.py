@@ -2,6 +2,7 @@ import subprocess
 import time
 import requests
 import pytest
+import os
 
 
 COMPOSE_FILES = [
@@ -20,6 +21,7 @@ def test_environment():
     result = subprocess.run(
         ["docker", "compose", *sum([["-f", f] for f in COMPOSE_FILES], []),
          "-p", PROJECT_NAME, "up", "--build", "-d"],
+        env=os.environ,
         capture_output=True,
         text=True,
         encoding="utf-8"
