@@ -1155,15 +1155,7 @@ async def login_endpoint(
     # --- Determine where to redirect ---
     return_url = request.cookies.get("return_url") or "/pdf_list"
 
-    response = JSONResponse(
-        {
-            "message": "Login successful",
-            "return_url": return_url,
-            "access_token": token,
-            "token_type": "bearer",
-        },
-        status_code=200,
-    )
+    response = JSONResponse({"message": "Login successful", "return_url": return_url}, status_code=200)
     response.set_cookie(key="access_token", value=token, httponly=True)
     response.delete_cookie("return_url")  # clean up after reading
 

@@ -66,7 +66,7 @@ START_TIME_2=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 
 # Capture output quietly without echoing it to the screen
-DC_DOWN_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml down 2>&1)
+DC_DOWN_OUTPUT=$(docker compose down 2>&1)
 
 # Initialize counters
 STOPPED_COUNT=0
@@ -123,7 +123,7 @@ echo "----------------------------------------------------"
 # --- STEP 3: Docker Compose Build ---
 START_TIME_3=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Rebuilding images (this may take a moment)...${NC}"
-DC_BUILD_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache 2>&1)
+DC_BUILD_OUTPUT=$(docker compose build --no-cache 2>&1)
 
 # Do NOT echo output here if it was already echoed earlier in the script logic.
 # If you didn't echo it, uncomment the next line:
@@ -157,7 +157,7 @@ START_TIME_4=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Starting new application services in detached mode...${NC}"
 
 # Capture output quietly
-DC_UP_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans 2>&1)
+DC_UP_OUTPUT=$(docker compose up -d --remove-orphans 2>&1)
 
 # Initialize counters
 CREATED_COUNT=0
@@ -279,7 +279,7 @@ echo "----------------------------------------------------"
 START_TIME_8=$(date +%s.%N)
 echo -e "${COLOR}--- $STEP_COUNT. Waiting for application to report successful startup... (Watching logs)${NC}"
 # Timeout set to 60 seconds
-STARTUP_WAIT_OUTPUT=$(timeout 60 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f 2>&1 | grep -m 1 "Application startup complete.")
+STARTUP_WAIT_OUTPUT=$(timeout 60 docker compose logs -f 2>&1 | grep -m 1 "Application startup complete.")
 echo "$STARTUP_WAIT_OUTPUT"
 
 if [ -n "$STARTUP_WAIT_OUTPUT" ]; then

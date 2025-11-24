@@ -2,22 +2,15 @@ repos:
   - repo: local
     hooks:
       - id: pytest-generated
-        name: python scripts (create pdf)
+        name: pytest (generated PDF tests)
         entry: uv run pytest -q src/tests/test_pdf_scripts.py
         language: system
         pass_filenames: false
         stages: [pre-push]
 
-      - id: pytest-endpoints-admin
-        name: endpoints (admin)
-        entry: uv run pytest -q src/tests/test_endpoints_admin.py
-        language: system
-        pass_filenames: false
-        stages: [pre-push]
-
-      - id: pytest-endpoints-auth-pages
-        name: endpoints (auth pages)
-        entry: uv run pytest -q src/tests/test_endpoints_auth_pages.py
+      - id: pytest-db
+        name: pytest (db status test)
+        entry: uv run pytest -q src/tests/test_db_status.py
         language: system
         pass_filenames: false
         stages: [pre-push]

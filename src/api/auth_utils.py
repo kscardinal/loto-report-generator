@@ -1,5 +1,5 @@
 import jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends, Request, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
@@ -29,7 +29,7 @@ security = HTTPBearer()
 
 def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MINUTES):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
+    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -75,7 +75,10 @@ def get_current_user(request: Request, redirect: bool = True):
         raise HTTPException(status_code=401, detail="Invalid token")
     
 def get_current_user_no_redirect(request: Request):
-    return get_current_user(request, redirect=False)
+    user = get_current_user(request, redirect=False)
+    if not user:
+        raise HTTPException(status_code=403, detail="Forbidden: Not authenticated")
+    return user
 
 def require_role(required_role: str):
     def wrapper(user):
@@ -137,7 +140,7 @@ async def lookup_ip_with_db(ip: str, known_locations_collection: Collection, tim
                 # Store in DB
                 known_locations_collection.update_one(
                     {"ip_address": ip},
-                    {"$set": {"location": location, "last_updated": datetime.now(timezone.utc)}},
+                    {"$set": {"location": location, "last_updated": datetime.utcnow()}},
                     upsert=True
                 )
                 return location
@@ -179,7 +182,7 @@ def log_action(
         "username": username,
         "action": action,
         "details": details or {},
-        "timestamp": datetime.now(timezone.utc)
+        "timestamp": datetime.utcnow()
     }
 
     inserted = audit_logs_collection.insert_one(log_entry)
