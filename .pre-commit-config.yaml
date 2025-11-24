@@ -14,3 +14,10 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+
+      - id: pytest-endpoints-auth-pages
+        name: endpoints (auth pages)
+        entry: uv run pytest -q src/tests/test_endpoints_auth_pages.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

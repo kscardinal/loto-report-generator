@@ -41,14 +41,10 @@ USER_HEADERS = {"Authorization": f"Bearer {USER_TOKEN}"}
 # TESTS
 # -----------------------------
 
-# ----------------------------------------
-## 🩺 Health Check Endpoints
-# ----------------------------------------
-
 def test_health_check_success(test_environment):
     """Tests that the public /health endpoint returns a 200 OK status."""
     
-    print("\n\n🩺  Starting Test: /health public access")
+    print("\n\n🌐  Starting Test: /health public access")
     url = f"{TEST_SERVER}/health"
     print(f"➡️  Requesting: {url}")
     
@@ -67,14 +63,10 @@ def test_health_check_success(test_environment):
     print("✅ /health check passed\n")
 
 
-# ----------------------------------------
-## 🧩 Database Status Endpoints (/db_status)
-# ----------------------------------------
-
 def test_db_status_success_with_owner(test_environment):
     """Tests /db_status access with an 'owner' role token (since owner > admin)."""
     
-    print("\n\n🔒 Starting Test: /db_status with OWNER role")
+    print("\n\n🌐 Starting Test: /db_status with OWNER role")
     url = f"{TEST_SERVER}/db_status"
     print(f"➡️  Requesting: {url}")
     
@@ -97,7 +89,7 @@ def test_db_status_success_with_owner(test_environment):
 def test_db_status_success_with_admin(test_environment):
     """Tests /db_status access with the minimum required 'admin' role."""
     
-    print("\n\n🔒 Starting Test: /db_status with ADMIN role")
+    print("\n\n🌐 Starting Test: /db_status with ADMIN role")
     url = f"{TEST_SERVER}/db_status"
     print(f"➡️  Requesting: {url}")
     
@@ -120,7 +112,7 @@ def test_db_status_success_with_admin(test_environment):
 def test_db_status_insufficient_permissions(test_environment):
     """Tests that a standard 'user' role is denied access (403 Forbidden)."""
     
-    print("\n\n⚠️ Starting Test: /db_status with UNAUTHORIZED USER role")
+    print("\n\n🌐 Starting Test: /db_status with UNAUTHORIZED USER role")
     url = f"{TEST_SERVER}/db_status"
     print(f"➡️  Requesting: {url}")
     
@@ -142,7 +134,7 @@ def test_db_status_insufficient_permissions(test_environment):
 def test_db_status_unauthenticated(test_environment):
     """Tests that an unauthenticated request is denied access (401 Unauthorized)."""
     
-    print("\n\n🚫 Starting Test: /db_status with NO TOKEN (Unauthenticated)")
+    print("\n\n🌐 Starting Test: /db_status with NO TOKEN (Unauthenticated)")
     url = f"{TEST_SERVER}/db_status"
     print(f"➡️  Requesting: {url}")
     
@@ -159,3 +151,4 @@ def test_db_status_unauthenticated(test_environment):
     assert "Not authenticated" in data.get("detail"), f"❌ Unexpected error message: {data}"
 
     print("✅ Unauthenticated check passed (401)\n")
+
