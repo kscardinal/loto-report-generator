@@ -12,7 +12,7 @@ COMPOSE_FILES = [
 PROJECT_NAME = "app_pytest_env"  # fully isolated docker namespace
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def test_environment():
     # --- Start stack ---
     print("\n🚀 Starting test docker environment...\n")
