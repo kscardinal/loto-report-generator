@@ -237,7 +237,7 @@ curl http://<server-ip>/api/docs
 
 5. Run a test docker container locally
 ```bash
-docker-compose --env-file .env.dev up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up --build
 ```
 
 ---
