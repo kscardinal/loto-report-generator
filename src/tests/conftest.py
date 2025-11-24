@@ -93,7 +93,7 @@ def test_environment():
         
         # 2. Register a cleanup action to stop the stack when the fixture scope ends
         def teardown_docker():
-            print("\n🧹 Tearing down docker test environment...\n")
+            print("\n\n🧹 Tearing down docker test environment...\n")
             down_command = build_compose_command("down", ["-v", "--rmi", "local"]) # Add --rmi local to remove images if needed
             subprocess.run(
                 down_command,
@@ -114,7 +114,7 @@ def test_environment():
                 # Use a request-level timeout
                 r = requests.get(url, timeout=REQUEST_TIMEOUT) 
                 if r.status_code == 200:
-                    print("✅ Test server is up and healthy!")
+                    print("\n✅ Test server is up and healthy!")
                     break
             except requests.exceptions.ConnectionError:
                 pass # Expected while the service is starting
