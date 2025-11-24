@@ -17,7 +17,7 @@ repos:
 
       - id: pytest-endpoints
         name: pytest (endpoint tests)
-        entry: uv run pytest -q src/tests/test_health.py
+        entry: uv run pytest -q src/tests/test_endpoints.py
         language: system
         pass_filenames: false
         stages: [pre-push]
