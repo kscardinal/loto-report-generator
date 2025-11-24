@@ -52,13 +52,12 @@ jobs:
             pdf-cache-
 
       # 8️⃣ Run tests
-      - name: Run pytest
+      - name: Run pytest (Dockerized)
         run: uv run pytest -q
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
           MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
-          APP_ENV: dev
 
       # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)

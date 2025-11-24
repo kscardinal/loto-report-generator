@@ -6,6 +6,7 @@ services:
       MONGO_URL: mongodb://mongo:27017
       MONGO_USER: testuser
       MONGO_PASSWORD: testpass
+      SECRET_KEY: ${SECRET_KEY}
     ports:
       - "8100:8000" # Use a unique host port for testing to prevent conflict
     volumes:
