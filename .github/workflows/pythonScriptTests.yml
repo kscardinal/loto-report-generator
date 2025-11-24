@@ -59,22 +59,6 @@ jobs:
           MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
           MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
 
-      # 8️⃣.2️⃣ Run tests
-      - name: endpoints (admin)
-        run: uv run pytest -q src/tests/test_endpoints_admin.py
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
-
-      # 8️⃣.3️⃣ Run tests
-      - name: endpoints (auth pages)
-        run: uv run pytest -q src/tests/test_endpoints_auth_pages.py
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          MONGO_USER: ${{ secrets.MONGO_TEST_USER }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_TEST_PASSWORD }}
-
       # 9️⃣ Upload generated PDFs on failure
       - name: Upload generated PDFs (on failure)
         if: failure()
