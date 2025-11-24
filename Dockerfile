@@ -1,27 +1,16 @@
-ARG BUILD_FOR_TEST=false
-
 # Use official Python 3.13 base
 FROM python:3.13-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install core dependencies (always needed)
+# Install system dependencies needed for OpenCV + nginx
 RUN apt-get update && apt-get install -y \
-    # Packages like git, curl, or base networking utilities
+    nginx \
+    libgl1 \
+    libglib2.0-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Conditional installation of heavy graphics/web server packages
-RUN if [ "$BUILD_FOR_TEST" = "false" ]; then \
-    apt-get update && apt-get install -y \
-        nginx \
-        libgl1 \
-        libglib2.0-0 \
-        # ... any other heavy packages ...
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*; \
-    fi
 
 # Copy all project files into the container
 COPY . .
