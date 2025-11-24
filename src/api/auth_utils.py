@@ -75,10 +75,7 @@ def get_current_user(request: Request, redirect: bool = True):
         raise HTTPException(status_code=401, detail="Invalid token")
     
 def get_current_user_no_redirect(request: Request):
-    user = get_current_user(request, redirect=False)
-    if not user:
-        raise HTTPException(status_code=403, detail="Forbidden: Not authenticated")
-    return user
+    return get_current_user(request, redirect=False)
 
 def require_role(required_role: str):
     def wrapper(user):
