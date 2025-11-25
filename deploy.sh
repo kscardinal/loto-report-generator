@@ -296,6 +296,65 @@ print_duration $START_TIME_8
 STEP_COUNT=$((STEP_COUNT + 1))
 echo "----------------------------------------------------"
 
+# --- STEP 9: Install Root Crontab ---
+START_TIME_9=$(date +%s.%N)
+CRON_FILE="cron.host" # Assumes cron.host is in the main folder
+
+echo -e "${COLOR}--- $STEP_COUNT. Installing ${CRON_FILE} as root crontab (with safety check)...${NC}"
+
+# Check if the local cron file exists
+if [ ! -f "$CRON_FILE" ]; then
+    echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Crontab file ${CRON_FILE} not found! Skipping cron setup.${NC}"
+    print_duration $START_TIME_9
+    STEP_COUNT=$((STEP_COUNT + 1))
+    echo "----------------------------------------------------"
+    return # Use 'return' or 'exit 0' depending on whether you want to stop the script entirely
+fi
+
+# 1. Create a temporary file with the currently installed root crontab, excluding comments/blanks.
+#    We use mktemp to ensure a unique, safe file.
+TEMP_CURRENT_CRON=$(mktemp)
+
+# Get the current root crontab, filter out blank lines and lines starting with '#' (comments)
+# Sudo is needed to read the root crontab
+sudo crontab -u root -l 2>/dev/null | grep -v '^[[:space:]]*#' | grep -v '^[[:space:]]*$' > "$TEMP_CURRENT_CRON"
+CURRENT_CRON_LINES=$(wc -l < "$TEMP_CURRENT_CRON")
+
+# 2. Create a temporary file with the content of the deployment file, excluding comments/blanks.
+TEMP_HOST_CRON=$(mktemp)
+grep -v '^[[:space:]]*#' "$CRON_FILE" | grep -v '^[[:space:]]*$' > "$TEMP_HOST_CRON"
+HOST_CRON_LINES=$(wc -l < "$TEMP_HOST_CRON")
+
+# 3. Check for differences and potential data loss (i.e., extra lines in the current crontab)
+
+# Check if the files are exactly the same (0 lines of diff means they are identical)
+if diff -q "$TEMP_CURRENT_CRON" "$TEMP_HOST_CRON" > /dev/null; then
+    # CRONTABS ARE IDENTICAL: Skip installation
+    echo -e "${SKIP_COLOR}📜 SUMMARY $STEP_COUNT: Root crontab is already set correctly. Skipping installation.${NC}"
+elif [ "$CURRENT_CRON_LINES" -gt "$HOST_CRON_LINES" ]; then
+    # CURRENT CRONTAB HAS EXTRA LINES: Potential data loss (non-managed jobs exist)
+    echo -e "${SKIP_COLOR}⚠️ SUMMARY $STEP_COUNT: Existing root crontab has ${CURRENT_CRON_LINES} active lines, but ${CRON_FILE} only has ${HOST_CRON_LINES}.${NC}"
+    echo -e "${SKIP_COLOR}   **WARNING**: Installing ${CRON_FILE} would **remove** existing root cron jobs not defined in the file. Skipping overwrite.${NC}"
+else
+    # CURRENT CRONTAB IS EMPTY, OR HAS FEWER LINES THAN THE HOST FILE (SAFE TO OVERWRITE/ADD)
+    # The overwrite is required to update time/path if the content has changed
+    echo "Current and deployment crontab content differs. Installing new crontab..."
+    CRONTAB_OUTPUT=$(sudo crontab -u root "$CRON_FILE" 2>&1)
+
+    if [ $? -eq 0 ]; then
+        echo -e "${PASS_COLOR}📜 SUMMARY $STEP_COUNT: New cron job successfully installed/updated for root user.${NC}"
+    else
+        echo -e "${FAIL_COLOR}❌ SUMMARY $STEP_COUNT: Cron job installation FAILED. Output: ${CRONTAB_OUTPUT}${NC}"
+    fi
+fi
+
+# Cleanup temporary files
+rm -f "$TEMP_CURRENT_CRON" "$TEMP_HOST_CRON"
+
+print_duration $START_TIME_9
+STEP_COUNT=$((STEP_COUNT + 1))
+echo "----------------------------------------------------"
+
 # --- Final Message ---
 echo -e "${PASS_COLOR}🎉 Deployment script finished successfully!${NC}"
 print_duration $START_TIME_0
