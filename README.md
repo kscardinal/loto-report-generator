@@ -18,7 +18,13 @@
 	<p align="center">
 		<img src="https://img.shields.io/github/issues/kscardinal/loto-report-generator?style=for-the-badge&color=4CAF50">
 		<img src="https://img.shields.io/github/issues-pr/kscardinal/loto-report-generator?style=for-the-badge&color=4CAF50">
-		<img src="https://img.shields.io/github/actions/workflow/status/kscardinal/loto-report-generator/tests.yml?label=PDF%20Generation&style=for-the-badge&logo=github&logoColor=white&color=4CAF50" alt="GitHub Actions Workflow Status">
+	</p>
+</div>
+
+<div style="text-align: center; padding-top: 0px">
+	<p align="center">
+		<img src="https://img.shields.io/github/actions/workflow/status/kscardinal/loto-report-generator/pythonScriptTests.yml?label=Python%20Script%20Tests&style=for-the-badge&logo=github&logoColor=white&color=4CAF50" alt="GitHub Actions Workflow Status">
+		<img src="https://img.shields.io/github/actions/workflow/status/kscardinal/loto-report-generator/serverEndpointTests.yml?label=Server%20Endpoint%20Tests&style=for-the-badge&logo=github&logoColor=white&color=4CAF50" alt="GitHub Actions Workflow Status">
 	</p>
 </div>
 
