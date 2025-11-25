@@ -358,9 +358,9 @@ pwd {SCRIPT_FILE}
 crontab -e
 ```
 
-4. Set up task
+4. Set up task (server is in UTC time +5)
 ```bash
-0 2 * * * {PYTHON_PATH} {SCRIPT_PATH} >> {LOG_PATH} 2>&1
+0 8 * * * {PYTHON_PATH} {SCRIPT_PATH} >> {LOG_PATH} 2>&1
 ```
 
 ---
