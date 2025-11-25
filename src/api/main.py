@@ -1159,7 +1159,7 @@ LOCKOUT_STAGES = {
     5: 5,        # Stage 1: 5 attempts -> 5 minutes lock
     10: 15,      # Stage 2: 10 attempts -> 15 minutes lock
     15: 60,      # Stage 3: 15 attempts -> 60 minutes (1 hour) lock
-    20: 1440     # Stage 4: 20 attempts -> 1440 minutes (24 hours - Hard Lock)
+    20: 525600   # Hard Lock: 20 attempts -> 1 year lockout (Requires Admin/Support)
 }
 HARD_LOCK_ATTEMPTS = 20 # The final threshold for the hardest lock
 
