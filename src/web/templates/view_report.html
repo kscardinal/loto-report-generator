@@ -80,17 +80,25 @@
         <div class="metadata-column">
             <div class="section metadata full-height-container"> 
                 <h2>Metadata</h2>
-                <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
-                <p><strong>Tags:</strong></p>
-                <ul>
-                    {% for tag in report.tags %}
-                        <li>{{ tag }}</li>
-                    {% endfor %}
-                </ul>
-                <p><strong>Notes:</strong><br> {{ report.notes }}</p>
-                <p id="dateAdded" data-raw-date="{{ report.date_added }}"><br>...</p>
-                <p id="dateModified" data-raw-date="{{ report.last_modified }}"><br>...</p>
-                <p id="lastGenerated" data-raw-date="{{ report.last_generated }}"><br>...</p>
+                <div class="inner-section">
+                    <p><strong>Uploaded by:</strong> {{ report.uploaded_by }}</p>
+                </div>
+                <div class="inner-section">
+                    <p><strong>Tags:</strong></p>
+                    <ul>
+                        {% for tag in report.tags %}
+                            <li>{{ tag }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="inner-section">
+                    <p><strong>Notes:</strong><br> {{ report.notes }}</p>
+                </div>
+                <div class="inner-section">
+                    <p id="dateAdded" data-raw-date="{{ report.date_added }}"><br>...</p>
+                    <p id="dateModified" data-raw-date="{{ report.last_modified }}"><br>...</p>
+                    <p id="lastGenerated" data-raw-date="{{ report.last_generated }}"><br>...</p>
+                </div>
             </div>
         </div>
 
