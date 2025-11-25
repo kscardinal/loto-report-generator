@@ -264,7 +264,7 @@ SYSTEM_PRUNE_OUTPUT=$(docker system prune -f 2>&1)
 
 ### Summary Logic
 if echo "$SYSTEM_PRUNE_OUTPUT" | grep -q "Total reclaimed space: 0B"; then
-    echo -e "${SKIP_COLOR}🗑️  SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${NC}"
+    echo -e "${SKIP_COLOR}⚠️  SUMMARY $STEP_COUNT: System prune complete. No additional space reclaimed.${NC}"
 else
     # Extract the total reclaimed space
     RECLAIMED=$(echo "$SYSTEM_PRUNE_OUTPUT" | tail -n 1 | grep "Total reclaimed space" | awk '{print $4}')
