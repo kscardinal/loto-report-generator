@@ -1,2 +1,3 @@
 # m h  dom mon dow   command
 0 8 * * * /root/loto-report-generator/.venv/bin/python3 /root/loto-report-generator/src/api/cleanup_script.py >> /root/loto-report-generator/logs/cron.log 2>&1
+
