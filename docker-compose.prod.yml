@@ -2,6 +2,8 @@ services:
   backend:
     container_name: fastapi_app_prod
     env_file: .env
+    ports:
+    - "8000:8000"
 
   mongo:
     container_name: mongo_db_prod
