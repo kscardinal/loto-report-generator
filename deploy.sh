@@ -167,8 +167,6 @@ TOTAL_COUNT=0
 # Extract unique container names that were processed (created or started)
 CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E 'Container .* Created|Container .* Starting|Container .* Started' | awk '{print $2}' | sort -u)
 
-echo -e "\n${COLOR}--- Container Startup Report ---${NC}"
-
 # Loop through each container name found
 for NAME in $CONTAINER_NAMES; do
     # Skip non-container names like 'Network' or empty strings
