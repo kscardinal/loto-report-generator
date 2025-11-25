@@ -315,15 +315,21 @@ fi
 #    We use mktemp to ensure a unique, safe file.
 TEMP_CURRENT_CRON=$(mktemp)
 
-# Get the current root crontab, filter out blank lines and lines starting with '#' (comments)
+echo "--- DEBUG: Attempting to read root crontab into $TEMP_CURRENT_CRON ---" 
+# Filter out blank lines and lines starting with '#' (comments)
 # Sudo is needed to read the root crontab
 sudo crontab -u root -l 2>/dev/null | grep -v '^[[:space:]]*#' | grep -v '^[[:space:]]*$' > "$TEMP_CURRENT_CRON"
+# If the script prints the line below, the read was successful.
+echo "--- DEBUG: Successfully read root crontab. ---" 
+
 CURRENT_CRON_LINES=$(wc -l < "$TEMP_CURRENT_CRON")
 
 # 2. Create a temporary file with the content of the deployment file, excluding comments/blanks.
 TEMP_HOST_CRON=$(mktemp)
+
+echo "--- DEBUG: Attempting to read cron.host into $TEMP_HOST_CRON ---"
 grep -v '^[[:space:]]*#' "$CRON_FILE" | grep -v '^[[:space:]]*$' > "$TEMP_HOST_CRON"
-HOST_CRON_LINES=$(wc -l < "$TEMP_HOST_CRON")
+echo "--- DEBUG: Successfully read cron.host. ---"
 
 # 3. Check for differences and potential data loss (i.e., extra lines in the current crontab)
 
