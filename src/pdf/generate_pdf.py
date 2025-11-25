@@ -230,7 +230,7 @@ def initialize_pdf_generator(data_file):
         return False
 
     # Creating PDF and setting document title
-    file_name = os.path.splitext(data_file)[0]  # Remove .json extension
+    file_name = os.path.splitext(os.path.basename(data_file))[0]
     pdf = canvas.Canvas(file_name + ".pdf", PAGE_SIZE)
     pdf.setTitle(file_name)
 
@@ -1239,7 +1239,7 @@ def generate_pdf():
 def generate_pdf_from_json(json_data: dict, output_path: str) -> bool:
     global data, pdf, file_name
     data = json_data
-    file_name = os.path.splitext(output_path)[0]
+    file_name = Path(output_path).stem
     pdf = canvas.Canvas(output_path, PAGE_SIZE)
     pdf.setTitle(file_name)
 
