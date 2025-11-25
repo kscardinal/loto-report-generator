@@ -239,9 +239,48 @@ async function initPdfViewer() {
 
         if (loadingText) loadingText.textContent = "Loading PDF ...";
         
+        // ** NEW: Set up the 30-second timeout **
+        const timeoutId = setTimeout(() => {
+            console.warn("PDF load timed out after 30 seconds. Aborting.");
+            // This abort will trigger an 'AbortError' in the catch block below
+            pdfLoadController.abort();
+            
+            // OPTIONAL: Immediately show timeout message
+            if (loadingText) {
+                const spinner = pdfLoading.querySelector('.spinner');
+                if (spinner) spinner.remove();
+                loadingText.textContent = "PDF load failed: Timeout (30 seconds).";
+            }
+
+            // Re-enable independent buttons after failure
+            const downloadButton = document.getElementById("downloadBtn");
+            const deleteButton = document.getElementById("deleteBtn");
+
+            // Keep the primary download anchor disabled, as we don't have a cached PDF
+            const downloadAnchor = document.getElementById('downloadPdfAnchor'); 
+
+            if (downloadAnchor) {
+                downloadAnchor.classList.add('disabled');
+                downloadAnchor.setAttribute('aria-disabled', 'true');
+            }
+
+            // Re-enable the asset download and delete buttons
+            if (downloadButton) downloadButton.classList.remove('disabled');
+            if (deleteButton) deleteButton.classList.remove('disabled');
+            
+            // Create a NEW controller for the next time the page is loaded
+            // (The existing cancelPdfLoading already does this, but it's safer to ensure here too)
+            pdfLoadController = new AbortController();
+            
+        }, 30000); // 30,000 milliseconds = 30 seconds
+
         try {
             // PASS THE SIGNAL TO THE FETCH CALL
             const resp = await fetch(pdfUrl, { credentials: 'include', signal }); 
+            
+            // ** NEW: Clear the timeout since the fetch succeeded **
+            clearTimeout(timeoutId);
+
             if (!resp.ok) {
                 const txt = await resp.text().catch(() => null);
                 throw new Error(txt || `HTTP ${resp.status}`);
@@ -275,8 +314,10 @@ async function initPdfViewer() {
             renderAllPages();
 
             // Enable the buttons
+            const downloadAnchor = document.getElementById('downloadPdfAnchor');
             const downloadButton = document.getElementById("downloadBtn");
             const deleteButton = document.getElementById("deleteBtn");
+            
             if (downloadAnchor) {
                 downloadAnchor.classList.remove('disabled');
                 downloadAnchor.setAttribute('aria-disabled', 'false');
@@ -286,10 +327,18 @@ async function initPdfViewer() {
 
 
         } catch (err) {
+            // ** NEW: Clear the timeout on error, in case it wasn't a timeout error **
+            clearTimeout(timeoutId); 
+            
             // Check specifically for the AbortError
             if (err.name === 'AbortError') {
-                 console.log('PDF load cancelled successfully by user.');
-                 // Do not show an error to the user, just stop processing.
+                 console.log('PDF load cancelled successfully by user or timeout.');
+                 // Check if the loadingText has the timeout message already (set by the timeout function)
+                 if (loadingText && loadingText.textContent.includes("Timeout")) {
+                     // The timeout function handled the UI, just return
+                     return; 
+                 }
+                 // If the abort was from the user (cancelPdfLoading), just return silently.
                  return; 
             }
             
