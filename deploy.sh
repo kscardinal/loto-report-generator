@@ -77,6 +77,7 @@ echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 
 # Capture output quietly
 DC_DOWN_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml down 2>&1)
+echo "$DC_DOWN_OUTPUT"
 
 # Initialize counters
 STOPPED_COUNT=0
@@ -163,6 +164,7 @@ echo -e "${COLOR}--- $STEP_COUNT. Starting new application services in detached 
 
 # Capture output quietly
 DC_UP_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans 2>&1)
+echo "$DC_UP_OUTPUT"
 
 # Initialize counters
 CREATED_COUNT=0
