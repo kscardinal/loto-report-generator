@@ -6,11 +6,13 @@ on:
       - 'README.md'
       - 'LICENSE'
       - '.gitignore'
+      - '*.sh'
   pull_request:
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - '.gitignore'
+      - '*.sh'
 
 jobs:
   test:
