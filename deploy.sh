@@ -101,13 +101,13 @@ for NAME in $CONTAINER_NAMES; do
     STATUS=""
     
     # Check if the container was stopped
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Stopped"; then
         STATUS+="stopped"
         STOPPED_COUNT=$((STOPPED_COUNT + 1))
     fi
     
     # Check if the container was removed
-    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
+    if echo "$DC_DOWN_OUTPUT" | grep -q "Container $NAME  Removed"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -191,13 +191,13 @@ for NAME in $CONTAINER_NAMES; do
     STATUS=""
     
     # Check if the container was created
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Created"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Created"; then
         STATUS+="created"
         CREATED_COUNT=$((CREATED_COUNT + 1))
     fi
     
     # Check if the container was started
-    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Started"; then
+    if echo "$DC_UP_OUTPUT" | grep -q "Container $NAME  Started"; then
         if [ -n "$STATUS" ]; then
             STATUS+=" and "
         fi
@@ -313,7 +313,7 @@ START_TIME_9=$(date +%s.%N)
 START_TIME_9_F=$(date +%H:%M:%S)
 CRON_FILE="cron.host" # Assumes cron.host is in the main folder
 
-echo -e "${COLOR}--- $STEP_COUNT. Installing ${CRON_FILE} (Overwrite Mode)${NC}"
+echo -e "${COLOR}--- $STEP_COUNT. Installing ${CRON_FILE}... (Overwrite Mode)${NC}"
 
 # Check if the local cron file exists
 if [ ! -f "$CRON_FILE" ]; then
