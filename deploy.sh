@@ -85,7 +85,7 @@ REMOVED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '^Container ' | awk '{print $2}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '^Container ' | sed -E 's/^Container ([^[:space:]]+).*$/\1/' | sort -u)
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
@@ -172,7 +172,7 @@ STARTED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '^Container ' | awk '{print $2}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '^Container ' | sed -E 's/^Container ([^[:space:]]+).*$/\1/' | sort -u)
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
@@ -307,7 +307,7 @@ START_TIME_9=$(date +%s.%N)
 START_TIME_9_F=$(date +%H:%M:%S)
 CRON_FILE="cron.host" # Assumes cron.host is in the main folder
 
-echo -e "${COLOR}--- $STEP_COUNT. Installing ${CRON_FILE} as current user crontab... (Overwrite Mode)${NC}"
+echo -e "${COLOR}--- $STEP_COUNT. Installing ${CRON_FILE} (Overwrite Mode)${NC}"
 
 # Check if the local cron file exists
 if [ ! -f "$CRON_FILE" ]; then
