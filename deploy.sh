@@ -85,7 +85,7 @@ REMOVED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '^Container ' | sed -E 's/^Container ([^[:space:]]+).*$/\1/' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep 'Container.*Removed' | awk '{print $2}' | sort -u)
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
@@ -172,7 +172,7 @@ STARTED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '^Container ' | sed -E 's/^Container ([^[:space:]]+).*$/\1/' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep 'Container.*Started' | awk '{print $3}' | sort -u)
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
