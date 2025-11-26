@@ -77,7 +77,7 @@ echo -e "${COLOR}--- $STEP_COUNT. Bringing down existing services...${NC}"
 
 # Capture output quietly
 DC_DOWN_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml down 2>&1)
-echo "$DC_DOWN_OUTPUT"
+# echo "$DC_DOWN_OUTPUT"
 
 # Initialize counters
 STOPPED_COUNT=0
@@ -86,9 +86,9 @@ TOTAL_COUNT=0
 
 # Extract unique container names that were processed
 CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
-echo -e "${TIME_COLOR}DEBUG: Step 2 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
-echo -e "${TIME_COLOR}DEBUG: DC_DOWN_OUTPUT sample:${NC}"
-echo "$DC_DOWN_OUTPUT" | head -n 40 | sed -e 's/^/    /'
+# echo -e "${TIME_COLOR}DEBUG: Step 2 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
+# echo -e "${TIME_COLOR}DEBUG: DC_DOWN_OUTPUT sample:${NC}"
+# echo "$DC_DOWN_OUTPUT" | head -n 40 | sed -e 's/^/    /'
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
@@ -167,7 +167,7 @@ echo -e "${COLOR}--- $STEP_COUNT. Starting new application services in detached 
 
 # Capture output quietly
 DC_UP_OUTPUT=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans 2>&1)
-echo "$DC_UP_OUTPUT"
+# echo "$DC_UP_OUTPUT"
 
 # Initialize counters
 CREATED_COUNT=0
@@ -176,9 +176,9 @@ TOTAL_COUNT=0
 
 # Extract unique container names that were processed
 CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
-echo -e "${TIME_COLOR}DEBUG: Step 4 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
-echo -e "${TIME_COLOR}DEBUG: DC_UP_OUTPUT sample:${NC}"
-echo "$DC_UP_OUTPUT" | head -n 40 | sed -e 's/^/    /'
+# echo -e "${TIME_COLOR}DEBUG: Step 4 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
+# echo -e "${TIME_COLOR}DEBUG: DC_UP_OUTPUT sample:${NC}"
+# echo "$DC_UP_OUTPUT" | head -n 40 | sed -e 's/^/    /'
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
