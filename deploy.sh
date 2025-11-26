@@ -85,7 +85,7 @@ REMOVED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '^Container ' | awk '{print $3}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_DOWN_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
 echo -e "${TIME_COLOR}DEBUG: Step 2 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
 echo -e "${TIME_COLOR}DEBUG: DC_DOWN_OUTPUT sample:${NC}"
 echo "$DC_DOWN_OUTPUT" | head -n 40 | sed -e 's/^/    /'
@@ -175,7 +175,7 @@ STARTED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '^Container ' | awk '{print $3}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
 echo -e "${TIME_COLOR}DEBUG: Step 4 CONTAINER_NAMES=\"${CONTAINER_NAMES}\"${NC}"
 echo -e "${TIME_COLOR}DEBUG: DC_UP_OUTPUT sample:${NC}"
 echo "$DC_UP_OUTPUT" | head -n 40 | sed -e 's/^/    /'

@@ -170,7 +170,7 @@ STARTED_COUNT=0
 TOTAL_COUNT=0
 
 # Extract unique container names that were processed
-CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E 'Container .* Created|Container .* Starting|Container .* Started' | awk '{print $2}' | sort -u)
+CONTAINER_NAMES=$(echo "$DC_UP_OUTPUT" | grep -E '(Container)' | awk '{print $2}' | sort -u)
 
 ### Loop through containers to determine status
 for NAME in $CONTAINER_NAMES; do
