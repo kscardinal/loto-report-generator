@@ -1049,6 +1049,95 @@ def login_email(user, geo):
     # Send email using your auto function
     send_email_auto(to_email, subject, html_content)
 
+def lockout_email(user, lockout_time):
+    """
+    Sends an email when a user account is locked due to too many failed attempts.
+    """
+    to_email = user.get("email")
+    if not to_email:
+        return
+    
+    # Check if the lock is a "hard lock" (24 hours or more)
+    is_hard_lock = (lockout_time - datetime.now(timezone.utc)).total_seconds() >= (23 * 3600) # Check for 23 hours to be safe
+    
+    subject = "LOTO Generator - Your Account Has Been Locked"
+
+    # Convert lockout_time (which is UTC aware) to Eastern Time for the user
+    eastern = pytz.timezone("US/Eastern")
+    local_unlock_time = lockout_time.astimezone(eastern)
+    formatted_unlock_time = local_unlock_time.strftime("%B %d, %Y at %I:%M %p %Z")
+    
+    # Adjust message for hard lock
+    if is_hard_lock:
+        lock_detail_paragraph = """
+        <p>This is a <strong>hard lock</strong> due to repeated failed login attempts. To unlock your account, you must <strong>reset your password</strong> immediately.</p>
+        """
+    else:
+        lock_detail_paragraph = f"""
+        <p>You may attempt to log in again after:</p>
+        <p style="font-size: 1.2em; font-weight: bold; color: #C32026;">
+            {formatted_unlock_time}
+        </p>
+        <p>If you made these attempts, you can wait for the lockout to expire or immediately reset your password.</p>
+        """
+
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: transparent;
+                margin-right: 5%;
+                margin-left: 5%;
+                padding: 0;
+            }}
+            h2 {{
+                color: #C32026;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+            }}
+            th, td {{
+                text-align: left;
+                padding: 8px;
+                border-bottom: 1px solid #dddddd;
+            }}
+            th {{
+                background-color: #f0f0f0;
+            }}
+            .footer {{
+                margin-top: 20px;
+                font-size: 12px;
+                color: #777777;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Account Locked</h2>
+        <p>Dear {user.get('first_name', 'User')},</p>
+        <p>Your account, <strong>{user.get('username', '')}</strong>, has been temporarily locked because there were too many unsuccessful login attempts.</p>
+        
+        <h3>Lockout Details</h3>
+        {lock_detail_paragraph}
+        
+        <p>If you did not attempt to log in, this indicates someone else may be trying to access your account. <strong>We strongly recommend you change your password immediately.</strong></p>
+        
+        <p>
+          <a href="https://lotogenerator.app/forgot_password" 
+             style="background-color:#C32026; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:5px; display:inline-block;">
+            Reset Password Now
+          </a>
+        </p>
+        <p class="footer">This is an automated security message from LOTO Report Generator. Do not reply.</p>
+    </body>
+    </html>
+    """
+
+    send_email_auto(to_email, subject, html_content)
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
@@ -1065,15 +1154,25 @@ async def login_page(
     )
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
+# --- Configuration Constants (Repeat for context) ---
+LOCKOUT_STAGES = {
+    5: 5,        # Stage 1: 5 attempts -> 5 minutes lock
+    10: 15,      # Stage 2: 10 attempts -> 15 minutes lock
+    15: 60,      # Stage 3: 15 attempts -> 60 minutes (1 hour) lock
+    20: 525600   # Hard Lock: 20 attempts -> 1 year lockout (Requires Admin/Support)
+}
+HARD_LOCK_ATTEMPTS = 20 # The final threshold for the hardest lock
+
 @app.post("/login")
 async def login_endpoint(
-    request: Request, 
+    request: Request,
     data: dict,
     background_tasks: BackgroundTasks = None
 ):
     username_or_email = data.get("username_or_email")
     password = data.get("password")
     username_or_email_lower = username_or_email.lower()
+    current_time = datetime.now(timezone.utc)
 
     user = users.find_one({
         "$or": [
@@ -1083,6 +1182,7 @@ async def login_endpoint(
     })
 
     if not user:
+        # Prevent user enumeration: Return 401
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
@@ -1092,38 +1192,157 @@ async def login_endpoint(
             details={"status": f"fail: no user matching {username_or_email_lower}"},
             background_tasks=background_tasks
         )
-        return JSONResponse({"message": "User not found"}, status_code=404)
+        return JSONResponse({"message": "Wrong password"}, status_code=401)
+    
+    # 🔒 STEP 1: Check Lockout Status BEFORE verifying the password
+    lockout_time = user.get("lockout_until")
+    current_attempts = user.get("login_attempts", 0)
 
-    try:
-        ph.verify(user["password"], password)
-    except Exception:
+    # Ensure lockout_time is timezone-aware for comparison (handles legacy naive dates)
+    if lockout_time and lockout_time.tzinfo is None:
+        lockout_time = lockout_time.replace(tzinfo=timezone.utc)
+    
+    if lockout_time and lockout_time > current_time:
+        
+        if current_attempts >= HARD_LOCK_ATTEMPTS:
+            message = "Account is locked due to excessive failed attempts. Please contact support or reset password."
+        else:
+            remaining_time = lockout_time - current_time
+            total_seconds = max(0, remaining_time.total_seconds())
+            minutes = int(total_seconds // 60)
+            seconds = int(total_seconds % 60)
+            
+            message = f"Account locked due to too many failed attempts. Try again in {minutes}m {seconds}s."
+        
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
             known_locations_collection=known_locations,
-            username=username_or_email_lower,
+            username=user["username"],
             action="login",
-            details={"status": "fail: invlaid password"},
+            details={"status": "fail: locked out"},
             background_tasks=background_tasks
         )
-        return JSONResponse({"message": "Wrong password"}, status_code=401)
+        # Return 429 Too Many Requests
+        return JSONResponse({"message": message}, status_code=429)
 
-    if user.get("is_active") != 1:
+    # 🔒 STEP 2: Verify Password and Handle Success/Failure
+    try:
+        ph.verify(user["password"], password)
+        
+        # --- SUCCESSFUL LOGIN ---
+        
+        # Reset login attempts and lockout status
+        users.update_one(
+            {"_id": user["_id"]}, 
+            {"$set": {"last_accessed": current_time, "login_attempts": 0, "lockout_until": None}}
+        )
+        
+    except Exception:
+        # --- FAILED LOGIN (Wrong password) ---
+        
+        # Increment the failed attempts counter atomically
+        users.update_one(
+            {"_id": user["_id"]},
+            {"$inc": {"login_attempts": 1}}
+        )
+        
+        # Re-fetch user data to get the new attempts count
+        updated_user = users.find_one({"_id": user["_id"]})
+        new_attempts = updated_user.get("login_attempts", 1) 
+        
         log_action(
             request=request,
             audit_logs_collection=audit_logs,
             known_locations_collection=known_locations,
-            username=username_or_email_lower,
+            username=user["username"],
+            action="login",
+            details={"status": f"fail: invalid password, attempt {new_attempts}"},
+            background_tasks=background_tasks
+        )
+
+        # 🔒 C. Check if the new count triggers a lockout stage
+        
+        # ⭐ FIX: Only set lockout_duration_minutes if the new attempt count IS an exact stage threshold
+        lockout_duration_minutes = LOCKOUT_STAGES.get(new_attempts, 0)
+
+        # The old iterative logic is now safely removed/replaced:
+        # lockout_duration_minutes = 0
+        # for attempts, duration in sorted(LOCKOUT_STAGES.items()):
+        #     if new_attempts >= attempts:
+        #         lockout_duration_minutes = duration
+        #     else:
+        #         break 
+
+        if lockout_duration_minutes > 0:
+            
+            lockout_time_db = updated_user.get("lockout_until")
+            
+            # This check resolves the TypeError and ensures timezone awareness
+            if lockout_time_db and lockout_time_db.tzinfo is None:
+                lockout_time_db = lockout_time_db.replace(tzinfo=timezone.utc)
+            
+            # The lock is applied ONLY if the current lock is expired (or missing)
+            if lockout_time_db is None or lockout_time_db < current_time:
+                
+                # Lock the account for the calculated duration
+                lockout_time = current_time + timedelta(minutes=lockout_duration_minutes)
+                users.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": {"lockout_until": lockout_time}}
+                )
+
+                # 📧 Send Lockout Email Notification (Only send if we are actively setting a new lock)
+                if background_tasks is not None:
+                    background_tasks.add_task(lockout_email, user, lockout_time)
+                else:
+                    try:
+                        lockout_email(user, lockout_time)
+                    except Exception:
+                        logger.exception("Failed to send account lockout email")
+                
+                # Log the lockout event
+                log_action(
+                    request=request,
+                    audit_logs_collection=audit_logs,
+                    known_locations_collection=known_locations,
+                    username=user["username"],
+                    action="login",
+                    details={"status": f"fail: lockout triggered (stage {lockout_duration_minutes}m)"},
+                    background_tasks=background_tasks
+                )
+            
+                # Return 401 with a specific message for the client (same message hides the stage info)
+                return JSONResponse({"message": "Wrong password. Maximum login attempts reached."}, status_code=401)
+            
+            # If the account is locked but the lock time hasn't expired, 
+            # the request would have been caught in STEP 1. 
+            # If the lock expired but the new attempt is NOT a stage threshold (e.g., attempt 6), 
+            # we skip this entire block and return the standard error below.
+
+        # Standard wrong password response (attempts logged, but no lockout threshold hit yet)
+        return JSONResponse({"message": "Wrong password"}, status_code=401)
+
+
+    # 🔒 STEP 3: Handle Account Not Active (only runs on correct password)
+    if user.get("is_active") != 1:
+        # Increment attempts counter
+        users.update_one(
+            {"_id": user["_id"]},
+            {"$inc": {"login_attempts": 1}}
+        )
+        
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
+            username=user["username"],
             action="login",
             details={"status": "fail: account not active"},
             background_tasks=background_tasks
         )
         return JSONResponse({"message": "Account is not active"}, status_code=403)
 
-    users.update_one({"_id": user["_id"]}, {"$set": {"last_accessed": datetime.utcnow()}})
-
-    # Detect new login IPs: if current client IP is not in the user's registered list,
-    # persist it and notify the user via email about a new device using their account.
     try:
         client_ip = get_client_ip(request)
         registered_ips = user.get("registered_ips") or []
@@ -2224,17 +2443,25 @@ async def reset_password(data: dict, background_tasks: BackgroundTasks):
     hashed_password = ph.hash(new_password)
     target_email_normalized = target_email.lower()
 
-    # Update password, latest_reset, and increment password_resets
+    # Get a current UTC-aware time for the update
+    current_time_utc = datetime.now(timezone.utc)
+    
+    # Update password, latest_reset, increment password_resets, AND CLEAR LOCKOUT STATUS
     result = users.update_one(
         {"email": target_email_normalized},
         {
-            "$set": {"password": hashed_password, "latest_reset": datetime.utcnow()},
+            "$set": {
+                "password": hashed_password, 
+                "latest_reset": current_time_utc,
+                "lockout_until": None,
+                "login_attempts": 0
+            },
             "$inc": {"password_resets": 1}
         }
     )
 
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
 
     # Fetch user document to include in email
     user = users.find_one({"email": target_email_normalized})

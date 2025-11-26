@@ -5,7 +5,7 @@ const emailCheck = document.getElementById("emailCheck");
 const passwordCheck = document.getElementById("passwordCheck");
 const activationCheck = document.getElementById("activationCheck");
 
-let current_login_attempts = 0;
+// REMOVED: let current_login_attempts = 0; // The counter is now strictly server-side
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -21,46 +21,34 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             credentials: "include"
         });
 
+        const data = await response.json(); // Fetch the JSON data once
+
         if (response.status === 200) {
             // Success
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
-            const response_2 = await fetch("/update-login-attempts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ 
-                    username: usernameInput.value.toLowerCase(), 
-                    login_attempts: current_login_attempts 
-                })
-            });
-            const data = await response.json();
+            
             const returnUrl = data.return_url || "/pdf_list";
             window.location.href = returnUrl;
-        } else if (response.status === 404) {
-            // User not found
-            passwordCheck.style.display = "none";
-            emailCheck.textContent = "❌ User does not exist";
-            emailCheck.style.display = "block";
-            usernameInput.focus();
-            usernameInput.select();
+        
+        } else if (response.status === 429) {
+            // 🔒 Account Locked Out - Display the exact server message with remaining time
+            emailCheck.style.display = "none";
+            passwordCheck.style.display = "block";
+            
+            // This line uses the 'data.message' which contains the time frame
+            passwordCheck.textContent = `❌ ${data.message}`; 
+            
+            passwordInput.blur();
+        
         } else if (response.status === 401) {
-            // Wrong password
+            // Wrong password (The server will handle the generic message)
             emailCheck.style.display = "none";
             passwordCheck.textContent = "❌ Wrong password";
             passwordCheck.style.display = "block";
             passwordInput.focus();
             passwordInput.select();
-            current_login_attempts += 1;
-            const response_2 = await fetch("/update-login-attempts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ 
-                    username: usernameInput.value.toLowerCase(), 
-                    login_attempts: current_login_attempts 
-                })
-            });
+        
         } else if (response.status === 403) {
             // Account not activated
             emailCheck.style.display = "none";
@@ -68,19 +56,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             activationCheck.textContent = "❌ Your account has not been activated yet";
             activationCheck.style.display = "block";
             passwordInput.blur();
-            current_login_attempts += 1;
-            const response_2 = await fetch("/update-login-attempts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ 
-                    username: usernameInput.value.toLowerCase(), 
-                    login_attempts: current_login_attempts 
-                })
-            });
+        
         } else {
+            // Handle other unexpected errors
             emailCheck.style.display = "none";
             passwordCheck.style.display = "none";
+            activationCheck.style.display = "none";
         }
     } catch (err) {
         console.error("Login request failed:", err);

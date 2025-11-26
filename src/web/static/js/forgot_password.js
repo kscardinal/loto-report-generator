@@ -322,8 +322,24 @@ sendButton.addEventListener("click", async function() {
                 return;
             }
 
+            // Get the container element for the resend UI
+            const resendContainer = document.getElementById("resendContainer");
+            
+            // 1. Clear the countdown interval
+            if (resendIntervalId) {
+                clearInterval(resendIntervalId);
+                resendIntervalId = null;
+            }
+
+            // 2. Hide the entire container holding the link/countdown
+            if (resendContainer) {
+                resendContainer.style.display = "none";
+            }
+
+            resendLink.style.display = "none";
+            resendCountdown.style.display = 'none';
             sendButton.disabled = true;
-            sendButton.textContent = "Update Password"
+            sendButton.textContent = "Update Password";
             code.style.display = "none";
             codeMessage.style.display = "none";
             password.style.display = "block";
