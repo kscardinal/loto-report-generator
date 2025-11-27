@@ -682,31 +682,141 @@ async def cleanup_orphan_photos(
         return error
 
     deleted_photos = {}
-    total_bytes = 0
+    deleted_cached_pdfs = {}
+    total_photo_bytes = 0
+    total_pdf_bytes = 0
     errors = []
-    for grid_out in fs.find():
-        photo_id = grid_out._id
-        photo_name = grid_out.filename
-        usage_count = uploads.count_documents({"photos.photo_id": photo_id})
-        if usage_count == 0:
-            try:
-                fs.delete(photo_id)
-                deleted_photos[str(photo_id)] = photo_name
-                total_bytes += grid_out.length  # Get file size in bytes
-            except Exception as e:
-                # Record an error for reporting
-                errors.append({"photo_id": str(photo_id), "filename": photo_name, "error": str(e)})
 
+    # --- Build sets of referenced IDs ---
+    # Photos referenced by reports
+    referenced_photo_ids = set()
+    for doc in uploads.find({}, {"photos.photo_id": 1}):
+        for p in doc.get("photos", []):
+            pid = p.get("photo_id")
+            if pid is not None:
+                referenced_photo_ids.add(pid)
+
+    # Cached PDFs: gather all cache docs and referenced ids
+    pdf_cache_docs = list(cached_pdfs.find({}))
+    referenced_pdf_ids = set()
+    for cache_doc in pdf_cache_docs:
+        fid = cache_doc.get("gridfs_id")
+        if fid is not None:
+            referenced_pdf_ids.add(fid)
+
+    # Existing report names (to know if a cached PDF's report still exists)
+    existing_reports = set(uploads.distinct("report_name"))
+
+    # --- Handle cached PDFs first: remove only when report no longer exists ---
+    for cache_doc in pdf_cache_docs:
+        report_name = cache_doc.get("report_name")
+        file_id = cache_doc.get("gridfs_id")
+
+        if not file_id:
+            errors.append({
+                "photo_id": None,
+                "filename": None,
+                "error": "cached_pdfs entry missing gridfs_id",
+            })
+            continue
+
+        # If the related report still exists, keep this cached PDF
+        if report_name in existing_reports:
+            continue
+
+        # Report no longer exists -> delete cached PDF and its cache document
+        try:
+            try:
+                grid_out = fs.get(ObjectId(file_id))
+                filename = grid_out.filename
+                length = getattr(grid_out, "length", 0) or 0
+                fs.delete(ObjectId(file_id))
+                deleted_cached_pdfs[str(file_id)] = {
+                    "filename": filename,
+                    "report_name": report_name,
+                }
+                total_pdf_bytes += int(length)
+            except Exception as e:
+                # Couldn't delete the GridFS file, log as error but still attempt to delete cache doc
+                errors.append({
+                    "photo_id": str(file_id),
+                    "filename": None,
+                    "error": f"Failed to delete cached PDF from GridFS: {e}",
+                })
+
+            # Remove the cache document itself
+            try:
+                cached_pdfs.delete_one({"_id": cache_doc["_id"]})
+            except Exception as e:
+                errors.append({
+                    "photo_id": str(file_id),
+                    "filename": None,
+                    "error": f"Failed to delete cached_pdfs document: {e}",
+                })
+        except Exception as e:
+            errors.append({
+                "photo_id": str(file_id),
+                "filename": None,
+                "error": f"Unexpected error while cleaning cached PDF: {e}",
+            })
+
+    # --- Now clean truly orphaned files from GridFS ---
+    for grid_out in fs.find():
+        file_id = grid_out._id
+
+        # Skip if this file is referenced as a photo
+        if file_id in referenced_photo_ids:
+            continue
+
+        # Skip if this file is currently referenced by cached_pdfs (active cached PDF)
+        if file_id in referenced_pdf_ids:
+            continue
+
+        filename = grid_out.filename
+        length = getattr(grid_out, "length", 0) or 0
+
+        # Treat PDFs separately as cached/stray PDFs
+        if isinstance(filename, str) and filename.lower().endswith(".pdf"):
+            try:
+                fs.delete(file_id)
+                deleted_cached_pdfs[str(file_id)] = {
+                    "filename": filename,
+                    "report_name": None,
+                }
+                total_pdf_bytes += int(length)
+            except Exception as e:
+                errors.append({
+                    "photo_id": str(file_id),
+                    "filename": filename,
+                    "error": str(e),
+                })
+            continue
+
+        # Regular photo: delete if no references
+        try:
+            fs.delete(file_id)
+            deleted_photos[str(file_id)] = filename
+            total_photo_bytes += int(length)
+        except Exception as e:
+            errors.append({
+                "photo_id": str(file_id),
+                "filename": filename,
+                "error": str(e),
+            })
+
+    # --- Build details for audit log ---
     details = {}
-    if not deleted_photos:
-        details["status"] = "No orphaned photos to remove"
+    num_photos = len(deleted_photos)
+    num_pdfs = len(deleted_cached_pdfs)
+    total_bytes = total_photo_bytes + total_pdf_bytes
+
+    if num_photos == 0 and num_pdfs == 0:
+        details["status"] = "No orphaned photos or cached PDFs to remove"
     else:
-        count = len(deleted_photos)
         size = sizeof_fmt(total_bytes)
-        photo_word = "photo" if count == 1 else "photos"
-        details["status"] = f"{count} {photo_word} removed ({size} total)"
-        for pid, name in deleted_photos.items():
-            details[pid] = name
+        details["status"] = f"{num_photos} photos and {num_pdfs} cached PDFs removed ({size} total)"
+        details["photos_removed"] = deleted_photos
+        details["cached_pdfs_removed"] = deleted_cached_pdfs
 
     log_action(
         request=request,
@@ -717,22 +827,33 @@ async def cleanup_orphan_photos(
         details=details,
         background_tasks=background_tasks
     )
-    # Send summary email to DEFAULT_EMAIL
+
+    # --- Send summary email to DEFAULT_EMAIL ---
     try:
         to_email = os.getenv("DEFAULT_EMAIL", "")
-        subject = "LOTO Generator - Orphaned Photos Cleanup Report"
+        subject = "LOTO Generator - Orphaned Photos & Cached PDFs Cleanup Report"
         utc_time = datetime.utcnow()
         eastern = pytz.timezone("US/Eastern")
         local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(eastern)
         formatted_time = local_time.strftime("%B %d, %Y %I:%M %p %Z")
 
-        # Build rows for removed files
-        removed_rows = ""
+        # Build rows for removed photos
+        photo_rows = ""
         if deleted_photos:
             for pid, name in deleted_photos.items():
-                removed_rows += f"<tr><td>{pid}</td><td>{name}</td></tr>"
+                photo_rows += f"<tr><td>{pid}</td><td>{name}</td></tr>"
         else:
-            removed_rows = "<tr><td colspan=2>No orphaned photos removed</td></tr>"
+            photo_rows = "<tr><td colspan=2>No orphaned photos removed</td></tr>"
+
+        # Build rows for removed cached PDFs
+        pdf_rows = ""
+        if deleted_cached_pdfs:
+            for pid, info in deleted_cached_pdfs.items():
+                fname = info.get("filename")
+                rname = info.get("report_name")
+                pdf_rows += f"<tr><td>{pid}</td><td>{fname}</td><td>{rname}</td></tr>"
+        else:
+            pdf_rows = "<tr><td colspan=3>No cached PDFs removed</td></tr>"
 
         # Build rows for errors if any
         error_rows = ""
@@ -757,19 +878,25 @@ async def cleanup_orphan_photos(
             </style>
         </head>
         <body>
-            <h2>Orphaned Photos Cleanup Report</h2>
+            <h2>Orphaned Photos &amp; Cached PDFs Cleanup Report</h2>
             <p>Cleanup run time: <strong>{formatted_time}</strong></p>
-            <p>Summary: <strong>{len(deleted_photos)} files removed</strong> — total size {size_str}.</p>
+            <p>Summary: <strong>{num_photos} photos</strong> and <strong>{num_pdfs} cached PDFs</strong> removed — total size {size_str}.</p>
 
-            <h3>Removed Files</h3>
+            <h3>Removed Photos</h3>
             <table>
                 <tr><th>Photo ID</th><th>Filename</th></tr>
-                {removed_rows}
+                {photo_rows}
+            </table>
+
+            <h3>Removed Cached PDFs</h3>
+            <table>
+                <tr><th>PDF ID</th><th>Filename</th><th>Report Name</th></tr>
+                {pdf_rows}
             </table>
 
             <h3>Errors</h3>
             <table>
-                <tr><th>Photo ID</th><th>Filename</th><th>Error</th></tr>
+                <tr><th>ID</th><th>Filename</th><th>Error</th></tr>
                 {error_rows}
             </table>
 
@@ -787,8 +914,12 @@ async def cleanup_orphan_photos(
         logger.exception("Failed while preparing or sending cleanup email report")
 
     return {
-        "message": f"Cleanup complete. {len(deleted_photos)} orphaned photos deleted.",
-        "deleted": deleted_photos,
+        "message": (
+            f"Cleanup complete. {len(deleted_photos)} orphaned photos and "
+            f"{len(deleted_cached_pdfs)} cached PDFs deleted."
+        ),
+        "deleted_photos": deleted_photos,
+        "deleted_cached_pdfs": deleted_cached_pdfs,
         "errors": errors
     }
 
