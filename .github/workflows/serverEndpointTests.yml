@@ -3,16 +3,18 @@ name: Server Endpoint Tests
 on:
   push:
     paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
       - '.gitignore'
       - '*.sh'
+      - '*.md'
+      - '*.css'
+      - '*.yaml'
   pull_request:
     paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
       - '.gitignore'
       - '*.sh'
+      - '*.md'
+      - '*.css'
+      - '*.yaml'
 
 jobs:
   test:
