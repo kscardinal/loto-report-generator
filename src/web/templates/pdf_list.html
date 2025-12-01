@@ -25,7 +25,9 @@
     {% endif %}
 
     <div class="right-div">
-        <a href="{{ url_for('create_report') }}" class="add-btn" title="Create New Report">+ Create Report</a>
+        <a id="createReportBtn" href="{{ url_for('create_report') }}" class="add-btn" title="Create New Report">+ Create Report</a>
+        <a id="selectModeBtn" class="add-btn">Select</a>
+        <a id="generateSelectedBtn" class="add-btn" style="display:none;">Generate</a>
         <a href="#" class="add-btn" id="logout-btn">Logout</a>
     </div>
 </header>

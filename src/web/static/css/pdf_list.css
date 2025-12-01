@@ -246,3 +246,18 @@ button {
 button:hover {
 	filter: brightness(0.90);
 }
+
+/* -----------------------------
+   Multi-select checkboxes
+----------------------------- */
+.select-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    accent-color: var(--brand);
+    cursor: pointer;
+}
+
+.report-card.select-mode {
+    cursor: default;
+}
