@@ -2510,6 +2510,7 @@ async def verify_backup_code(
     """
     Verify a user's backup code.
     No authentication required.
+    Sets a 24-hour reset_timeout on successful verification.
     """
     email = data.get("email")
     code = data.get("code")
@@ -2527,19 +2528,31 @@ async def verify_backup_code(
 
     backup_code = user.get("backup_code")
     if not backup_code:
+        # Note: This case is unlikely if /send_backup_code was successful, but kept for robustness.
         raise HTTPException(status_code=400, detail="No backup code stored for this user")
 
     # Compare codes
     if backup_code != code:
         raise HTTPException(status_code=400, detail="Invalid backup code")
 
-    # Generate a new backup code
+    # --- NEW TIMEOUT LOGIC ---
+    # Set a timeout for 24 hours from now (1 day)
+    timeout_duration = timedelta(hours=24)
+    timeout_until = datetime.now(timezone.utc) + timeout_duration
+    # --- END NEW TIMEOUT LOGIC ---
+
+    # Generate a new backup code (for next time the user needs it)
     new_backup_code = generate_backup_code()
 
-    # Update the user document with the new code
+    # Update the user document:
+    # 1. Update with the new backup code.
+    # 2. Set the reset_timeout field.
     users.update_one(
         {"email": email},
-        {"$set": {"backup_code": new_backup_code}}
+        {"$set": {
+            "backup_code": new_backup_code,
+            "reset_timeout": timeout_until # New field for 24h cooldown
+        }}
     )
 
     # Log action
@@ -2549,14 +2562,44 @@ async def verify_backup_code(
         known_locations_collection=known_locations,
         username=email,
         action="verify_backup_code",
-        details={"status": "successful validation", "new_code_generated": True},
+        details={"status": "successful validation", "new_code_generated": True, "reset_timeout_set_until": timeout_until.isoformat()},
         background_tasks=background_tasks
     )
 
     return {
-        "message": "Backup code verified successfully. A new backup code has been generated.",
+        "message": "Backup code verified successfully. A new password reset cooldown is now active.",
         "new_backup_code": new_backup_code  # optionally return for testing
     }
+
+# -----------------------------
+# Check password reset timeout endpoint
+# -----------------------------
+@app.post("/check_reset_timeout")
+async def check_reset_timeout(data: dict):
+    target_email = data.get("email")
+
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Missing email")
+
+    target_email_normalized = target_email.strip().lower()
+
+    user = users.find_one({"email": target_email_normalized}, {"reset_timeout": 1}) # Only fetch the timeout field
+
+    if not user:
+        # For security, you might want to return a generic response,
+        # but for internal checks we'll use 404
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    timeout_until = user.get("reset_timeout")
+    current_time_utc = datetime.now(timezone.utc)
+    
+    is_timeout_active = timeout_until and timeout_until > current_time_utc
+    
+    # Return the timeout status and the time if active
+    return JSONResponse({
+        "is_timeout_active": is_timeout_active, 
+        "timeout_until": timeout_until.isoformat() if is_timeout_active else None
+    }, status_code=200)
 
 # -----------------------------
 # Update verification attempts endpoint

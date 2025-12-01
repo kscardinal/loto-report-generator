@@ -200,14 +200,70 @@ sendButton.addEventListener("click", async function() {
     const emailValue = email.value.trim();
     const codeValue = code.value.trim();
     
+    // 1. Basic Email Validation
     if (!emailValue) {
         alert("Please enter an email.");
         return;
     }
 
+    // --- START: NEW RESET TIMEOUT CHECK ---
+    try {
+        const timeoutCheckRes = await fetch("/check_reset_timeout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailValue })
+        });
+
+        // Check if the request itself failed (not a 404 or expected error)
+        if (!timeoutCheckRes.ok) {
+            const errorData = await timeoutCheckRes.json();
+            
+            // Handle expected API errors that should prevent sending
+            if (errorData.detail) {
+                 // Example: Rate limit active from server-side checks
+                 emailCheckMessage.textContent = "❌ " + errorData.detail;
+                 emailCheckMessage.style.display = "block";
+                 email.classList.add("error");
+                 return;
+            }
+            // For security, if the user isn't found (404), we might silently proceed 
+            // to the /send_backup_code endpoint, which will also fail securely.
+            // If it's a critical server error, the flow continues (fail open) unless we explicitly return.
+        }
+        
+        const timeoutData = await timeoutCheckRes.json();
+        if (timeoutData.is_timeout_active) {
+            const timeoutDate = new Date(timeoutData.timeout_until);
+            const now = new Date();
+            const diffMs = timeoutDate.getTime() - now.getTime();
+            
+            // Convert milliseconds to human-readable format
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Format time until:
+            let timeMessage = `You must wait **${hours}h ${minutes}m**`;
+            
+            emailCheckMessage.innerHTML = `⚠️ Password reset is currently locked. ${timeMessage} until you can attempt again.`;
+            emailCheckMessage.style.display = "block";
+            email.classList.add("error");
+            
+            // Disable the send button during the timeout period
+            sendButton.disabled = true; 
+            sendButton.textContent = "Reset Locked";
+            return;
+        }
+
+    } catch (err) {
+        console.error("Error checking reset timeout:", err);
+        // Fail open: continue to original flow if timeout check fails (server is down)
+    }
+    // --- END: NEW RESET TIMEOUT CHECK ---
+
     if (!codeSent) {
         // First press → send backup code
         try {
+            // IMPORTANT: The timeout check passed, so proceed with sending the code
             const res = await fetch("/send_backup_code", {
                 method: "POST",
                 headers: {
@@ -242,6 +298,7 @@ sendButton.addEventListener("click", async function() {
                 return;
             }
 
+            // Success: update UI for code entry
             email.disabled = true;
             emailCheckMessage.textContent = "";
             emailCheckMessage.style.display = "none";
