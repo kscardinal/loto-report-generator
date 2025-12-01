@@ -466,19 +466,19 @@ http://localhost:8000/docs
 | `/update-verification-attempts`        | POST      | ⚙️ Auth API       | Updates the verification-attempt counter for a given email address.                 |
 | `/reset_password`                      | POST      | 🔒 Auth API       | Resets a user’s password and sends a confirmation email.                            |
 | `/jwt_test`                            | GET       | ⚙️ Auth API       | Verifies the current JWT and returns a success JSON response.                       |
-| `/users`                               | GET       | 🖥️ Admin Page    | Displays the HTML user management page (owner only).                                |
+| `/users`                               | GET       | 🖥️ Admin Page     | Displays the HTML user management page (owner only).                                |
 | `/users_json`                          | GET       | ⚙️ Admin API      | Returns JSON data for all users (owner only).                                       |
 | `/change_status`                       | POST      | ⚙️ Admin API      | Activates or deactivates a user account (owner only).                               |
 | `/update_role`                         | POST      | ⚙️ Admin API      | Updates a user’s role (owner only).                                                 |
 | `/delete_user`                         | POST      | ⚙️ Admin API      | Deletes a user account and sends a notification email (owner only).                 |
 | `/update-login-attempts`               | POST      | ⚙️ Admin API      | Updates the stored login-attempt counter for a specified user (JWT-protected).      |
-| `/audit_logs`                          | GET       | 🖥️ Admin Page    | Displays the audit log viewer page (owner only).                                    |
+| `/audit_logs`                          | GET       | 🖥️ Admin Page     | Displays the audit log viewer page (owner only).                                    |
 | `/audit_logs_json`                     | GET       | ⚙️ Admin API      | Returns recent audit logs as JSON (owner only).                                     |
-| `/create_report`                       | GET       | 🖥️ Reports Page  | Displays the HTML form for creating a new report.                                   |
+| `/create_report`                       | GET       | 🖥️ Reports Page   | Displays the HTML form for creating a new report.                                   |
 | `/upload/`                             | POST      | ⚙️ Reports API    | Uploads JSON report data and photos to create or update a report in MongoDB/GridFS. |
-| `/pdf_list`                            | GET       | 🖥️ Reports Page  | Displays the HTML page listing all available reports.                               |
+| `/pdf_list`                            | GET       | 🖥️ Reports Page   | Displays the HTML page listing all available reports.                               |
 | `/pdf_list_json`                       | GET       | ⚙️ Reports API    | Returns a paginated JSON list of reports and their metadata.                        |
-| `/view_report/{report_name}`           | GET       | 🖥️ Reports Page  | Displays detailed metadata and photos for a single report as an HTML page.          |
+| `/view_report/{report_name}`           | GET       | 🖥️ Reports Page   | Displays detailed metadata and photos for a single report as an HTML page.          |
 | `/metadata/{report_name}`              | GET       | ⚙️ Reports API    | Returns stored metadata for a specific report (without JSON payload or photos).     |
 | `/download_report_files/{report_name}` | GET       | ⚙️ Reports API    | Returns JSON containing download URLs for a report’s JSON and photos.               |
 | `/download_json/{report_name}`         | GET       | ⚙️ Reports API    | Downloads the raw JSON data for the specified report.                               |
