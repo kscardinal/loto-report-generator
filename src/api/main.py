@@ -506,8 +506,10 @@ async def download_pdf_bulk(
                         )
 
                         zipf.writestr(f"{report_name}.pdf", pdf_bytes)
+                        print(f"DEBUG: Cache hit for {report_name}")
                         continue
                     except Exception:
+                        print(f"DEBUG: Cache retrieval failed for {report_name}: {e}. Regenerating.")
                         pass  # Cache broken → regenerate
 
                 # -----------------------------------------
