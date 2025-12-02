@@ -218,6 +218,9 @@ generateSelectedBtn.addEventListener("click", async () => {
         return;
     }
 
+    const overlay = document.getElementById("pdfGeneratingOverlay");
+    overlay.classList.remove("hidden-overlay");
+
     const list = Array.from(selectedReports);
 
     try {
@@ -263,6 +266,10 @@ generateSelectedBtn.addEventListener("click", async () => {
     } catch (e) {
         console.error(e);
         alert("Error during generation.");
+    }  finally {
+        overlay.classList.add("hidden-overlay");
+        logoutBtn.style.display = "";
+        createReportBtn.style.display = "";
     }
 });
 
