@@ -311,3 +311,34 @@ Full-screen overlay for PDF generation
     justify-content: center;
     align-items: center;
 }
+
+/* Selected reports count popup */
+.selected-count-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #C32026;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.75);
+    font-size: 0.95rem;
+    font-weight: 600;
+    z-index: 3000;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Show popup */
+.selected-count-popup.show-popup {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Hidden state */
+.hidden-popup {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    pointer-events: none;
+}

@@ -30,6 +30,8 @@ const selectModeBtn = document.getElementById("selectModeBtn");
 const generateSelectedBtn = document.getElementById("generateSelectedBtn");
 const createReportBtn = document.getElementById("createReportBtn");
 
+const selectedCountPopup = document.getElementById("selectedCountPopup");
+
 // ------------------------------
 // Load settings from localStorage
 // ------------------------------
@@ -86,6 +88,20 @@ function formatFriendlyETDate(isoStr) {
     if (diffDays < 7) return `${etDate.toLocaleDateString("en-US", { weekday: "long" })}, ${timeStr}`;
     if (diffDays < 30) return `${etDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${timeStr}`;
     return `${etDate.getMonth()+1}/${etDate.getDate()}/${etDate.getFullYear().toString().slice(-2)}, ${timeStr}`;
+}
+
+function updateSelectedCountPopup() {
+    const count = selectedReports.size;
+    if (count > 0) {
+        selectedCountPopup.textContent = `${count} report${count === 1 ? "" : "s"} selected`;
+        selectedCountPopup.classList.add("show-popup");
+        selectedCountPopup.classList.remove("hidden-popup");
+        paginationInfo.style.paddingBottom = "50px";
+    } else {
+        selectedCountPopup.classList.remove("show-popup");
+        selectedCountPopup.classList.add("hidden-popup");
+        paginationInfo.style.paddingBottom = "0";
+    }
 }
 
 // ------------------------------
@@ -156,6 +172,7 @@ function renderReportsPage(json) {
                 const name = ev.target.dataset.report;
                 if (ev.target.checked) selectedReports.add(name);
                 else selectedReports.delete(name);
+                updateSelectedCountPopup();
             });
             card.onclick = ev => { if (!ev.target.classList.contains("select-checkbox")) ev.stopPropagation(); };
         }
@@ -207,6 +224,7 @@ selectModeBtn.addEventListener("click", () => {
     logoutBtn.style.display = selectMode ? "none" : "";
     createReportBtn.style.display = selectMode ? "none" : "";
     loadAndRender(currentPage, perPage);
+    updateSelectedCountPopup();
 });
 
 // ------------------------------
@@ -259,6 +277,7 @@ generateSelectedBtn.addEventListener("click", async () => {
         // --------------------------------------------------
         selectMode = false;
         selectedReports.clear();
+        updateSelectedCountPopup();
         selectModeBtn.textContent = "Select";
         generateSelectedBtn.style.display = "none";
         await loadAndRender(currentPage, perPage);
