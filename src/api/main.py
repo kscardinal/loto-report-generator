@@ -418,7 +418,148 @@ def download_pdf(
             background_tasks=background_tasks
         )
         return JSONResponse(status_code=500, content={"error": "Unexpected error.", "details": traceback.format_exc()})
+    
+# ---------------------------------------------------------
+# Generate a single PDF and return the bytes
+# ---------------------------------------------------------
+def generate_pdf_bytes(report_name: str):
+    doc = uploads.find_one({"report_name": report_name})
+    if not doc:
+        raise Exception(f"Report '{report_name}' not found")
 
+    TEMP_DIR.mkdir(exist_ok=True)
+
+    # Write JSON file
+    json_file_path = TEMP_DIR / f"{report_name}.json"
+    with open(json_file_path, "w", encoding="utf-8") as f:
+        json.dump(doc["json_data"], f, ensure_ascii=False, indent=2)
+
+    # Write photos
+    for photo in doc["photos"]:
+        p = TEMP_DIR / photo["photo_name"]
+        with open(p, "wb") as f:
+            f.write(fs.get(photo["photo_id"]).read())
+
+    # Run PDF generator
+    pdf_file_path = TEMP_DIR / f"{report_name}.pdf"
+    subprocess.run(
+        ["python", str(PROCESS_DIR / "generate_pdf.py"), str(json_file_path)],
+        check=True
+    )
+
+    # Read PDF bytes
+    pdf_bytes = pdf_file_path.read_bytes()
+
+    # Clean up TEMP_DIR
+    for item in TEMP_DIR.iterdir():
+        if item.is_file():
+            item.unlink()
+        else:
+            shutil.rmtree(item)
+
+    # Update last_generated timestamp
+    uploads.update_one(
+        {"_id": doc["_id"]},
+        {"$set": {"last_generated": datetime.now()}}
+    )
+
+    return pdf_bytes
+
+
+# ---------------------------------------------------------
+# Bulk PDF Download (returns ZIP)
+# ---------------------------------------------------------
+@app.post("/download_pdf_bulk", name="download_pdf_bulk")
+async def download_pdf_bulk(
+    request: Request,
+    payload: dict,
+    username: str = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
+):
+    import io
+    from zipfile import ZipFile
+
+    report_names = payload.get("reports", [])
+    if not isinstance(report_names, list) or not report_names:
+        return JSONResponse(status_code=400, content={"error": "Missing or invalid 'reports' list"})
+
+    zip_buffer = io.BytesIO()
+    errors = []
+
+    # Create ZIP in memory
+    with ZipFile(zip_buffer, "w") as zipf:
+
+        for report_name in report_names:
+            try:
+                # -----------------------------------------
+                # 1. Try Cache First
+                # -----------------------------------------
+                cached_doc = cached_pdfs.find_one({"report_name": report_name})
+                if cached_doc:
+                    try:
+                        pdf_bytes = fs.get(cached_doc["gridfs_id"]).read()
+
+                        # Refresh cache timestamp
+                        cached_pdfs.update_one(
+                            {"_id": cached_doc["_id"]},
+                            {"$set": {"last_accessed": datetime.now(timezone.utc)}}
+                        )
+
+                        zipf.writestr(f"{report_name}.pdf", pdf_bytes)
+                        print(f"DEBUG: Cache hit for {report_name}")
+                        continue
+                    except Exception:
+                        print(f"DEBUG: Cache retrieval failed for {report_name}: {e}. Regenerating.")
+                        pass  # Cache broken → regenerate
+
+                # -----------------------------------------
+                # 2. Cache miss → Regenerate (CPU-safe: sequential)
+                # -----------------------------------------
+                pdf_bytes = generate_pdf_bytes(report_name)
+
+                zipf.writestr(f"{report_name}.pdf", pdf_bytes)
+
+                # Save new PDF to cache
+                gridfs_id = fs.put(
+                    pdf_bytes, filename=f"{report_name}.pdf", content_type="application/pdf"
+                )
+
+                cached_pdfs.insert_one({
+                    "report_name": report_name,
+                    "gridfs_id": gridfs_id,
+                    "created_at": datetime.now(timezone.utc),
+                    "last_accessed": datetime.now(timezone.utc),
+                })
+
+            except Exception as e:
+                errors.append(f"{report_name}: {str(e)}")
+
+        # Add error log into ZIP
+        if errors:
+            zipf.writestr("errors.txt", "\n".join(errors))
+
+    # Audit log
+    log_action(
+        request=request,
+        audit_logs_collection=audit_logs,
+        known_locations_collection=known_locations,
+        username=username["username"],
+        action="download_pdf_bulk",
+        details={"reports": report_names},
+        background_tasks=background_tasks
+    )
+
+    # Create a timestamped filename
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+    zip_filename = f"bulk_reports_{timestamp}.zip"
+
+    # Return zipped buffer
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={zip_filename}"}
+    )
 
 # -----------------------------
 # CACHE MAINTENANCE FUNCTION (MUST BE DEFINED)

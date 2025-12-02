@@ -246,3 +246,99 @@ button {
 button:hover {
 	filter: brightness(0.90);
 }
+
+/* -----------------------------
+   Multi-select checkboxes
+----------------------------- */
+.select-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    accent-color: var(--brand);
+    cursor: pointer;
+}
+
+.report-card.select-mode {
+    cursor: default;
+}
+
+/* -----------------------------
+Full-screen overlay for PDF generation
+----------------------------- */
+.map-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    transition: opacity 0.25s ease;
+}
+
+/* Hidden state */
+.hidden-overlay {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* === White Popup Card (same as map) === */
+.map-loading-content {
+    width: 90%;
+    max-width: 350px;
+    background: white;
+    padding: 28px 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    animation: popIn 0.25s ease;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to   { transform: scale(1.0); opacity: 1; }
+}
+
+.map-loading-content p {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
+}
+
+/* Spinner (same red circle used on map loader) */
+.map-loading-content .spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Selected reports count popup */
+.selected-count-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #C32026;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.75);
+    font-size: 0.95rem;
+    font-weight: 600;
+    z-index: 3000;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Show popup */
+.selected-count-popup.show-popup {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Hidden state */
+.hidden-popup {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    pointer-events: none;
+}

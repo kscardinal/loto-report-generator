@@ -117,12 +117,12 @@ function formatFriendlyETDate(isoStr) {
     };
 
     const dtYear = getDateComponent(dt, 'year');
-    const dtMonth = getDateComponent(dt, 'month');
-    const dtDay = getDateComponent(dt, 'day');
+    const dtMonth = String(getDateComponent(dt, 'month')).padStart(2, '0');
+    const dtDay = String(getDateComponent(dt, 'day')).padStart(2, '0');
 
     const nowYear = getDateComponent(now, 'year');
-    const nowMonth = getDateComponent(now, 'month');
-    const nowDay = getDateComponent(now, 'day');
+    const nowMonth = String(getDateComponent(now, 'month')).padStart(2, '0');
+    const nowDay = String(getDateComponent(now, 'day')).padStart(2, '0');
 
     // Create Date objects representing the start of the day in ET (00:00:00)
     const dtDayStart = new Date(`${dtYear}-${dtMonth}-${dtDay}T00:00:00`); 

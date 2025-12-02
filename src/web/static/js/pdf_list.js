@@ -4,12 +4,14 @@ let pendingAction = null; // stored callback for modal confirm
 // ------------------------------
 // Global variables
 // ------------------------------
-let totalPages = 1;  // global total pages
+let totalPages = 1;  
 let currentPage = 1;
 let perPage = 25;
-let reports = []; // array of all reports
+let reports = []; 
 
-// DOM elements
+let selectMode = false;
+let selectedReports = new Set();
+
 const reportListEl = document.getElementById("reportList");
 const perPageSelect = document.getElementById("perPageSelect");
 const prevBtn = document.getElementById("prevBtn");
@@ -23,6 +25,12 @@ const confirmText = document.getElementById("confirmText");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
 const logoutBtn = document.getElementById("logout-btn");
+
+const selectModeBtn = document.getElementById("selectModeBtn");
+const generateSelectedBtn = document.getElementById("generateSelectedBtn");
+const createReportBtn = document.getElementById("createReportBtn");
+
+const selectedCountPopup = document.getElementById("selectedCountPopup");
 
 // ------------------------------
 // Load settings from localStorage
@@ -55,7 +63,7 @@ function updateURL() {
 }
 
 // ------------------------------
-// Format date in ET timezone
+// Format date helpers
 // ------------------------------
 function formatETDate(isoStr) {
     if (!isoStr) return "N/A";
@@ -63,39 +71,41 @@ function formatETDate(isoStr) {
     return dt.toLocaleString("en-US", { timeZone: "America/New_York" });
 }
 
-// ------------------------------
-// Format date friendly
-// ------------------------------
 function formatFriendlyETDate(isoStr) {
     if (!isoStr) return "N/A";
-
     const dt = new Date(isoStr);
     const now = new Date();
-
-    // Convert to ET offset (New York)
     const options = { timeZone: "America/New_York" };
     const etDate = new Date(dt.toLocaleString("en-US", options));
     const etNow = new Date(now.toLocaleString("en-US", options));
-
-    // Differences
     const dtDayStart = new Date(etDate.getFullYear(), etDate.getMonth(), etDate.getDate());
     const nowDayStart = new Date(etNow.getFullYear(), etNow.getMonth(), etNow.getDate());
     const diffDays = Math.floor((nowDayStart - dtDayStart) / (1000*60*60*24));
-
-    // Time part
     const timeStr = etDate.toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" });
 
     if (diffDays === 0) return `Today, ${timeStr}`;
     if (diffDays === 1) return `Yesterday, ${timeStr}`;
     if (diffDays < 7) return `${etDate.toLocaleDateString("en-US", { weekday: "long" })}, ${timeStr}`;
     if (diffDays < 30) return `${etDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${timeStr}`;
-    
-    // For 30+ days ago, show full numeric date
     return `${etDate.getMonth()+1}/${etDate.getDate()}/${etDate.getFullYear().toString().slice(-2)}, ${timeStr}`;
 }
 
+function updateSelectedCountPopup() {
+    const count = selectedReports.size;
+    if (count > 0) {
+        selectedCountPopup.textContent = `${count} report${count === 1 ? "" : "s"} selected`;
+        selectedCountPopup.classList.add("show-popup");
+        selectedCountPopup.classList.remove("hidden-popup");
+        paginationInfo.style.paddingBottom = "50px";
+    } else {
+        selectedCountPopup.classList.remove("show-popup");
+        selectedCountPopup.classList.add("hidden-popup");
+        paginationInfo.style.paddingBottom = "0";
+    }
+}
+
 // ------------------------------
-// Render a page of reports
+// Render reports page
 // ------------------------------
 function renderReportsPage(json) {
     if (!json || !Array.isArray(json.reports)) {
@@ -109,18 +119,17 @@ function renderReportsPage(json) {
         return;
     }
 
-    // Sync globals with server
     reports = json.reports;
     totalPages = json.total_pages || 1;
     currentPage = Math.min(Math.max(json.page || 1, 1), totalPages);
     perPage = json.per_page || perPage;
 
     const total = json.total || reports.length;
-
     const start = (currentPage - 1) * perPage + 1;
     const end = Math.min(start + reports.length - 1, total);
 
     reportListEl.innerHTML = "";
+
     reports.forEach(r => {
         const card = document.createElement("div");
         card.className = "report-card";
@@ -129,7 +138,17 @@ function renderReportsPage(json) {
         const tags = Array.isArray(r.tags) ? r.tags.join(", ") : (r.tags || "None");
         const dateUploaded = formatFriendlyETDate(r.last_modified);
 
+        let checkboxHTML = "";
+        if (selectMode) {
+            checkboxHTML = `
+                <input type="checkbox" class="select-checkbox"
+                       data-report="${escapeHtml(r.report_name)}"
+                       ${selectedReports.has(r.report_name) ? "checked" : ""}>
+            `;
+        }
+
         card.innerHTML = `
+            ${checkboxHTML}
             <div class="report-info" role="button" tabindex="0" aria-label="Open ${escapeHtml(r.report_name)}">
                 <div class="report-name">${escapeHtml(r.report_name)}</div>
                 <div class="report-meta">${escapeHtml(dateUploaded)} | Uploaded by: ${escapeHtml(uploadedBy)}</div>
@@ -145,7 +164,21 @@ function renderReportsPage(json) {
             </div>
         `;
 
+        if (selectMode) {
+            card.classList.add("select-mode");
+            const checkbox = card.querySelector(".select-checkbox");
+            checkbox.addEventListener("click", ev => {
+                ev.stopPropagation();
+                const name = ev.target.dataset.report;
+                if (ev.target.checked) selectedReports.add(name);
+                else selectedReports.delete(name);
+                updateSelectedCountPopup();
+            });
+            card.onclick = ev => { if (!ev.target.classList.contains("select-checkbox")) ev.stopPropagation(); };
+        }
+
         card.addEventListener("click", ev => {
+            if (selectMode) return;
             if (ev.target.closest(".download-btn") || ev.target.closest(".delete-btn")) return;
             window.location.href = `/view_report/${encodeURIComponent(r.report_name)}`;
         });
@@ -168,7 +201,6 @@ function renderReportsPage(json) {
         };
     });
 
-    // Update pagination UI
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
     paginationInfo.textContent = `${start}-${end} / ${total}`;
     prevBtn.disabled = currentPage <= 1;
@@ -179,9 +211,87 @@ function renderReportsPage(json) {
 
     updateURL();
     saveSettings();
-
-    if (document.activeElement) document.activeElement.blur();
 }
+
+// ------------------------------
+// Select mode button
+// ------------------------------
+selectModeBtn.addEventListener("click", () => {
+    selectMode = !selectMode;
+    selectedReports.clear();
+    selectModeBtn.textContent = selectMode ? "Cancel" : "Select";
+    generateSelectedBtn.style.display = selectMode ? "" : "none";
+    logoutBtn.style.display = selectMode ? "none" : "";
+    createReportBtn.style.display = selectMode ? "none" : "";
+    loadAndRender(currentPage, perPage);
+    updateSelectedCountPopup();
+});
+
+// ------------------------------
+// Generate selected button
+// ------------------------------
+generateSelectedBtn.addEventListener("click", async () => {
+    if (selectedReports.size === 0) {
+        alert("No reports selected.");
+        return;
+    }
+
+    const overlay = document.getElementById("pdfGeneratingOverlay");
+    overlay.classList.remove("hidden-overlay");
+
+    const list = Array.from(selectedReports);
+
+    try {
+        const resp = await fetch("/download_pdf_bulk", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reports: list })
+        });
+
+        if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            alert("Generation failed: " + (data.detail || resp.status));
+            return;
+        }
+
+        // --------------------------------------------------
+        // ✔ Convert the ZIP stream into a blob
+        // --------------------------------------------------
+        const blob = await resp.blob();
+
+        // --------------------------------------------------
+        // ✔ Create a download link for the ZIP
+        // --------------------------------------------------
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "bulk_reports.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        // --------------------------------------------------
+        // UI cleanup after successful download
+        // --------------------------------------------------
+        selectMode = false;
+        selectedReports.clear();
+        updateSelectedCountPopup();
+        selectModeBtn.textContent = "Select";
+        generateSelectedBtn.style.display = "none";
+        await loadAndRender(currentPage, perPage);
+
+    } catch (e) {
+        console.error(e);
+        alert("Error during generation.");
+    }  finally {
+        overlay.classList.add("hidden-overlay");
+        logoutBtn.style.display = "";
+        createReportBtn.style.display = "";
+    }
+});
+
 
 // ------------------------------
 // Confirm modal
