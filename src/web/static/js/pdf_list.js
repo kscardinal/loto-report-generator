@@ -217,6 +217,7 @@ generateSelectedBtn.addEventListener("click", async () => {
         alert("No reports selected.");
         return;
     }
+
     const list = Array.from(selectedReports);
 
     try {
@@ -233,17 +234,38 @@ generateSelectedBtn.addEventListener("click", async () => {
             return;
         }
 
-        alert("Generation started for " + list.length + " report(s).");
+        // --------------------------------------------------
+        // ✔ Convert the ZIP stream into a blob
+        // --------------------------------------------------
+        const blob = await resp.blob();
+
+        // --------------------------------------------------
+        // ✔ Create a download link for the ZIP
+        // --------------------------------------------------
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "bulk_reports.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        // --------------------------------------------------
+        // UI cleanup after successful download
+        // --------------------------------------------------
         selectMode = false;
         selectedReports.clear();
         selectModeBtn.textContent = "Select";
         generateSelectedBtn.style.display = "none";
-        loadAndRender(currentPage, perPage);
+        await loadAndRender(currentPage, perPage);
+
     } catch (e) {
         console.error(e);
         alert("Error during generation.");
     }
 });
+
 
 // ------------------------------
 // Confirm modal

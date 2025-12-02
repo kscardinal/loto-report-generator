@@ -547,12 +547,16 @@ async def download_pdf_bulk(
         background_tasks=background_tasks
     )
 
+    # Create a timestamped filename
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+    zip_filename = f"bulk_reports_{timestamp}.zip"
+
     # Return zipped buffer
     zip_buffer.seek(0)
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=bulk_reports.zip"}
+        headers={"Content-Disposition": f"attachment; filename={zip_filename}"}
     )
 
 # -----------------------------
