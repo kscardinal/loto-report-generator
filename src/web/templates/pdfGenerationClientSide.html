@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live jsPDF Previewer</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF Library for client-side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Ensure the input and preview container fills the screen */
+        .h-screen-minus-header {
+            height: calc(100vh - 4rem);
+        }
+        /* Style the iframe to be non-obtrusive */
+        iframe {
+            border: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <header class="bg-indigo-700 p-4 text-white shadow-lg flex justify-between items-center">
+        <h1 class="text-xl font-bold">Client-Side PDF Live Preview</h1>
+        <button id="downloadButton" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 rounded-lg text-sm font-medium transition duration-150">
+            Download PDF
+        </button>
+    </header>
+
+    <!-- Main 50/50 Layout Container -->
+    <main class="flex h-screen-minus-header">
+        
+        <!-- Left Panel: Input Area -->
+        <div class="w-full md:w-1/2 p-6 overflow-y-auto bg-white shadow-xl">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-800">1. Edit Document Content</h2>
+            
+            <label for="reportTitle" class="block text-lg font-medium text-gray-700 mb-2">Report Title</label>
+            <input type="text" id="reportTitle" value="Quarterly Financial Report"
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 mb-6">
+
+            <label for="reportContent" class="block text-lg font-medium text-gray-700 mb-2">Main Content (Separate lines with ENTER)</label>
+            <textarea id="reportContent" rows="15"
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">This is the first paragraph of the live-generated report. You can type anything here, and the PDF preview on the right will update immediately.
+
+The key to a live view is using the jsPDF library's 'bloburl' output, which creates a temporary URL for the PDF data directly in the browser's memory. This URL is then loaded into an iframe.
+
+Since this process happens purely on the client side, there is no network lag or server processing required, resulting in a true real-time preview.
+
+You can customize the PDF generation logic in the updateLivePreview function to add things like tables, images (if provided as Base64 strings), or complex formatting based on the input text.
+</textarea>
+        </div>
+
+        <!-- Right Panel: Live PDF Preview -->
+        <div class="hidden md:block w-1/2 p-2 bg-gray-200 border-l border-gray-300">
+            <h2 class="text-2xl font-semibold mb-2 text-indigo-800 p-4">2. Live PDF Preview</h2>
+            <div class="h-[calc(100%-4rem)] bg-white rounded-lg shadow-inner overflow-hidden">
+                <!-- Iframe is where the PDF will be rendered by the browser's built-in viewer -->
+                <iframe id="pdf-preview-iframe" class="w-full h-full bg-white"></iframe>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        const { jsPDF } = window.jspdf;
+        
+        // DOM Elements
+        const reportTitleEl = document.getElementById('reportTitle');
+        const reportContentEl = document.getElementById('reportContent');
+        const previewIframeEl = document.getElementById('pdf-preview-iframe');
+        const downloadButtonEl = document.getElementById('downloadButton');
+
+        // Debounce function to limit how often we regenerate the PDF (improves performance while typing)
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        /**
+         * Generates the PDF document based on current input and updates the preview iframe.
+         */
+        function updateLivePreview() {
+            const doc = new jsPDF();
+            const title = reportTitleEl.value;
+            const content = reportContentEl.value;
+
+            // --- PDF Generation Logic ---
+            
+            // Set font and style for the title
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.setTextColor(55, 48, 163); // Indigo-700 equivalent
+            doc.text(title, 20, 20);
+
+            // Set font and style for the body
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+
+            // Split content by newlines to fit within the document bounds
+            const splitContent = content.split('\n');
+            const margin = 20;
+            const maxWidth = 170; // Max width in mm for text wrapping
+            let cursorY = 30;
+            const lineHeight = 7;
+            const pageHeight = doc.internal.pageSize.height;
+
+            splitContent.forEach(line => {
+                // If line is empty (double newline), add an extra line space
+                if (line.trim() === '') {
+                    cursorY += lineHeight / 2;
+                    return;
+                }
+
+                // Split text into lines that fit the page width
+                const textLines = doc.splitTextToSize(line, maxWidth);
+                
+                textLines.forEach(textLine => {
+                    // Check if we need a new page
+                    if (cursorY + lineHeight > pageHeight - margin) {
+                        doc.addPage();
+                        cursorY = margin; // Reset cursor to top margin
+                    }
+                    doc.text(textLine, margin, cursorY);
+                    cursorY += lineHeight;
+                });
+                
+                // Add a small gap after each line/paragraph block
+                cursorY += lineHeight / 2;
+            });
+            
+            // --- Preview Update ---
+            
+            // 1. Output the PDF as a Blob URL
+            const pdfBlobUrl = doc.output('bloburl');
+            
+            // 2. Set the iframe source to the Blob URL for instant preview
+            previewIframeEl.src = pdfBlobUrl;
+
+            // 3. Update the download link to use the same Blob data
+            downloadButtonEl.onclick = () => {
+                doc.save(title.replace(/\s/g, '_') + '.pdf');
+            };
+        }
+
+        // Initialize the preview on load
+        window.onload = () => {
+             updateLivePreview(); 
+             // Log Level for Firestore: Not applicable here as we are not using Firestore, 
+             // but if we were, we would import 'setLogLevel' and call it here.
+        };
+
+        // Attach the debounced update function to input events
+        const debouncedUpdate = debounce(updateLivePreview, 300); // Wait 300ms after last keystroke
+        reportTitleEl.addEventListener('input', debouncedUpdate);
+        reportContentEl.addEventListener('input', debouncedUpdate);
+
+    </script>
+</body>
+</html>

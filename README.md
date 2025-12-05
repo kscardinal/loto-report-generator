@@ -395,7 +395,7 @@ npx tsc src/web/scripts/input_form_3.ts --outDir src/web/scripts
 
 1. Start agent
 ``` bash
-eval "$(ssh-agent -s -t 8)"
+eval "$(ssh-agent -s -t 8h)"
 ```
 
 2. Add key to agent

@@ -14,12 +14,21 @@ function cancelPdfLoading() {
 }
 
 let pendingAction = null; // Stored callback for modal confirm
+let pendingRenameAction = null; // Stored callback for rename confirmation
 
 // DOM elements for Modal
 const confirmModal = document.getElementById("confirmModal");
 const confirmText = document.getElementById("confirmText");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
+
+// DOM elements for Rename Modal
+const renameModal = document.getElementById("renameModal");
+const renameInput = document.getElementById("renameInput");
+const renameOldName = document.getElementById("renameOldName");
+const renameError = document.getElementById("renameError");
+const renameYes = document.getElementById("renameYes");
+const renameNo = document.getElementById("renameNo");
 
 // ------------------------------
 // Confirm modal
@@ -34,6 +43,7 @@ if (confirmNo) {
     confirmNo.addEventListener("click", () => {
         pendingAction = null;
         confirmModal.style.display = "none";
+        document.body.focus();
     });
 }
 
@@ -43,6 +53,93 @@ if (confirmYes) {
         pendingAction = null;
         confirmModal.style.display = "none";
         // After successful deletion, the deleteReport function will handle redirect
+    });
+}
+
+// ------------------------------
+// Rename modal handlers
+// ------------------------------
+if (renameNo) {
+    renameNo.addEventListener("click", () => {
+        pendingRenameAction = null;
+        renameModal.style.display = "none";
+        renameInput.value = "";
+        renameError.textContent = "";
+        renameError.style.display = "none";
+    });
+}
+
+if (renameYes) {
+    renameYes.addEventListener("click", async () => {
+        const newName = renameInput.value.trim();
+        if (!pendingRenameAction) {
+            renameError.textContent = "No report selected for renaming.";
+            renameError.style.display = "block";
+            return;
+        }
+        const oldName = pendingRenameAction;
+        
+        // Validation
+        if (!newName) {
+            renameError.textContent = "Report name cannot be empty.";
+            renameError.style.display = "block";
+            renameInput.focus();
+            return;
+        }
+        
+        if (newName === oldName) {
+            renameError.textContent = "New name must be different from the current name.";
+            renameError.style.display = "block";
+            renameInput.focus();
+            return;
+        }
+
+        const success = await renameReport(oldName, newName);
+        if (success) {
+            pendingRenameAction = null; // only clear if rename succeeded
+        }
+    });
+}
+
+if (renameInput) {
+    renameInput.addEventListener("keydown", async e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const newName = renameInput.value.trim();
+            if (!pendingRenameAction) {
+                renameError.textContent = "No report selected for renaming.";
+                renameError.style.display = "block";
+                return;
+            }
+            const oldName = pendingRenameAction;
+            
+            // Validation
+            if (!newName) {
+                renameError.textContent = "Report name cannot be empty.";
+                renameError.style.display = "block";
+                renameInput.focus();
+                return;
+            }
+            
+            if (newName === oldName) {
+                renameError.textContent = "New name must be different from the current name.";
+                renameError.style.display = "block";
+                renameInput.focus();
+                return;
+            }
+            
+            const success = await renameReport(oldName, newName);
+            if (success) {
+                pendingRenameAction = null; // only clear if rename succeeded
+            }
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            pendingRenameAction = null;
+            renameModal.style.display = "none";
+            renameInput.value = "";
+            renameError.textContent = "";
+            renameError.style.display = "none";
+        }
     });
 }
 
@@ -65,6 +162,51 @@ async function deleteReport(reportName, redirectUrl) {
         }
     } catch (err) {
         alert("Delete failed. See server logs for details.");
+    }
+}
+
+// ------------------------------
+// Open rename modal
+// ------------------------------
+function openRenameModal(reportName) {
+    renameOldName.textContent = `Current name: "${reportName}"`;
+    renameInput.value = reportName;
+    renameError.textContent = "";
+    renameError.style.display = "none";
+    renameModal.style.display = "flex";
+    renameInput.focus();
+    renameInput.select();
+    
+    pendingRenameAction = reportName;
+}
+
+// ------------------------------
+// Rename report
+// ------------------------------
+async function renameReport(oldName, newName) {
+    try {
+        const resp = await fetch("/rename_report", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ old_name: oldName, new_name: newName })
+        });
+        if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            renameError.textContent = data.detail || data.error || "Failed to rename report";
+            renameError.style.display = "block";
+            return false; // indicate failure
+        } else {
+            renameModal.style.display = "none";
+            // Reload to show updated name
+            window.location.href = `/view_report/${encodeURIComponent(newName)}`;
+            return true; // indicate success
+        }
+    } catch (err) {
+        console.error(err);
+        renameError.textContent = "Rename failed - see console";
+        renameError.style.display = "block";
+        return false; // indicate failure
     }
 }
 
@@ -267,6 +409,8 @@ async function initPdfViewer() {
             // Re-enable the asset download and delete buttons
             if (downloadButton) downloadButton.classList.remove('disabled');
             if (deleteButton) deleteButton.classList.remove('disabled');
+            const renameBtn = document.getElementById('renameBtn');
+            if (renameBtn) renameBtn.classList.remove('disabled');
             
             // Create a NEW controller for the next time the page is loaded
             // (The existing cancelPdfLoading already does this, but it's safer to ensure here too)
@@ -324,6 +468,8 @@ async function initPdfViewer() {
             }
             if (downloadButton) downloadButton.classList.remove('disabled');
             if (deleteButton) deleteButton.classList.remove('disabled');
+            const renameBtn = document.getElementById('renameBtn');
+            if (renameBtn) renameBtn.classList.remove('disabled');
 
 
         } catch (err) {
@@ -444,6 +590,8 @@ async function initPdfViewer() {
             spinnerContent.classList.remove("hidden-spinner");
 			document.getElementById('downloadPdfAnchor').classList.add('disabled');
 			document.getElementById('deleteBtn').classList.add('disabled');
+			const renameBtn = document.getElementById('renameBtn');
+			if (renameBtn) renameBtn.classList.add('disabled');
 
             try {
                 const res = await fetch(`/download_report_files/${reportNameLocal}`);
@@ -474,6 +622,8 @@ async function initPdfViewer() {
                 downloadButton.disabled = false;
 				document.getElementById('downloadPdfAnchor').classList.remove('disabled');
 				document.getElementById('deleteBtn').classList.remove('disabled');
+				const renameBtn = document.getElementById('renameBtn');
+				if (renameBtn) renameBtn.classList.remove('disabled');
             }
         });
     }
@@ -486,24 +636,42 @@ async function initPdfViewer() {
             confirmAction("delete", reportNameLocal, () => deleteReport(reportNameLocal, redirectUrl));
         });
     }
+
+    // Rename button
+    const renameButton = document.getElementById("renameBtn");
+    if (renameButton) {
+        renameButton.addEventListener("click", () => {
+            const reportNameLocal = renameButton.dataset.report;
+            openRenameModal(reportNameLocal);
+        });
+    }
 }
 
 // ------------------------------
 // Close modal with Escape key
 // ------------------------------
 document.addEventListener("keydown", (e) => {
-    // Check if the Escape key was pressed and the modal is currently visible
-    if (e.key === "Escape" && confirmModal.style.display === "flex") {
-        // Prevent default browser actions (like scrolling)
-        e.preventDefault(); 
-        
-        // This executes the same logic as hitting "Cancel"
-        pendingAction = null;
-        confirmModal.style.display = "none";
-        
-        // Optional: refocus on the delete button or the element that opened the modal
-        const deleteButton = document.getElementById("deleteBtn");
-        if (deleteButton) deleteButton.focus();
+    // Check if the Escape key was pressed and handle based on priority
+    if (e.key === "Escape") {
+        // Priority 1: Confirm modal
+        if (confirmModal.style.display === "flex") {
+            // Prevent default browser actions (like scrolling)
+            e.preventDefault(); 
+            
+            // This executes the same logic as hitting "Cancel"
+            pendingAction = null;
+            confirmModal.style.display = "none";
+            document.body.focus();
+        }
+        // Priority 2: Rename modal
+        else if (renameModal.style.display === "flex") {
+            e.preventDefault();
+            pendingRenameAction = null;
+            renameModal.style.display = "none";
+            renameInput.value = "";
+            renameError.textContent = "";
+            renameError.style.display = "none";
+        }
     }
 });
 

@@ -467,6 +467,94 @@ def generate_pdf_bytes(report_name: str):
 
 
 # ---------------------------------------------------------
+# Rename a report
+# ---------------------------------------------------------
+@app.post("/rename_report", name="rename_report")
+async def rename_report(
+    request: Request,
+    data: dict,
+    username: str = Depends(get_current_user_no_redirect),
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Rename a report and update all references.
+    
+    This endpoint:
+    1. Validates the old and new report names
+    2. Updates the main report document
+    3. Updates all photo references to the new report name
+    4. Updates all cached PDF entries
+    5. Logs the action to audit logs
+    
+    Request body:
+    {
+        "old_name": "report_name_1",
+        "new_name": "report_name_2"
+    }
+    """
+    # Extract data
+    old_name = data.get("old_name", "").strip()
+    new_name = data.get("new_name", "").strip()
+    
+    # Validation
+    if not old_name or not new_name:
+        raise HTTPException(status_code=400, detail="Both old_name and new_name are required")
+    
+    if old_name == new_name:
+        raise HTTPException(status_code=400, detail="New name must be different from old name")
+    
+    # Check if old report exists
+    old_doc = uploads.find_one({"report_name": old_name})
+    if not old_doc:
+        raise HTTPException(status_code=404, detail=f"Report '{old_name}' not found")
+    
+    # Check if new name already exists
+    existing_new = uploads.find_one({"report_name": new_name})
+    if existing_new:
+        raise HTTPException(status_code=409, detail=f"Report '{new_name}' already exists")
+    
+    try:
+        # --- 1. Update the main report document ---
+        uploads.update_one(
+            {"_id": old_doc["_id"]},
+            {"$set": {
+                "report_name": new_name,
+                "last_modified": datetime.now()
+            }}
+        )
+        
+        # --- 2. Update all cached PDFs with the old report name ---
+        cached_pdfs.update_many(
+            {"report_name": old_name},
+            {"$set": {
+                "report_name": new_name,
+                "last_accessed": datetime.now()
+            }}
+        )
+        
+        # --- 3. Log the action ---
+        log_action(
+            request=request,
+            audit_logs_collection=audit_logs,
+            known_locations_collection=known_locations,
+            username=username["username"],
+            action="rename_report",
+            details={"old_name": old_name, "new_name": new_name},
+            background_tasks=background_tasks
+        )
+        
+        return {
+            "message": f"Report '{old_name}' successfully renamed to '{new_name}'",
+            "old_name": old_name,
+            "new_name": new_name
+        }
+    
+    except Exception as e:
+        logger.error(f"Error renaming report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error renaming report: {str(e)}")
+
+
+# ---------------------------------------------------------
 # Bulk PDF Download (returns ZIP)
 # ---------------------------------------------------------
 @app.post("/download_pdf_bulk", name="download_pdf_bulk")
@@ -2957,3 +3045,4 @@ async def locations_summary(current_user: dict = Depends(get_current_user)):
         "states_centers": state_centers,
         "countries_centers": country_centers
     }
+

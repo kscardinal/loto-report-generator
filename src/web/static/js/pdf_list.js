@@ -32,6 +32,15 @@ const createReportBtn = document.getElementById("createReportBtn");
 
 const selectedCountPopup = document.getElementById("selectedCountPopup");
 
+const renameModal = document.getElementById("renameModal");
+const renameInput = document.getElementById("renameInput");
+const renameOldName = document.getElementById("renameOldName");
+const renameError = document.getElementById("renameError");
+const renameYes = document.getElementById("renameYes");
+const renameNo = document.getElementById("renameNo");
+
+let pendingRenameAction = null; // stored callback for rename confirmation
+
 // ------------------------------
 // Load settings from localStorage
 // ------------------------------
@@ -154,13 +163,31 @@ function renderReportsPage(json) {
                 <div class="report-meta">${escapeHtml(dateUploaded)} | Uploaded by: ${escapeHtml(uploadedBy)}</div>
                 <div class="report-meta-line">Tags: ${escapeHtml(tags)}</div>
             </div>
-            <div class="report-buttons">
-                <a class="download-btn" href="/download_pdf/${encodeURIComponent(r.report_name)}" title="Download PDF" rel="noopener">
-                    <img src="/static/includes/download.svg" class="download-btn-symbol" alt="Download">
-                </a>
-                <button class="delete-btn" data-report="${encodeURIComponent(r.report_name)}" title="Delete report">
-                    <img src="/static/includes/trash.svg" class="delete-btn-symbol" alt="Delete">
+            <div class="report-menu-container">
+                <button class="menu-btn" data-report="${encodeURIComponent(r.report_name)}" title="More actions">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="6" cy="12" r="2.5"/>
+                        <circle cx="12" cy="12" r="2.5"/>
+                        <circle cx="18" cy="12" r="2.5"/>
+                    </svg>
                 </button>
+                <div class="menu-dropdown" style="display:none;">
+                    <a href="#" class="menu-item select-item" title="Enter select mode">
+                        Select
+                    </a>
+                    <a href="/download_pdf/${encodeURIComponent(r.report_name)}" class="menu-item download-item" title="Download PDF" rel="noopener">
+                        Download PDF
+                    </a>
+                    <a href="/download_report_files/${encodeURIComponent(r.report_name)}" class="menu-item download-assets-item" title="Download Assets" rel="noopener">
+                        Download Assets
+                    </a>
+                    <a href="#" class="menu-item rename-item" data-report="${encodeURIComponent(r.report_name)}" title="Rename report">
+                        Rename
+                    </a>
+                    <a href="#" class="menu-item delete-item" data-report="${encodeURIComponent(r.report_name)}" title="Delete report">
+                        Delete
+                    </a>
+                </div>
             </div>
         `;
 
@@ -179,26 +206,89 @@ function renderReportsPage(json) {
 
         card.addEventListener("click", ev => {
             if (selectMode) return;
-            if (ev.target.closest(".download-btn") || ev.target.closest(".delete-btn")) return;
+            if (ev.target.closest(".report-menu-container")) return;
             window.location.href = `/view_report/${encodeURIComponent(r.report_name)}`;
         });
 
         card.addEventListener("keydown", ev => {
-            if (ev.key === "Enter" && !ev.target.closest(".download-btn") && !ev.target.closest(".delete-btn")) {
+            if (ev.key === "Enter" && !ev.target.closest(".report-menu-container")) {
                 window.location.href = `/view_report/${encodeURIComponent(r.report_name)}`;
             }
         });
 
-        reportListEl.appendChild(card);
-    });
-
-    // Attach delete handlers
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.onclick = ev => {
+        // Menu button handler
+        const menuBtn = card.querySelector(".menu-btn");
+        const menuDropdown = card.querySelector(".menu-dropdown");
+        const menuContainer = card.querySelector(".report-menu-container");
+        
+        let closeDropdownTimeout;
+        
+        menuBtn.addEventListener("click", ev => {
             ev.stopPropagation();
-            const decodedName = decodeURIComponent(btn.dataset.report);
+            clearTimeout(closeDropdownTimeout);
+            // Close all other dropdowns
+            document.querySelectorAll(".menu-dropdown").forEach(dropdown => {
+                if (dropdown !== menuDropdown) dropdown.style.display = "none";
+            });
+            // Remove active class from other buttons
+            document.querySelectorAll(".menu-btn.active").forEach(btn => {
+                if (btn !== menuBtn) btn.classList.remove("active");
+            });
+            // Toggle this dropdown
+            const isOpen = menuDropdown.style.display === "block";
+            menuDropdown.style.display = isOpen ? "none" : "block";
+            // Toggle active class on button
+            if (isOpen) {
+                menuBtn.classList.remove("active");
+            } else {
+                menuBtn.classList.add("active");
+            }
+        });
+        
+        // Close dropdown when hovering away from menu container with delay for gap tolerance
+        menuContainer.addEventListener("mouseleave", () => {
+            closeDropdownTimeout = setTimeout(() => {
+                menuDropdown.style.display = "none";
+                menuBtn.classList.remove("active");
+            }, 100);
+        });
+        
+        // Cancel timeout when re-entering menu container
+        menuContainer.addEventListener("mouseenter", () => {
+            clearTimeout(closeDropdownTimeout);
+        });
+
+        // Select handler
+        const selectItem = card.querySelector(".select-item");
+        selectItem.addEventListener("click", ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            menuDropdown.style.display = "none";
+            menuBtn.classList.remove("active");
+            selectModeBtn.click();
+        });
+
+        // Delete handler
+        const deleteBtn = card.querySelector(".delete-item");
+        deleteBtn.addEventListener("click", ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const decodedName = decodeURIComponent(deleteBtn.dataset.report);
+            menuDropdown.style.display = "none";
             confirmAction("Delete", decodedName, () => deleteReport(decodedName));
-        };
+        });
+
+        // Rename handler
+        const renameBtn = card.querySelector(".rename-item");
+        renameBtn.addEventListener("click", ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const decodedName = decodeURIComponent(renameBtn.dataset.report);
+            menuDropdown.style.display = "none";
+            openRenameModal(decodedName);
+        });
+
+        reportListEl.appendChild(card);
     });
 
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
@@ -314,6 +404,85 @@ confirmYes.addEventListener("click", async () => {
     await loadAndRender(currentPage, perPage);
 });
 
+// Rename modal handlers
+renameNo.addEventListener("click", () => {
+    pendingRenameAction = null;
+    renameModal.style.display = "none";
+    renameInput.value = "";
+    renameError.textContent = "";
+    renameError.style.display = "none";
+});
+
+renameYes.addEventListener("click", async () => {
+    const newName = renameInput.value.trim();
+    if (!pendingRenameAction) {
+        renameError.textContent = "No report selected for renaming.";
+        renameError.style.display = "block";
+        return;
+    }
+    const oldName = pendingRenameAction;
+    
+    // Validation
+    if (!newName) {
+        renameError.textContent = "Report name cannot be empty.";
+        renameError.style.display = "block";
+        renameInput.focus();
+        return;
+    }
+    
+    if (newName === oldName) {
+        renameError.textContent = "New name must be different from the current name.";
+        renameError.style.display = "block";
+        renameInput.focus();
+        return;
+    }
+
+    const success = await renameReport(oldName, newName);
+    if (success) {
+        pendingRenameAction = null; // only clear if rename succeeded
+    }
+});
+
+renameInput.addEventListener("keydown", async e => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        const newName = renameInput.value.trim();
+        if (!pendingRenameAction) {
+            renameError.textContent = "No report selected for renaming.";
+            renameError.style.display = "block";
+            return;
+        }
+        const oldName = pendingRenameAction;
+        
+        // Validation
+        if (!newName) {
+            renameError.textContent = "Report name cannot be empty.";
+            renameError.style.display = "block";
+            renameInput.focus();
+            return;
+        }
+        
+        if (newName === oldName) {
+            renameError.textContent = "New name must be different from the current name.";
+            renameError.style.display = "block";
+            renameInput.focus();
+            return;
+        }
+
+        const success = await renameReport(oldName, newName);
+        if (success) {
+            pendingRenameAction = null; // only clear if rename succeeded
+        }
+    } else if (e.key === "Escape") {
+        e.preventDefault();
+        pendingRenameAction = null;
+        renameModal.style.display = "none";
+        renameInput.value = "";
+        renameError.textContent = "";
+        renameError.style.display = "none";
+    }
+});
+
 // ------------------------------
 // Delete report
 // ------------------------------
@@ -333,6 +502,50 @@ async function deleteReport(reportName) {
     } catch (err) {
         console.error(err);
         alert("Delete failed - see console.");
+    }
+}
+
+// ------------------------------
+// Open rename modal
+// ------------------------------
+function openRenameModal(reportName) {
+    renameOldName.textContent = `Current name: "${reportName}"`;
+    renameInput.value = reportName;
+    renameError.textContent = "";
+    renameError.style.display = "none";
+    renameModal.style.display = "flex";
+    renameInput.focus();
+    renameInput.select();
+    
+    pendingRenameAction = reportName;
+}
+
+// ------------------------------
+// Rename report
+// ------------------------------
+async function renameReport(oldName, newName) {
+    try {
+        const resp = await fetch("/rename_report", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ old_name: oldName, new_name: newName })
+        });
+        if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            renameError.textContent = data.detail || data.error || "Failed to rename report";
+            renameError.style.display = "block";
+            return false; // indicate failure
+        } else {
+            renameModal.style.display = "none";
+            await loadAndRender(currentPage, perPage);
+            return true; // indicate success
+        }
+    } catch (err) {
+        console.error(err);
+        renameError.textContent = "Rename failed - see console";
+        renameError.style.display = "block";
+        return false; // indicate failure
     }
 }
 
@@ -413,16 +626,43 @@ loadAndRender(currentPage, perPage);
 // ------------------------------
 document.addEventListener("keydown", (e) => {
 	// Check if the Escape key was pressed and the modal is currently visible
-	if (e.key === "Escape" && confirmModal.style.display === "flex") {
-		// Prevent default browser actions (like scrolling)
-		e.preventDefault(); 
-		
-		// This executes the same logic as hitting "Cancel"
-		pendingAction = null;
-		confirmModal.style.display = "none";
-		
-		// Optional: refocus on the delete button or the element that opened the modal
-		const deleteButton = document.getElementById("deleteBtn");
-		if (deleteButton) deleteButton.focus();
+	if (e.key === "Escape") {
+		// Close confirm modal
+		if (confirmModal.style.display === "flex") {
+			e.preventDefault(); 
+			pendingAction = null;
+			confirmModal.style.display = "none";
+		}
+		// Close rename modal
+		else if (renameModal.style.display === "flex") {
+			e.preventDefault();
+			pendingRenameAction = null;
+			renameModal.style.display = "none";
+			renameInput.value = "";
+			renameError.textContent = "";
+			renameError.style.display = "none";
+		}
+		// Exit select mode
+		else if (selectMode) {
+			e.preventDefault();
+			selectModeBtn.click();
+		}
+		// Close menu dropdowns
+		else {
+			document.querySelectorAll(".menu-dropdown").forEach(dropdown => {
+				if (dropdown.style.display === "block") {
+					dropdown.style.display = "none";
+				}
+			});
+		}
 	}
+});
+
+// ------------------------------
+// Close menu dropdowns when clicking outside
+// ------------------------------
+document.addEventListener("click", () => {
+    document.querySelectorAll(".menu-dropdown").forEach(dropdown => {
+        dropdown.style.display = "none";
+    });
 });
