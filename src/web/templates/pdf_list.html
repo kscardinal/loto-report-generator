@@ -76,6 +76,20 @@
     </div>
 </div>
 
+<!-- Rename Modal -->
+<div id="renameModal" class="modal">
+    <div id="renameBox" class="modal-box" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+        <p id="renameTitle" style="margin: 0 0 12px 0; font-weight: bold;">Rename Report</p>
+        <p id="renameOldName" style="color: #666; font-size: 0.9rem; margin: 0 0 12px 0;"></p>
+        <input id="renameInput" type="text" placeholder="Enter new report name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 0.95rem;">
+        <p id="renameError" style="color: #dc3545; font-size: 0.85rem; margin: 8px 0 0 0; display: none;"></p>
+        <div class="modal-actions" style="margin-top: 16px;">
+            <button id="renameYes" class="modal-yes">Rename</button>
+            <button id="renameNo" class="modal-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- PDF Generation Loading Popup (Matches Map Popup) -->
 <div id="pdfGeneratingOverlay" class="map-loading-overlay hidden-overlay">
     <div class="map-loading-content">
