@@ -22,16 +22,8 @@
 # Replace the example tags below with the actual names of the 10 
 # unsigned tags you want to sign. Separate them with spaces.
 TAGS_TO_SIGN=(
-    "v0.0.0" 
-    "v0.0.1" 
-    "v0.0.2" 
-    "v0.0.3" 
-    "v0.0.4" 
-    "v0.0.5" 
-    "v0.0.6" 
-    "v0.0.7" 
-    "v0.0.8" 
-    "v0.0.9"
+    "v0.0.00" 
+    "v0.0.00"
 )
 
 REMOTE_NAME="origin" # Standard remote name. Change if yours is different.
