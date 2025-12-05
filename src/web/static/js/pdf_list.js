@@ -415,6 +415,11 @@ renameNo.addEventListener("click", () => {
 
 renameYes.addEventListener("click", async () => {
     const newName = renameInput.value.trim();
+    if (!pendingRenameAction) {
+        renameError.textContent = "No report selected for renaming.";
+        renameError.style.display = "block";
+        return;
+    }
     const oldName = pendingRenameAction;
     
     // Validation
@@ -431,15 +436,22 @@ renameYes.addEventListener("click", async () => {
         renameInput.focus();
         return;
     }
-    
-    await renameReport(oldName, newName);
-    pendingRenameAction = null;
+
+    const success = await renameReport(oldName, newName);
+    if (success) {
+        pendingRenameAction = null; // only clear if rename succeeded
+    }
 });
 
 renameInput.addEventListener("keydown", async e => {
     if (e.key === "Enter") {
         e.preventDefault();
         const newName = renameInput.value.trim();
+        if (!pendingRenameAction) {
+            renameError.textContent = "No report selected for renaming.";
+            renameError.style.display = "block";
+            return;
+        }
         const oldName = pendingRenameAction;
         
         // Validation
@@ -456,9 +468,11 @@ renameInput.addEventListener("keydown", async e => {
             renameInput.focus();
             return;
         }
-        
-        await renameReport(oldName, newName);
-        pendingRenameAction = null;
+
+        const success = await renameReport(oldName, newName);
+        if (success) {
+            pendingRenameAction = null; // only clear if rename succeeded
+        }
     } else if (e.key === "Escape") {
         e.preventDefault();
         pendingRenameAction = null;
@@ -521,14 +535,17 @@ async function renameReport(oldName, newName) {
             const data = await resp.json().catch(() => ({}));
             renameError.textContent = data.detail || data.error || "Failed to rename report";
             renameError.style.display = "block";
+            return false; // indicate failure
         } else {
             renameModal.style.display = "none";
             await loadAndRender(currentPage, perPage);
+            return true; // indicate success
         }
     } catch (err) {
         console.error(err);
         renameError.textContent = "Rename failed - see console";
         renameError.style.display = "block";
+        return false; // indicate failure
     }
 }
 
