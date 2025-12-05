@@ -215,15 +215,26 @@ MONGO_HOST=...
 MONGO_PORT=...
 MONGO_DB=...
 
-# App Config (dev = auto-reload, production = no auto-reload)
+# App Config
 APP_ENV=dev
 
-# Server IP (used by PDF scripts)
-SERVER_IP=http://<your-server-domain-or-ip>
+# Server IP
+SERVER_IP=http://{SERVER_IP_ADDRESS}:8000
 TEST_SERVER_IP=http://localhost:8000
 
-#JWT
+# JWT
 SECRET_KEY=...
+ADMIN_JWT=...
+
+# email
+SENDER_EMAIL=...
+SENDER_PASSWORD=...
+SENDGRID_API_KEY=...
+
+DEFAULT_EMAIL=...
+
+# Cleanup URL
+CLEANUP_URL=http://lotogenerator.app/cleanup_orphan_photos
 ```
 
 3. Start Docker
